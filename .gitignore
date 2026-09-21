@@ -1,0 +1,5 @@
+node_modules/
+*.log
+# liste RIS reali: non devono mai entrare nel repository
+*.pdf
+ris-items.json

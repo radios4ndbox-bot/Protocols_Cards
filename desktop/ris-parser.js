@@ -1,0 +1,221 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Parser della lista esami RIS — profilo "Desio / Lista esami da eseguire"
+
+   Riceve gli elementi di testo con le loro coordinate, così come li
+   restituisce pdf.js (`item.transform[4]` = x, `item.transform[5]` = y,
+   `item.str` = testo), e ricostruisce la tabella.
+
+   Il documento è una tabella annidata: ogni paziente è una riga della
+   tabella esterna, e sotto di lui una sotto-tabella con gli esami
+   richiesti. Le celle vanno a capo, quindi una riga logica occupa più
+   righe fisiche.
+
+   Due caratteristiche del generatore, verificate sul campo:
+   · le righe di una cella si susseguono nella direzione +y, non −y;
+   · la riga con il numero di accettazione apre il blocco del paziente,
+     che prosegue fino al numero di accettazione successivo.
+   La direzione viene comunque ricavata dal documento stesso invece di
+   essere data per scontata, così un generatore con assi invertiti non
+   manda tutto all'aria.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+(function (root) {
+  'use strict';
+
+  /* Confini delle colonne in unità PDF, presi a metà fra una colonna e la
+     successiva. Fanno parte del profilo: un altro RIS avrà altri valori. */
+  const COLS = [
+    ['codice',      -1e4,  130],   // n. accettazione (paziente) · codice (esame)
+    ['descrizione',  130,  237],
+    ['orario',       237,  310],
+    ['paziente',     310,  370],
+    ['nascita',      370,  430],
+    ['diagnostica',  430,  491],
+    ['provenienza',  491,  582],
+    ['stato',        582,  681],
+    ['urgenza',      681,  749],
+    ['statoEsame',   749,  804],
+    ['tariffario',   804,  895],
+    ['dose',         895,  1e4],
+  ];
+
+  const RE_ACC    = /^0D\d{6,10}$/;
+  const RE_CODICE = /^\d{6,}[A-Z0-9.\-]*$/;
+  const RE_DATA   = /^\d{2}\/\d{2}\/\d{4}$/;
+  const RE_ORA    = /^\d{2}:\d{2}$/;
+  const HDR_ESAMI = 'codice';                       // prima cella dell'intestazione
+
+  /* Righe di servizio del report: titolo, intestazione di pagina,
+     intestazione della tabella esterna. Vanno tolte prima di dividere in
+     blocchi, altrimenti finiscono nel blocco del paziente precedente
+     quando si concatenano le pagine.                                    */
+  function èRumore(r) {
+    const t = Object.values(r.c).join(' ').replace(/\s+/g, ' ').trim();
+    if (!t) return true;
+    if (/^Lista esami da eseguire$/i.test(t)) return true;
+    if (/^\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\s+\d+\s+Of\s+\d+/i.test(t)) return true;
+    if (/Acc\. Number/i.test(t)) return true;
+    if (/^(Richieste|errori|Tipo invio|Progressivo ricetta|Prog\.Acc\.)$/i.test(t)) return true;
+    return false;
+  }
+
+  const colDi = x => (COLS.find(c => x >= c[1] && x < c[2]) || COLS[0])[0];
+
+  /* ── righe fisiche: elementi raggruppati per y ────────────────────── */
+  function righe(items, tolleranza) {
+    const map = [];
+    for (const it of items) {
+      const testo = (it.str !== undefined ? it.str : it.t || '').trim();
+      if (!testo) continue;
+      const tr = it.transform;
+      const x = it.x !== undefined ? it.x : (tr ? tr[4] : undefined);
+      const y = it.y !== undefined ? it.y : (tr ? tr[5] : undefined);
+      if (typeof x !== 'number' || typeof y !== 'number') continue;   // elemento senza coordinate
+      let g = map.find(r => Math.abs(r.y - y) <= tolleranza);
+      if (!g) { g = { y, celle: [] }; map.push(g); }
+      g.celle.push({ x, testo });
+    }
+    return map.map(r => {
+      const c = {};
+      r.celle.sort((a, b) => a.x - b.x).forEach(e => {
+        const k = colDi(e.x);
+        c[k] = c[k] ? c[k] + ' ' + e.testo : e.testo;
+      });
+      return { y: r.y, c, vuota: Object.keys(c).length === 0 };
+    });
+  }
+
+  /* ── direzione di lettura di un blocco, ricavata dal documento ─────
+     Dalla riga di accettazione, l'orario HH:MM sta nella riga successiva:
+     da che parte si trovi lo decide il documento, non un'assunzione.   */
+  function direzione(ordinate) {
+    const idxAcc = ordinate
+      .map((r, i) => (RE_ACC.test(r.c.codice || '') ? i : -1))
+      .filter(i => i >= 0);
+    let su = 0, giu = 0;
+    for (const i of idxAcc) {
+      const dopo  = ordinate[i + 1], prima = ordinate[i - 1];
+      if (dopo  && RE_ORA.test((dopo.c.orario  || '').trim())) su++;
+      if (prima && RE_ORA.test((prima.c.orario || '').trim())) giu++;
+    }
+    return giu > su ? -1 : 1;            // +1 = il blocco prosegue in +y
+  }
+
+  /* ── un blocco → un paziente ──────────────────────────────────────── */
+  function leggiBlocco(blocco) {
+    const capo = blocco[0].c;
+    const p = {
+      accession:   (capo.codice || '').trim(),
+      data:        '',
+      ora:         '',
+      cognome:     (capo.paziente || '').trim(),
+      nome:        '',
+      nascita:     '',
+      diagnostica: (capo.diagnostica || '').trim(),
+      provenienza: (capo.provenienza || '').trim(),
+      stato:       (capo.stato || '').trim(),
+      urgenza:     (capo.urgenza || '').trim(),
+      quesito:     '',
+      esami:       [],
+      incerto:     [],
+    };
+    if (RE_DATA.test((capo.orario || '').trim())) p.data = capo.orario.trim();
+    if (RE_DATA.test((capo.nascita || '').trim())) p.nascita = capo.nascita.trim();
+
+    let negliEsami = false;
+    const quesiti = [];
+
+    for (let i = 1; i < blocco.length; i++) {
+      const c = blocco[i].c;
+      const cod = (c.codice || '').trim();
+
+      if (!negliEsami && cod.toLowerCase() === HDR_ESAMI) { negliEsami = true; continue; }
+
+      if (negliEsami) {
+        if (RE_CODICE.test(cod)) {
+          p.esami.push({
+            codice: cod,
+            descrizione: (c.descrizione || '').trim(),
+            stato: (c.statoEsame || c.urgenza || '').trim(),
+          });
+        }
+        continue;
+      }
+
+      /* riga a tutta larghezza, senza codice riconoscibile → quesito */
+      const soloTesto = cod && !RE_CODICE.test(cod) && !RE_ACC.test(cod)
+                        && !c.paziente && !c.orario && !c.nascita;
+      if (soloTesto) { quesiti.push(cod); continue; }
+
+      /* altrimenti è il proseguimento delle celle andate a capo */
+      const ora = (c.orario || '').trim();
+      if (RE_ORA.test(ora)) p.ora = ora;
+      else if (ora && !p.data && RE_DATA.test(ora)) p.data = ora;
+
+      if (c.paziente)    p.nome        = (p.nome + ' ' + c.paziente).trim();
+      if (c.diagnostica) p.diagnostica = (p.diagnostica + ' ' + c.diagnostica).trim();
+      if (c.provenienza) p.provenienza = (p.provenienza + ' ' + c.provenienza).trim();
+      if (c.urgenza && !p.urgenza) p.urgenza = c.urgenza.trim();
+      if (c.stato && !p.stato)     p.stato   = c.stato.trim();
+    }
+
+    p.quesito = quesiti.join(' ').replace(/\s+/g, ' ').trim();
+    p.nomeCompleto = (p.cognome + ' ' + p.nome).replace(/\s+/g, ' ').trim();
+
+    /* ── segnalazioni: cosa il parser non è riuscito a ricavare ─────── */
+    if (!p.nomeCompleto)           p.incerto.push('nome');
+    if (!p.nascita)                p.incerto.push('data di nascita');
+    if (!p.ora)                    p.incerto.push('orario');
+    if (!p.esami.length)           p.incerto.push('nessun esame');
+    if (!p.quesito)                p.incerto.push('quesito');
+    if (p.nomeCompleto && p.nomeCompleto.split(/\s+/).length < 2)
+      p.incerto.push('nome incompleto');
+
+    return p;
+  }
+
+  /* ── ingresso pubblico ────────────────────────────────────────────── */
+  function parseRis(pagine, opz) {
+    const o = opz || {};
+    const tol = o.tolleranzaY || 2;
+
+    /* Le pagine vengono concatenate in un flusso unico: il blocco di un
+       paziente può proseguire sulla pagina seguente, e l'ultimo esame
+       finire da solo in fondo al documento.                             */
+    let flusso = [];
+    pagine.forEach((items, pi) => {
+      const rs = righe(items, tol).filter(r => !r.vuota && !èRumore(r));
+      const dir = o.direzione || direzione(rs.slice().sort((a, b) => a.y - b.y));
+      rs.sort((a, b) => (a.y - b.y) * dir);
+      rs.forEach(r => { r.pagina = pi + 1; });
+      flusso = flusso.concat(rs);
+    });
+
+    const inizi = flusso.map((r, i) => (RE_ACC.test((r.c.codice || '').trim()) ? i : -1))
+                        .filter(i => i >= 0);
+
+    const pazienti = inizi.map((s, k) => {
+      const e = k + 1 < inizi.length ? inizi[k + 1] : flusso.length;
+      const p = leggiBlocco(flusso.slice(s, e));
+      p.pagina = flusso[s].pagina;
+      return p;
+    });
+
+    /* righe rimaste fuori da ogni blocco: se ce ne sono, il profilo non
+       descrive bene il documento e va segnalato.                        */
+    const fuoriBlocco = inizi.length ? inizi[0] : flusso.length;
+
+    /* ordine di seduta: l'orario, non l'ordine di stampa */
+    pazienti.sort((a, b) => (a.ora || '99:99').localeCompare(b.ora || '99:99'));
+
+    return {
+      pazienti,
+      righeIgnorate: fuoriBlocco,
+      conSegnalazioni: pazienti.filter(p => p.incerto.length).length,
+    };
+  }
+
+  const api = { parseRis, righe, direzione, COLS };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.RisParser = api;
+})(typeof self !== 'undefined' ? self : this);
