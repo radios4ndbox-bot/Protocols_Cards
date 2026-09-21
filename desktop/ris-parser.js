@@ -22,22 +22,31 @@
 (function (root) {
   'use strict';
 
-  /* Confini delle colonne in unità PDF, presi a metà fra una colonna e la
-     successiva. Fanno parte del profilo: un altro RIS avrà altri valori. */
+  /* Confini delle colonne espressi come frazione della larghezza di pagina.
+     In unità assolute sarebbero legati al motore di estrazione: pdf.js e
+     pypdf, sullo stesso documento, restituiscono coordinate in scale
+     diverse (rapporto 4/3). La frazione invece è la stessa ovunque.      */
   const COLS = [
-    ['codice',      -1e4,  130],   // n. accettazione (paziente) · codice (esame)
-    ['descrizione',  130,  237],
-    ['orario',       237,  310],
-    ['paziente',     310,  370],
-    ['nascita',      370,  430],
-    ['diagnostica',  430,  491],
-    ['provenienza',  491,  582],
-    ['stato',        582,  681],
-    ['urgenza',      681,  749],
-    ['statoEsame',   749,  804],
-    ['tariffario',   804,  895],
-    ['dose',         895,  1e4],
+    ['codice',      -1,     0.1158],   // accettazione (paziente) · codice (esame)
+    ['descrizione',  0.1158, 0.2111],
+    ['orario',       0.2111, 0.2761],
+    ['paziente',     0.2761, 0.3296],
+    ['nascita',      0.3296, 0.3830],
+    ['diagnostica',  0.3830, 0.4373],
+    ['provenienza',  0.4373, 0.5184],
+    ['stato',        0.5184, 0.6065],
+    ['urgenza',      0.6065, 0.6671],
+    ['statoEsame',   0.6671, 0.7161],
+    ['tariffario',   0.7161, 0.7972],
+    ['dose',         0.7972, 99],
   ];
+
+  /* Ancore per l'autocalibrazione: nella riga d'intestazione della
+     sotto-tabella esami, «Codice» e «Dose» stanno a queste frazioni.     */
+  const ANCORA = { Codice: 0.0567, Dose: 0.8562 };
+  /* seconda ancora: il numero di accettazione è allineato alla stessa
+     frazione di «Codice», e c'è anche su pagine senza intestazione.     */
+  const ANCORA_ACC = 0.0567;
 
   const RE_ACC    = /^0D\d{6,10}$/;
   const RE_CODICE = /^\d{6,}[A-Z0-9.\-]*$/;
@@ -59,10 +68,39 @@
     return false;
   }
 
-  const colDi = x => (COLS.find(c => x >= c[1] && x < c[2]) || COLS[0])[0];
+  const colDi = f => (COLS.find(c => f >= c[1] && f < c[2]) || COLS[0])[0];
+
+  /* Larghezza di pagina ricavata dal documento: la distanza fra «Codice» e
+     «Dose» nell'intestazione degli esami è nota in frazioni, quindi basta
+     una proporzione. Serve solo quando la larghezza non viene fornita.   */
+  const testoDi = i => (i.str !== undefined ? i.str : i.t || '').trim();
+  const xDi = i => (i.x !== undefined ? i.x : (i.transform || [])[4]);
+  const yDi = i => (i.y !== undefined ? i.y : (i.transform || [])[5]);
+
+  /* La scala è la stessa su tutte le pagine, quindi si calibra una volta
+     sull'intero documento: una pagina che contiene solo la coda di un
+     blocco non ha intestazioni, e da sola non sarebbe calibrabile.
+     Due ancore, dalla più precisa alla più disponibile.                 */
+  function calibra(tuttiGliItems) {
+    const it = tuttiGliItems.filter(i => typeof xDi(i) === 'number');
+
+    const cod = it.filter(i => testoDi(i) === 'Codice');
+    const dos = it.filter(i => testoDi(i) === 'Dose');
+    for (const a of cod) for (const b of dos) {
+      if (Math.abs(yDi(a) - yDi(b)) > 2) continue;
+      if (xDi(b) > xDi(a)) return (xDi(b) - xDi(a)) / (ANCORA.Dose - ANCORA.Codice);
+    }
+
+    const acc = it.filter(i => RE_ACC.test(testoDi(i)));
+    if (acc.length) {
+      const xs = acc.map(xDi).sort((a, b) => a - b);
+      return xs[Math.floor(xs.length / 2)] / ANCORA_ACC;      // mediana
+    }
+    return 0;
+  }
 
   /* ── righe fisiche: elementi raggruppati per y ────────────────────── */
-  function righe(items, tolleranza) {
+  function righe(items, tolleranza, larghezza) {
     const map = [];
     for (const it of items) {
       const testo = (it.str !== undefined ? it.str : it.t || '').trim();
@@ -78,7 +116,7 @@
     return map.map(r => {
       const c = {};
       r.celle.sort((a, b) => a.x - b.x).forEach(e => {
-        const k = colDi(e.x);
+        const k = colDi(e.x / larghezza);
         c[k] = c[k] ? c[k] + ' ' + e.testo : e.testo;
       });
       return { y: r.y, c, vuota: Object.keys(c).length === 0 };
@@ -183,8 +221,15 @@
        paziente può proseguire sulla pagina seguente, e l'ultimo esame
        finire da solo in fondo al documento.                             */
     let flusso = [];
-    pagine.forEach((items, pi) => {
-      const rs = righe(items, tol).filter(r => !r.vuota && !èRumore(r));
+    const avvisi = [];
+    const globale = o.larghezzaPagina
+      || calibra(pagine.flatMap(p => (Array.isArray(p) ? p : p.items) || []));
+
+    pagine.forEach((pagina, pi) => {
+      const items = Array.isArray(pagina) ? pagina : pagina.items;
+      const larghezza = (Array.isArray(pagina) ? 0 : pagina.larghezza) || globale;
+      if (!larghezza) { avvisi.push(`pagina ${pi+1}: larghezza non determinabile`); return; }
+      const rs = righe(items, tol, larghezza).filter(r => !r.vuota && !èRumore(r));
       const dir = o.direzione || direzione(rs.slice().sort((a, b) => a.y - b.y));
       rs.sort((a, b) => (a.y - b.y) * dir);
       rs.forEach(r => { r.pagina = pi + 1; });
@@ -210,12 +255,13 @@
 
     return {
       pazienti,
+      avvisi,
       righeIgnorate: fuoriBlocco,
       conSegnalazioni: pazienti.filter(p => p.incerto.length).length,
     };
   }
 
-  const api = { parseRis, righe, direzione, COLS };
+  const api = { parseRis, righe, direzione, calibra, COLS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.RisParser = api;
 })(typeof self !== 'undefined' ? self : this);

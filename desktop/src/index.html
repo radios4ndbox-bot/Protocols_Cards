@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protocol Cards — importazione lista</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   PROTOCOL CARDS · tool PC
+   File unico e autosufficiente: pdf.js e il parser sono incorporati,
+   così funziona da chiavetta su un PC senza rete.
+   Nessun dato lascia il browser.
+   ═══════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#f2f6fd; --surface:#fff; --surface2:#e9f0fc; --surface3:#dde8fa;
+  --border:#d3e0f5; --border2:#bed2ef;
+  --text:#15233f; --text2:#33456b; --muted:#6d7f9f;
+  --accent:#2f6fed; --accent-d:#1d54c4; --accent-s:#e6eefd;
+  --warn:#e0801f; --warn-t:#95530c; --warn-s:#fdf1e2;
+  --ok:#0c9b78; --ok-t:#056a52; --ok-s:#e2f7f1;
+  --danger:#d64545; --danger-s:#fdeaea;
+  --sh:0 1px 2px rgba(21,35,63,.06), 0 4px 14px rgba(47,111,237,.06);
+  --sh-l:0 10px 34px rgba(21,35,63,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  display:flex;flex-direction:column;overflow:hidden}
+button,input,textarea,select{font-family:inherit}
+
+header{flex-shrink:0;display:flex;align-items:center;gap:14px;
+  padding:14px 26px;background:var(--surface);border-bottom:1px solid var(--border)}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+header h1{font-size:16px;font-weight:700;letter-spacing:-.2px}
+header .sub{font-size:11.5px;color:var(--muted);margin-top:1px}
+.privacy{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:11.5px;
+  color:var(--ok-t);background:var(--ok-s);border:1px solid var(--ok);
+  border-radius:99px;padding:6px 14px;font-weight:600}
+
+.passi{flex-shrink:0;display:flex;gap:6px;padding:12px 26px 0;background:var(--surface);
+  border-bottom:1px solid var(--border)}
+.passo{display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:9px 9px 0 0;
+  font-size:12.5px;font-weight:650;color:var(--muted);border:1px solid transparent;
+  border-bottom:none;position:relative;top:1px}
+.passo.on{background:var(--bg);color:var(--accent-d);border-color:var(--border)}
+.passo.fatto{color:var(--ok-t)}
+.passo i{width:20px;height:20px;border-radius:50%;background:var(--surface3);color:var(--text2);
+  display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;
+  font-style:normal}
+.passo.on i{background:var(--accent);color:#fff}
+.passo.fatto i{background:var(--ok);color:#fff}
+
+main{flex:1;overflow-y:auto;padding:26px}
+.vista{display:none;max-width:1180px;margin:0 auto}
+.vista.on{display:block}
+
+/* ── 1 · importazione ── */
+.drop{border:2px dashed var(--border2);border-radius:16px;padding:60px 30px;text-align:center;
+  background:var(--surface);cursor:pointer;transition:.18s;position:relative}
+.drop:hover,.drop.sopra{border-color:var(--accent);background:var(--accent-s)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop .ico{font-size:40px;margin-bottom:12px}
+.drop h2{font-size:17px;font-weight:700;margin-bottom:6px}
+.drop p{font-size:13px;color:var(--muted)}
+.nota{margin-top:20px;padding:15px 18px;background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;font-size:12.5px;color:var(--text2);line-height:1.6}
+.nota b{color:var(--text)}
+#stato{margin-top:16px;padding:13px 17px;border-radius:11px;font-size:13px;display:none}
+#stato.info{display:block;background:var(--accent-s);border:1px solid var(--accent);color:var(--accent-d)}
+#stato.err{display:block;background:var(--danger-s);border:1px solid var(--danger);color:var(--danger)}
+
+/* ── 2 · verifica ── */
+.barra{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.barra h2{font-size:17px;font-weight:700}
+.conta{font-size:12.5px;color:var(--muted)}
+.chip{font-size:11.5px;font-weight:700;border-radius:99px;padding:4px 11px}
+.chip.ok{background:var(--ok-s);color:var(--ok-t);border:1px solid var(--ok)}
+.chip.warn{background:var(--warn-s);color:var(--warn-t);border:1px solid var(--warn)}
+.sp{flex:1}
+.btn{height:40px;padding:0 20px;border-radius:10px;border:none;background:var(--accent);
+  color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:var(--sh)}
+.btn:hover{background:var(--accent-d)}
+.btn:disabled{background:var(--surface3);color:var(--muted);cursor:not-allowed;box-shadow:none}
+.btn.sec{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+.btn.sec:hover{background:var(--surface2)}
+
+.tab{width:100%;border-collapse:separate;border-spacing:0;background:var(--surface);
+  border:1px solid var(--border);border-radius:13px;overflow:hidden;box-shadow:var(--sh)}
+.tab th{text-align:left;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--muted);padding:11px 12px;background:var(--surface2);
+  border-bottom:1px solid var(--border);white-space:nowrap}
+.tab td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top;font-size:13px}
+.tab tr:last-child td{border-bottom:none}
+.tab tr.warn td{background:var(--warn-s)}
+.tab tr.esclusa td{opacity:.42}
+.cel{width:100%;border:1px solid transparent;border-radius:7px;padding:5px 7px;
+  background:transparent;font-size:13px;color:var(--text);outline:none;resize:none;
+  line-height:1.45;overflow:hidden}
+.cel:hover{border-color:var(--border2);background:var(--surface)}
+.cel:focus{border-color:var(--accent);background:var(--surface);
+  box-shadow:0 0 0 3px var(--accent-s)}
+.cel.mono{font-variant-numeric:tabular-nums}
+.cel.corto{max-width:110px}
+td.segn .cel{border-color:var(--warn)}
+.esami{font-size:11.5px;color:var(--text2);line-height:1.6}
+.esami div{padding:1px 0}
+.esami code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--muted);
+  margin-right:6px}
+.avvisi{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.avvisi span{font-size:9.5px;font-weight:700;background:var(--warn);color:#fff;
+  border-radius:4px;padding:2px 6px}
+.togli{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface);color:var(--muted);cursor:pointer;font-size:14px}
+.togli:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-s)}
+
+/* ── 3 · trasferimento ── */
+.qr-griglia{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:26px;align-items:start}
+.qr-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:22px;box-shadow:var(--sh);text-align:center}
+#qr{display:block;margin:0 auto;image-rendering:pixelated;border-radius:8px;
+  background:#fff;max-width:100%;height:auto}
+.qr-sotto{margin-top:14px;font-size:12px;color:var(--muted);line-height:1.6}
+.qr-sotto b{color:var(--text)}
+.frame-n{margin-top:10px;font-size:11.5px;font-weight:700;color:var(--accent-d);
+  font-variant-numeric:tabular-nums}
+.riepilogo{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:22px;box-shadow:var(--sh)}
+.riepilogo h3{font-size:14px;font-weight:700;margin-bottom:12px}
+.riga{display:flex;justify-content:space-between;gap:14px;padding:7px 0;
+  border-bottom:1px solid var(--border);font-size:13px}
+.riga:last-child{border-bottom:none}
+.riga span:first-child{color:var(--muted)}
+.riga b{font-variant-numeric:tabular-nums}
+.azioni{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.spiega{margin-top:18px;font-size:12px;color:var(--text2);line-height:1.65}
+.spiega ol{margin:8px 0 0 18px}
+.spiega li{margin-bottom:4px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PC</div>
+  <div>
+    <h1>Protocol Cards — importazione lista</h1>
+    <div class="sub">ASST Brianza · Desio</div>
+  </div>
+  <div class="privacy">🔒 Nessun dato lascia questo computer</div>
+</header>
+
+<div class="passi">
+  <div class="passo on" data-p="1"><i>1</i> Carica il PDF</div>
+  <div class="passo" data-p="2"><i>2</i> Verifica e correggi</div>
+  <div class="passo" data-p="3"><i>3</i> Trasferisci sul telefono</div>
+</div>
+
+<main>
+  <!-- ═══ 1 ═══ -->
+  <section class="vista on" id="v1">
+    <div class="drop" id="drop">
+      <input type="file" id="file" accept="application/pdf,.pdf">
+      <div class="ico">📄</div>
+      <h2>Trascina qui la lista esami</h2>
+      <p>oppure fai clic per sceglierla — formato «Lista esami da eseguire», RIS Desio</p>
+    </div>
+    <div id="stato"></div>
+    <div class="nota">
+      <b>Il PDF non viene caricato da nessuna parte.</b> Viene letto qui, dentro il browser:
+      il file resta sul computer e nulla viene inviato in rete. Questo strumento non
+      conserva niente — chiudendo la pagina non resta traccia.
+    </div>
+  </section>
+
+  <!-- ═══ 2 ═══ -->
+  <section class="vista" id="v2">
+    <div class="barra">
+      <h2>Verifica dei dati estratti</h2>
+      <span class="conta" id="conta"></span>
+      <span class="chip ok" id="chipOk"></span>
+      <span class="chip warn" id="chipWarn" style="display:none"></span>
+      <span class="sp"></span>
+      <button class="btn sec" id="indietro1">← Cambia file</button>
+      <button class="btn" id="avanti">Genera il QR →</button>
+    </div>
+    <div class="nota" style="margin:0 0 14px">
+      Le righe evidenziate sono quelle su cui il parser <b>non è sicuro</b>: controllale.
+      Ogni campo è modificabile — questo è l'ultimo posto comodo per correggere, sul
+      telefono è più scomodo.
+    </div>
+    <table class="tab">
+      <thead><tr>
+        <th style="width:74px">Orario</th>
+        <th style="width:112px">Accettazione</th>
+        <th>Paziente</th>
+        <th style="width:112px">Nascita</th>
+        <th>Quesito diagnostico</th>
+        <th style="width:270px">Esami richiesti</th>
+        <th style="width:44px"></th>
+      </tr></thead>
+      <tbody id="righe"></tbody>
+    </table>
+  </section>
+
+  <!-- ═══ 3 ═══ -->
+  <section class="vista" id="v3">
+    <div class="barra">
+      <h2>Trasferimento sul telefono</h2>
+      <span class="sp"></span>
+      <button class="btn sec" id="indietro2">← Torna alla verifica</button>
+    </div>
+    <div class="qr-griglia">
+      <div class="qr-box">
+        <canvas id="qr" width="420" height="420"></canvas>
+        <div class="frame-n" id="frameN"></div>
+        <div class="qr-sotto" id="qrSotto"></div>
+      </div>
+      <div>
+        <div class="riepilogo">
+          <h3>Contenuto del trasferimento</h3>
+          <div class="riga"><span>Giornata</span><b id="rGiorno">—</b></div>
+          <div class="riga"><span>Pazienti</span><b id="rPaz">—</b></div>
+          <div class="riga"><span>Esami</span><b id="rEsami">—</b></div>
+          <div class="riga"><span>Dati grezzi</span><b id="rGrezzi">—</b></div>
+          <div class="riga"><span>Dopo compressione</span><b id="rComp">—</b></div>
+          <div class="riga"><span>Codici QR</span><b id="rFrame">—</b></div>
+          <div class="azioni">
+            <button class="btn sec" id="scaricaJson">Scarica come file JSON</button>
+            <button class="btn sec" id="stampa">Stampa il QR</button>
+          </div>
+        </div>
+        <div class="spiega">
+          <b>Come si trasferisce</b>
+          <ol>
+            <li>Apri Protocol Cards sul telefono e scegli la scansione.</li>
+            <li>Inquadra il codice qui sopra.</li>
+            <li>Se i codici sono più di uno si alternano da soli: tieni inquadrato
+                finché il telefono non li ha raccolti tutti, in qualsiasi ordine.</li>
+          </ol>
+          Il codice contiene solo i dati della lista. Non passa da nessuna rete:
+          viaggia dallo schermo alla fotocamera.
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>/* ⟦PDFJS⟧ */</script>
+<script>/* ⟦QRCODE⟧ */</script>
+<script type="text/plain" id="sorgente-worker">/* ⟦PDFJSWORKER⟧ */</script>
+<script>/* ⟦RISPARSER⟧ */</script>
+<script>
+'use strict';
+
+/* ═══ pdf.js senza rete ══════════════════════════════════════════════
+   Il worker è incorporato nella pagina come testo: da lì si ricava un
+   URL blob. Se il browser rifiuta di creare un Worker da un blob — può
+   succedere aprendo il file da file:// — pdf.js ripiega da solo sul
+   percorso senza worker, che carica lo stesso URL come script.        */
+const sorgenteWorker = document.getElementById('sorgente-worker').textContent;
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  URL.createObjectURL(new Blob([sorgenteWorker], { type: 'text/javascript' }));
+
+const $ = id => document.getElementById(id);
+let pazienti = [];
+
+/* ═══ passo 1 · lettura del PDF ══════════════════════════════════════ */
+const drop = $('drop');
+['dragover','dragenter'].forEach(e => drop.addEventListener(e, ev => {
+  ev.preventDefault(); drop.classList.add('sopra');
+}));
+['dragleave','drop'].forEach(e => drop.addEventListener(e, () => drop.classList.remove('sopra')));
+drop.addEventListener('drop', ev => {
+  ev.preventDefault();
+  const f = ev.dataTransfer.files[0];
+  if (f) leggi(f);
+});
+$('file').addEventListener('change', e => { if (e.target.files[0]) leggi(e.target.files[0]); });
+
+function dice(msg, tipo) { const s = $('stato'); s.textContent = msg; s.className = tipo || ''; }
+
+async function leggi(file) {
+  if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') {
+    dice('Serve un PDF: «' + file.name + '» non lo è.', 'err'); return;
+  }
+  dice('Lettura di ' + file.name + '…', 'info');
+  try {
+    const buf = await file.arrayBuffer();
+    const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    const pagine = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const pag = await doc.getPage(i);
+      const c = await pag.getTextContent();
+      /* la larghezza viene da pdf.js: le frazioni di colonna del parser
+         diventano così indipendenti dalla scala del documento */
+      pagine.push({ items: c.items, larghezza: pag.getViewport({ scale: 1 }).width });
+    }
+    const r = RisParser.parseRis(pagine);
+    if (!r.pazienti.length) {
+      dice('Nessun paziente riconosciuto. Il PDF potrebbe avere un formato diverso '
+         + 'da quello previsto (' + doc.numPages + ' pagine lette).', 'err');
+      return;
+    }
+    pazienti = r.pazienti.map(p => ({ ...p, escluso: false }));
+    dice('', '');
+    disegnaTabella();
+    vai(2);
+  } catch (e) {
+    dice('Non sono riuscito a leggere il PDF: ' + e.message, 'err');
+    console.error(e);
+  }
+}
+
+/* ═══ navigazione ════════════════════════════════════════════════════ */
+function vai(n) {
+  [1,2,3].forEach(i => $('v'+i).classList.toggle('on', i===n));
+  document.querySelectorAll('.passo').forEach(p => {
+    const k = +p.dataset.p;
+    p.classList.toggle('on', k===n);
+    p.classList.toggle('fatto', k<n);
+  });
+  if (n === 3) preparaTrasferimento();
+}
+$('indietro1').onclick = () => { $('file').value=''; vai(1); };
+$('indietro2').onclick = () => vai(2);
+$('avanti').onclick    = () => vai(3);
+
+/* ═══ passo 2 · tabella modificabile ═════════════════════════════════ */
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function cresci(t){ t.style.height='auto'; t.style.height = t.scrollHeight+'px'; }
+
+function disegnaTabella() {
+  const tb = $('righe');
+  tb.innerHTML = '';
+  pazienti.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    tr.className = (p.incerto.length ? 'warn ' : '') + (p.escluso ? 'esclusa' : '');
+    const seg = c => p.incerto.some(x => x.includes(c)) ? ' segn' : '';
+    tr.innerHTML = `
+      <td class="${seg('orario')}"><input class="cel mono corto" data-k="ora" value="${esc(p.ora)}"></td>
+      <td><input class="cel mono" data-k="accession" value="${esc(p.accession)}"></td>
+      <td class="${seg('nome')}"><textarea class="cel" rows="1" data-k="nomeCompleto">${esc(p.nomeCompleto)}</textarea>
+        <div class="avvisi">${p.incerto.map(a=>`<span>${esc(a)}</span>`).join('')}</div></td>
+      <td class="${seg('nascita')}"><input class="cel mono corto" data-k="nascita" value="${esc(p.nascita)}"></td>
+      <td class="${seg('quesito')}"><textarea class="cel" rows="1" data-k="quesito">${esc(p.quesito)}</textarea></td>
+      <td><div class="esami">${p.esami.length
+            ? p.esami.map(e=>`<div><code>${esc(e.codice)}</code>${esc(e.descrizione)}</div>`).join('')
+            : '<span style="color:var(--warn-t)">nessun esame</span>'}</div></td>
+      <td><button class="togli" title="Escludi dalla lista">✕</button></td>`;
+
+    tr.querySelectorAll('.cel').forEach(c => {
+      if (c.tagName === 'TEXTAREA') { cresci(c); c.addEventListener('input', () => cresci(c)); }
+      c.addEventListener('input', () => {
+        pazienti[i][c.dataset.k] = c.value;
+        if (['nomeCompleto','nascita','ora','quesito'].includes(c.dataset.k)) ricontrolla(i, tr);
+      });
+    });
+    tr.querySelector('.togli').onclick = () => {
+      pazienti[i].escluso = !pazienti[i].escluso;
+      tr.classList.toggle('esclusa', pazienti[i].escluso);
+      aggiornaConteggi();
+    };
+    tb.appendChild(tr);
+  });
+  aggiornaConteggi();
+}
+
+/* le segnalazioni si aggiornano mentre correggi: quando il campo è a posto
+   l'evidenziazione sparisce senza dover ricaricare                        */
+function ricontrolla(i, tr) {
+  const p = pazienti[i];
+  const a = [];
+  if (!p.nomeCompleto.trim())                          a.push('nome');
+  else if (p.nomeCompleto.trim().split(/\s+/).length<2) a.push('nome incompleto');
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(p.nascita.trim())) a.push('data di nascita');
+  if (!/^\d{2}:\d{2}$/.test(p.ora.trim()))             a.push('orario');
+  if (!p.esami.length)                                 a.push('nessun esame');
+  if (!p.quesito.trim())                               a.push('quesito');
+  p.incerto = a;
+  tr.classList.toggle('warn', a.length > 0);
+  const colonna = { 'orario':0, 'nome':2, 'nome incompleto':2, 'data di nascita':3, 'quesito':4 };
+  tr.querySelectorAll('td').forEach(td => td.classList.remove('segn'));
+  const tds = tr.querySelectorAll('td');
+  a.forEach(x => { const k = colonna[x]; if (k !== undefined && tds[k]) tds[k].classList.add('segn'); });
+  tr.querySelector('.avvisi').innerHTML = a.map(x=>`<span>${esc(x)}</span>`).join('');
+  aggiornaConteggi();
+}
+
+function attivi() { return pazienti.filter(p => !p.escluso); }
+
+function aggiornaConteggi() {
+  const a = attivi();
+  const conSeg = a.filter(p => p.incerto.length).length;
+  $('conta').textContent = `${a.length} pazienti · ${a.reduce((s,p)=>s+p.esami.length,0)} esami`;
+  $('chipOk').textContent = `${a.length - conSeg} verificati`;
+  $('chipWarn').style.display = conSeg ? 'inline-block' : 'none';
+  $('chipWarn').textContent = `${conSeg} da controllare`;
+  $('avanti').disabled = a.length === 0;
+}
+
+/* ═══ passo 3 · payload e QR ═════════════════════════════════════════ */
+
+/* Formato compatto: chiavi di una lettera e liste posizionali. Il telefono
+   conosce lo schema, quindi i nomi dei campi non vanno trasmessi.        */
+function payload() {
+  const a = attivi();
+  return {
+    v: 1,
+    d: (a[0] && a[0].data) || '',
+    p: a.map(p => [
+      p.accession, p.nomeCompleto, p.nascita, p.ora, p.quesito,
+      p.esami.map(e => e.descrizione).join(' | '),
+    ]),
+  };
+}
+
+/* deflate del browser, senza librerie esterne */
+async function comprimi(testo) {
+  const dati = new TextEncoder().encode(testo);
+  if (typeof CompressionStream === 'undefined') return { dati, metodo: 'nessuna' };
+  const cs = new CompressionStream('deflate-raw');
+  const w = cs.writable.getWriter(); w.write(dati); w.close();
+  const buf = await new Response(cs.readable).arrayBuffer();
+  return { dati: new Uint8Array(buf), metodo: 'deflate' };
+}
+
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+function base64url(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 3) {
+    const n = (bytes[i] << 16) | ((bytes[i+1] || 0) << 8) | (bytes[i+2] || 0);
+    s += B64[(n>>18)&63] + B64[(n>>12)&63]
+       + (i+1 < bytes.length ? B64[(n>>6)&63] : '')
+       + (i+2 < bytes.length ? B64[n&63] : '');
+  }
+  return s;
+}
+
+/* somma di controllo: un trasferimento parziale o corrotto dev'essere
+   riconosciuto, non accettato in silenzio                              */
+function checksum(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return h.toString(36).toUpperCase().padStart(7, '0').slice(0, 7);
+}
+
+const MAX_FRAME = 1200;          // caratteri per codice, con margine
+let frames = [], iFrame = 0, timer = null;
+
+async function preparaTrasferimento() {
+  clearInterval(timer);
+  const a = attivi();
+  const json = JSON.stringify(payload());
+  const { dati, metodo } = await comprimi(json);
+  const corpo = base64url(dati);
+  const somma = checksum(corpo);
+
+  const n = Math.max(1, Math.ceil(corpo.length / MAX_FRAME));
+  const dim = Math.ceil(corpo.length / n);
+  frames = [];
+  for (let i = 0; i < n; i++)
+    frames.push(`PC1|${somma}|${i+1}/${n}|${corpo.slice(i*dim, (i+1)*dim)}`);
+
+  $('rGiorno').textContent = a[0] && a[0].data ? a[0].data : '—';
+  $('rPaz').textContent    = a.length;
+  $('rEsami').textContent  = a.reduce((s,p)=>s+p.esami.length,0);
+  $('rGrezzi').textContent = (json.length/1024).toFixed(1).replace('.',',') + ' KB';
+  $('rComp').textContent   = (corpo.length/1024).toFixed(1).replace('.',',') + ' KB'
+                           + (metodo==='deflate' ? ` (−${Math.round(100-corpo.length/json.length*100)}%)` : '');
+  $('rFrame').textContent  = n === 1 ? '1 (statico)' : `${n} (a rotazione)`;
+
+  $('qrSotto').innerHTML = n === 1
+    ? `La giornata sta in <b>un solo codice</b>: inquadralo e basta.`
+    : `La lista è divisa in <b>${n} codici</b> che si alternano ogni secondo.
+       Tieni il telefono inquadrato finché non li ha raccolti tutti.`;
+
+  iFrame = 0;
+  mostraFrame();
+  if (n > 1) timer = setInterval(() => { iFrame = (iFrame+1) % frames.length; mostraFrame(); }, 1000);
+}
+
+function mostraFrame() {
+  disegnaQR($('qr'), frames[iFrame]);
+  $('frameN').textContent = frames.length > 1 ? `codice ${iFrame+1} di ${frames.length}` : '';
+}
+
+$('scaricaJson').onclick = () => {
+  const b = new Blob([JSON.stringify(payload(), null, 1)], { type:'application/json' });
+  const u = URL.createObjectURL(b);
+  const a = document.createElement('a');
+  const g = (attivi()[0] || {}).data || 'lista';
+  a.href = u; a.download = `protocol-cards-${g.replace(/\//g,'-')}.json`; a.click();
+  setTimeout(() => URL.revokeObjectURL(u), 1000);
+};
+$('stampa').onclick = () => window.print();
+
+/* ═══ disegno del codice QR ══════════════════════════════════════════ */
+function disegnaQR(canvas, testo) {
+  const q = qrcode(0, 'L');            // correzione bassa: più dati per codice
+  q.addData(testo);
+  q.make();
+  const n = q.getModuleCount();
+  const lato = canvas.width;
+  const scala = Math.floor(lato / (n + 8));   // 4 moduli di margine per lato
+  const dim = scala * (n + 8);
+  const off = Math.floor((lato - dim) / 2);
+  const g = canvas.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, lato, lato);
+  g.fillStyle = '#15233f';
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++)
+      if (q.isDark(r, c))
+        g.fillRect(off + (c+4)*scala, off + (r+4)*scala, scala, scala);
+}
+
+aggiornaConteggi();
+</script>
+</body>
+</html>
