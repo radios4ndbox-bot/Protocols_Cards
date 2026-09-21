@@ -822,16 +822,16 @@ const PROTOCOLS = {
   'cranio-trauma': { l:'TC Cranio – Trauma cranico acuto', idr:0, giKg:0, basale:'req',
     kw:['trauma cranico','trauma','caduta'], ex:['encefalo','cranio'],
     nota:'Protocollo interamente basale: la fase senza mdc è l’esame stesso.',
-    fasi:[{fase:'basale',zone:['ENC'],delay:''}] },
+    fasi:[{fase:'basale',zone:['ENC'],delay:'',fix:1}] },
   'encefalo-stroke': { l:'TC Encefalo + angio-TC – Stroke', idr:1.6, giKg:0.35, basale:'req',
     kw:['stroke','ictus','deficit neurologico','ischemia cerebrale'], ex:['encefalo'],
     nota:'Obbligatoria per escludere l’emorragia prima di qualunque fase contrastografica.',
-    fasi:[{fase:'basale',zone:['ENC'],delay:''},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T'}] },
+    fasi:[{fase:'basale',zone:['ENC'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1}] },
   'fegato-cirr': { l:'Fegato cirrotico – Stadiazione', idr:1.4, giKg:0.63, basale:'req',
     kw:['hcc','epatocarcinoma','cirrosi','epatopatia','sorveglianza'], ex:['addome'],
     nota:'Studio quadrifasico: la basale serve a riconoscere le lesioni spontaneamente iperdense.',
-    fasi:[{fase:'basale',zone:['ADs'],delay:''},{fase:'arteriosa',zone:['ADs'],delay:'B-T'},
-          {fase:'venosa',zone:['ADc'],delay:'75'},{fase:'tardiva',zone:['ADs'],delay:'300'}] },
+    fasi:[{fase:'basale',zone:['ADs'],delay:'',fix:1},{fase:'arteriosa',zone:['ADs'],delay:'B-T',fix:1},
+          {fase:'venosa',zone:['ADc'],delay:'75',fix:1},{fase:'tardiva',zone:['ADs'],delay:'300',fix:1}] },
   'onco-ristad': { l:'Oncologia – Ristadiazione', idr:1.4, giKg:0.55, basale:'skip',
     kw:['restaging','ristadiazione','stadiazione'], ex:[],
     nota:'Nel follow-up oncologico la basale è ridondante se esiste un precedente di confronto.',
@@ -843,20 +843,20 @@ const PROTOCOLS = {
   'vie-biliari': { l:'Vie biliari – Patologia infiammatoria', idr:1.4, giKg:0.60, basale:'req',
     kw:['colecistite','colangite','litiasi biliare'], ex:['addome'],
     nota:'La basale è necessaria per identificare i calcoli calcifici, mascherati dopo mdc.',
-    fasi:[{fase:'basale',zone:['ADs'],delay:''},{fase:'venosa',zone:['ADs'],delay:'70'}] },
+    fasi:[{fase:'basale',zone:['ADs'],delay:'',fix:1},{fase:'venosa',zone:['ADs'],delay:'70',fix:1}] },
   'aorta-endop': { l:'AngioTC Aorta – controllo endoprotesi', idr:1.6, giKg:0.55, basale:'req',
     kw:['endoleak','endoprotesi','evar'], ex:['aorta'],
     nota:'Serve a distinguere le calcificazioni parietali dall’endoleak in fase contrastografica.',
-    fasi:[{fase:'basale',zone:['ADc'],delay:''},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T'},
-          {fase:'tardiva',zone:['ADc'],delay:'300'}] },
+    fasi:[{fase:'basale',zone:['ADc'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1},
+          {fase:'tardiva',zone:['ADc'],delay:'300',fix:1}] },
   'aorta-diss': { l:'TC Aorta – Dissezione', idr:1.8, giKg:0.55, basale:'req',
     kw:['dissezione','sindrome aortica'], ex:['aorta'],
     nota:'La basale individua l’ematoma intramurale, isodenso dopo contrasto.',
-    fasi:[{fase:'basale',zone:['TAc'],delay:''},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T'}] },
+    fasi:[{fase:'basale',zone:['TAc'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1}] },
   'urotc-split': { l:'UROTC Split Bolus', idr:1.2, giKg:0.55, basale:'req',
     kw:['ematuria','colica renale','idronefrosi','urolitiasi','calcolosi'], ex:['uro'],
     nota:'La basale è indispensabile per la ricerca di calcoli, indistinguibili dopo mdc.',
-    fasi:[{fase:'basale',zone:['ADc'],delay:''},{fase:'venosa',zone:['ADc'],delay:'100'}] },
+    fasi:[{fase:'basale',zone:['ADc'],delay:'',fix:1},{fase:'venosa',zone:['ADc'],delay:'100',fix:1}] },
   'addome-acuto': { l:'TC Addome acuto', idr:1.4, giKg:0.60, basale:'opt',
     kw:['appendicite','diverticolite','occlusione','perforazione','addome acuto','peritonite'],
     ex:['addome'],
@@ -865,7 +865,7 @@ const PROTOCOLS = {
   'politrauma': { l:'TC Total body – Politrauma', idr:1.6, giKg:0.60, basale:'opt',
     kw:['politrauma','trauma maggiore','incidente stradale'], ex:['total body'],
     nota:'In urgenza la basale è spesso omessa per ridurre i tempi; resta utile sull’encefalo.',
-    fasi:[{fase:'arteriosa',zone:['TAc'],delay:'B-T'},{fase:'venosa',zone:['ADc'],delay:'70'}] },
+    fasi:[{fase:'arteriosa',zone:['TAc'],delay:'B-T',fix:1},{fase:'venosa',zone:['ADc'],delay:'70',fix:1}] },
   'hrct-nodulo': { l:'HRCT – Nodulo polmonare', idr:0, giKg:0, basale:'req',
     kw:['nodulo','lungrads','interstiziopatia','fibrosi'], ex:['torace'],
     nota:'Protocollo senza mdc: l’acquisizione basale è l’intero esame.',
@@ -883,16 +883,21 @@ const LEXICON = ['embolia','dissezione','aneurisma','endoleak','trauma','stroke'
   'linfoma','ascesso','flogosi','infezione','pancreatite','sanguinamento','politrauma','versamento'];
 
 const ZONES = {
-  basale:   [['ENC','Encefalo'],['Collo','Collo'],['ADs','Addome sup.'],['ADc','Addome compl.'],
+  basale:   [['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
+             ['ADs','Addome sup.'],['ADc','Addome compl.'],
              ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']],
-  arteriosa:[['ADs','Addome sup.'],['ADc','Addome compl.'],['TAs','Torace-addome sup.'],
-             ['TAc','Torace-addome compl.'],['Collo TAs','Collo + tor-add sup.'],
-             ['Collo TAc','Collo + tor-add compl.'],['Angio TC','Angio-TC']],
-  venosa:   [['ADs','Addome sup.'],['ADc','Addome compl.'],['TAs','Torace-addome sup.'],
-             ['TAc','Torace-addome compl.'],['Collo TAs','Collo + tor-add sup.'],
-             ['Collo TAc','Collo + tor-add compl.']],
-  tardiva:  [['ADs','Addome sup.'],['ADc','Addome compl.'],['TAs','Torace-addome sup.'],
-             ['TAc','Torace-addome compl.'],['ENC','Encefalo']],
+  arteriosa:[['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
+             ['ADs','Addome sup.'],['ADc','Addome compl.'],
+             ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
+             ['Collo TAs','Collo + tor-add sup.'],['Collo TAc','Collo + tor-add compl.'],
+             ['Angio TC','Angio-TC']],
+  venosa:   [['Collo','Collo'],['TO','Torace'],
+             ['ADs','Addome sup.'],['ADc','Addome compl.'],
+             ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
+             ['Collo TAs','Collo + tor-add sup.'],['Collo TAc','Collo + tor-add compl.']],
+  tardiva:  [['ENC','Encefalo'],['TO','Torace'],
+             ['ADs','Addome sup.'],['ADc','Addome compl.'],
+             ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']],
 };
 const PH = {
   basale:   { l:'Basale',      c:'#6d7f9f', mdc:false, delay:null },
@@ -941,6 +946,40 @@ function matchProtocol(esame, quesito){
     if(s > bs){ bs = s; best = k; }
   }
   return bs > 0 ? best : null;
+}
+
+/* ═══ REGIONE ANATOMICA DALL'ESAME ═══════════════════════
+   Deduce la zona da protocollare dalla dicitura dell'esame richiesto:
+   «TC TORACE» → Torace, «TC ADDOME SUPERIORE» → Addome sup., e cosi' via.
+   Le regole sono ordinate dalla piu' specifica alla piu' generica e il
+   primo riscontro vince: stesso esame, stessa zona, sempre.           */
+function regionOf(esame){
+  const t = normText(esame);
+  if(/total body|whole body/.test(t))              return 'TAc';
+  if(/aorta/.test(t))                              return /toracic|ascendente|arco/.test(t) ? 'TAc' : 'ADc';
+  if(/\buro\b|urotc|uro tc|renal|vescic/.test(t))  return 'ADc';
+  if(/encefal|cranio|cerebral|capo/.test(t))       return 'ENC';
+  if(/\bcollo\b|cervical|tiroide|laring|faring|parotid/.test(t)) return 'Collo';
+  const tor = /torac/.test(t), add = /addom/.test(t), sup = /superior|\bsup\b/.test(t);
+  if(tor && add)                                   return sup ? 'TAs' : 'TAc';
+  if(tor)                                          return 'TO';
+  if(add)                                          return sup ? 'ADs' : 'ADc';
+  return null;
+}
+const ZONE_L = { ENC:'Encefalo', Collo:'Collo', TO:'Torace', ADs:'Addome sup.',
+                 ADc:'Addome compl.', TAs:'Torace-addome sup.', TAc:'Torace-addome compl.' };
+
+/* Applica la regione dell'esame alle fasi del protocollo. Le fasi marcate
+   `fix` conservano la propria zona: e' intrinseca al protocollo (l'angio-TC,
+   l'alternanza addome sup./compl. dello studio epatico, la copertura
+   urografica) e non dipende da come e' scritta la richiesta.           */
+function fitZones(fasi, esame){
+  const r = regionOf(esame);
+  return fasi.map(f => {
+    const { fix, ...pulita } = f;
+    if(fix || !r || !ZONES[f.fase].some(([c]) => c === r)) return pulita;
+    return { ...pulita, zone:[r] };
+  });
 }
 
 /* ═══ FIRMA DETERMINISTICA ═══════════════════════════════ */
@@ -1443,19 +1482,26 @@ function syncMode(){
 $('segS').onclick = () => { mode='sugg'; syncMode(); renderOpts(); };
 $('segM').onclick = () => { mode='man';  syncMode(); };
 $('applyBtn').onclick = () => {
-  let src;
+  let src, appreso = false;
   if(mode==='sugg'){
     const list=options(); if(!list.length) return;
     src = list[selOpt] || list[0];
+    appreso = src.k === 'learn';
   } else {
     const k=$('ddProto').value;
     if(!k){ cur.fasi=[]; renderRows(); syncHint(); toast('Fasi azzerate'); return; }
     const pr=PROTOCOLS[k]; src={fasi:pr.fasi,idr:pr.idr,giKg:pr.giKg}; cur.proto=k;
   }
-  cur.fasi = JSON.parse(JSON.stringify(src.fasi));
+  /* un protocollo appreso porta gia' le zone scelte per questa firma:
+     rimapparle vanificherebbe la scelta dell'operatore.                */
+  const fasi = JSON.parse(JSON.stringify(src.fasi));
+  cur.fasi = appreso ? fasi : fitZones(fasi, cur.esame);
   cur.idr = src.idr; cur.giKg = src.giKg;
   $('pGiKg').value=cur.giKg; $('pIdr').value=cur.idr;
-  renderRows(); syncHint(); toast('Protocollo applicato');
+  renderRows(); syncHint();
+
+  const r = appreso ? null : regionOf(cur.esame);
+  toast(r ? `Protocollo applicato · ${ZONE_L[r]}` : 'Protocollo applicato');
 };
 
 function renderRows(){
@@ -1561,11 +1607,15 @@ function syncHint(){
   $('hintA').onclick = () => { cur.fasi=cur.fasi.filter(f=>f.fase!=='basale');
     renderRows(); syncHint(); toast('Fase basale rimossa'); };
 }
+/* zona della basale aggiunta dal suggerimento: prima la regione dell'esame,
+   poi quelle gia' scelte nelle altre fasi.                             */
 function defaultZones(){
-  const a=cur.fasi.filter(f=>f.fase!=='basale');
-  if(a.length) return [...new Set(a.flatMap(f=>f.zone))]
-    .filter(z => ZONES.basale.some(([c])=>c===z));
-  return ['TAc'];
+  const r = regionOf(cur.esame);
+  if(r && ZONES.basale.some(([c]) => c === r)) return [r];
+  const a = cur.fasi.filter(f => f.fase !== 'basale');
+  const z = [...new Set(a.flatMap(f => f.zone))]
+    .filter(x => ZONES.basale.some(([c]) => c === x));
+  return z.length ? z : ['TAc'];
 }
 function autoGrow(ta){ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; }
 function countNotes(){ const n=$('notes').value.length;
