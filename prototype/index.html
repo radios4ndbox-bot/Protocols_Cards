@@ -391,8 +391,18 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 @keyframes pop{from{opacity:0;transform:translateY(-6px) scale(.97)}}
 .row-n{font-size:12px;font-weight:750;min-width:62px;color:var(--ph)}
 .row-z{display:flex;gap:4px;flex-wrap:wrap;flex:1}
-.row-z span{font-size:9.5px;font-weight:650;padding:2.5px 6px;border-radius:5px;
-  background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
+/* sigla zona: al tocco si espande mostrando il nome per esteso */
+.row-z .zc{display:inline-flex;align-items:center;font-size:9.5px;font-weight:650;
+  padding:2.5px 6px;border-radius:5px;background:var(--surface2);
+  border:1px solid var(--border);color:var(--text2);cursor:pointer;
+  transition:background .2s,border-color .2s,color .2s,transform .12s}
+.row-z .zc.plain{cursor:default}
+.row-z .zc b{font-weight:750}
+.row-z .zc i{max-width:0;opacity:0;font-style:normal;white-space:nowrap;overflow:hidden;
+  transition:max-width .3s cubic-bezier(.32,.72,0,1),opacity .18s,margin-left .3s}
+.row-z .zc.on{background:var(--accent-s);border-color:var(--accent);color:var(--accent-d)}
+.row-z .zc.on i{max-width:150px;opacity:1;margin-left:5px}
+.row-z .zc:not(.plain):active{transform:scale(.94)}
 .row-d{width:54px;height:28px;flex-shrink:0;border-radius:7px;border:1px solid var(--border);
   background:var(--surface2);color:var(--text);font-size:11px;text-align:center;outline:none;padding:0}
 .row-x{flex-shrink:0;width:26px;height:26px;border-radius:7px;border:none;background:transparent;
@@ -966,8 +976,18 @@ function regionOf(esame){
   if(add)                                          return sup ? 'ADs' : 'ADc';
   return null;
 }
-const ZONE_L = { ENC:'Encefalo', Collo:'Collo', TO:'Torace', ADs:'Addome sup.',
-                 ADc:'Addome compl.', TAs:'Torace-addome sup.', TAc:'Torace-addome compl.' };
+const ZONE_L = {};
+Object.values(ZONES).forEach(l => l.forEach(([c,lab]) => ZONE_L[c] = lab));
+
+/* sigla espandibile solo dove il nome esteso aggiunge informazione:
+   «Angio TC» e «Angio-TC» sono la stessa parola, non vale aprirla.    */
+function zChip(z){
+  const l = ZONE_L[z];
+  const nudo = x => x.toLowerCase().replace(/[^a-z0-9]/g,'');
+  return (l && nudo(l) !== nudo(z))
+    ? `<span class="zc" data-z="${z}"><b>${z}</b><i>${l}</i></span>`
+    : `<span class="zc plain">${z}</span>`;
+}
 
 /* Applica la regione dell'esame alle fasi del protocollo. Le fasi marcate
    `fix` conservano la propria zona: e' intrinseca al protocollo (l'angio-TC,
@@ -1512,7 +1532,7 @@ function renderRows(){
     const row=document.createElement('div');
     row.className='row'; row.style.setProperty('--ph',m.c);
     row.innerHTML = `<span class="row-n">${m.l}</span>
-      <div class="row-z">${f.zone.map(z=>`<span>${z}</span>`).join('')}</div>
+      <div class="row-z">${f.zone.map(zChip).join('')}</div>
       ${m.delay!==null?`<input class="row-d" value="${f.delay}" aria-label="ritardo">`:''}
       <button class="row-x" aria-label="Rimuovi">×</button>`;
     row.querySelector('.row-x').onclick = () => { cur.fasi.splice(i,1); renderRows(); syncHint(); };
@@ -1655,7 +1675,19 @@ function addPhase(fase,zone){
 }
 $('ddPhase').onchange = () => { pick=[]; syncZone(); };
 $('ddZone').onclick = e => { e.stopPropagation(); $('pop').classList.toggle('open'); };
-document.addEventListener('click', () => $('pop').classList.remove('open'));
+const chiudiSigle = () => document.querySelectorAll('.zc.on')
+  .forEach(x => x.classList.remove('on'));
+document.addEventListener('click', () => { $('pop').classList.remove('open'); chiudiSigle(); });
+
+/* una sigla per volta: toccarne un'altra chiude la precedente */
+$('rows').addEventListener('click', e => {
+  const c = e.target.closest('.zc:not(.plain)');
+  if(!c) return;
+  e.stopPropagation();
+  const aperta = c.classList.contains('on');
+  chiudiSigle();
+  if(!aperta) c.classList.add('on');
+});
 $('pop').onclick = e => e.stopPropagation();
 $('addBtn').onclick = () => {
   const ph=$('ddPhase').value; if(!ph||!pick.length) return;
