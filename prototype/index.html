@@ -15,7 +15,7 @@
 
 :root{
   --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a; --border:#2e3350;
-  --text:#e8ecf4; --muted:#7a82a0; --accent:#4f8ef7;
+  --text:#e8ecf4; --muted:#7a82a0; --accent:#4f8ef7; --warn:#e8b339;
 
   /* stati — il --color1 della card originale diventa canale di stato */
   --st-todo:#ed782a;   /* da protocollare : arancio (colore originale) */
@@ -23,6 +23,7 @@
   --st-done:#6d7488;   /* completata      : grigio                     */
 
   --r:14px;
+  --ab:70px;                              /* altezza app bar */
   --safe-b:env(safe-area-inset-bottom,0px);
 }
 
@@ -36,46 +37,62 @@ body{
 
 /* ─── APP BAR ─────────────────────────────────────────── */
 .appbar{
-  position:fixed;top:0;left:0;right:0;z-index:40;
-  padding:14px 16px 12px;background:rgba(15,17,23,.92);
+  position:fixed;top:0;left:0;right:0;z-index:40;height:var(--ab);
+  padding:13px 16px;background:rgba(15,17,23,.93);
   backdrop-filter:blur(12px);border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:12px;
 }
 .appbar h1{font-size:16px;font-weight:650;letter-spacing:-.2px}
-.appbar .date{font-size:11px;color:var(--muted);margin-top:1px;
-  font-variant-numeric:tabular-nums}
+.appbar .date{font-size:11px;color:var(--muted);margin-top:1px}
 .appbar .proto{
   margin-left:auto;font-size:9px;letter-spacing:.8px;text-transform:uppercase;
   color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:3px 9px;
 }
 
-/* ─── BOARD ───────────────────────────────────────────── */
+/* ─── BOARD : lista verticale ─────────────────────────── */
 .board{
   position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
-  padding:74px 14px calc(28px + var(--safe-b));
+  padding:calc(var(--ab) + 10px) 14px calc(30px + var(--safe-b));
   -webkit-overflow-scrolling:touch;
 }
 .board.hidden{display:none}
 
 .legend{
-  display:flex;gap:14px;flex-wrap:wrap;
-  padding:2px 2px 14px;font-size:10.5px;color:var(--muted);
+  display:flex;gap:13px;flex-wrap:wrap;
+  padding:2px 2px 12px;font-size:10.5px;color:var(--muted);
 }
 .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;
   margin-right:5px;vertical-align:1px}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+/* checkpoint mattina / pomeriggio */
+.cp{
+  position:sticky;top:0;z-index:6;
+  display:flex;align-items:center;gap:10px;
+  margin:18px -14px 11px;padding:9px 14px;
+  background:rgba(15,17,23,.94);backdrop-filter:blur(10px);
+}
+.cp:first-of-type{margin-top:2px}
+.cp-t{
+  font-size:10.5px;font-weight:750;letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--text);
+}
+.cp-ico{font-size:13px;line-height:1}
+.cp-n{
+  font-size:10px;font-weight:650;color:var(--muted);
+  border:1px solid var(--border);border-radius:99px;padding:2px 8px;
+}
+.cp-line{flex:1;height:1px;background:var(--border)}
 
-/* ─── MINIATURA ───────────────────────────────────────── */
+.list{display:flex;flex-direction:column;gap:10px}
+
+/* ─── MINIATURA (riga a tutta larghezza) ──────────────── */
 .slot{position:relative;border-radius:var(--r)}
-
-/* strato rivelato dallo swipe */
 .slot::after{
   content:'✓  completato';position:absolute;inset:0;
   display:flex;align-items:center;justify-content:flex-end;
-  padding-right:16px;border-radius:var(--r);
+  padding-right:18px;border-radius:var(--r);
   background:linear-gradient(90deg,transparent,rgba(109,116,136,.22));
-  font-size:11px;font-weight:600;color:var(--st-done);
+  font-size:11.5px;font-weight:650;color:var(--st-done);
   opacity:0;transition:opacity .2s;pointer-events:none;
 }
 .slot.swiping::after{opacity:1}
@@ -84,83 +101,78 @@ body{
 
 .card-mini{
   --color1:var(--st-todo);
-  position:relative;height:104px;border-radius:var(--r);
+  position:relative;height:82px;border-radius:var(--r);
   border:1.5px solid var(--color1);
   background:var(--surface);overflow:hidden;cursor:pointer;
   transition:transform .28s cubic-bezier(.32,.72,0,1),
-             border-color .4s ease, box-shadow .3s ease, opacity .3s ease;
+             border-color .4s ease, opacity .3s ease;
   box-shadow:0 1px 0 rgba(0,0,0,.3);
-  touch-action:pan-y;
-  will-change:transform;
+  touch-action:pan-y;will-change:transform;
 }
-.card-mini:active{transform:scale(.955)}
+.card-mini:active{transform:scale(.975)}
 
-/* strato "cielo" — il back della card originale */
 .mini-back{
   position:absolute;inset:0;border-radius:var(--r);overflow:hidden;
-  background:radial-gradient(120% 90% at 50% 118%,
-    color-mix(in srgb,var(--color1) 42%,transparent) 0%,transparent 62%);
+  background:radial-gradient(85% 150% at 88% 130%,
+    color-mix(in srgb,var(--color1) 40%,transparent) 0%,transparent 60%);
 }
 .mini-back::before{
-  content:'';position:absolute;width:190%;aspect-ratio:1;left:-45%;top:14%;
+  content:'';position:absolute;width:150%;aspect-ratio:1;right:-40%;top:-25%;
   background:radial-gradient(closest-side,
-    color-mix(in srgb,var(--color1) 20%,transparent),transparent 72%);
+    color-mix(in srgb,var(--color1) 17%,transparent),transparent 70%);
   animation:rotate-cloud 18s linear infinite;
 }
 @keyframes rotate-cloud{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.mini-back::before{animation:none}}
 
-/* strato "front" — scivola via in apertura */
 .mini-front{
   position:absolute;inset:0;border-radius:var(--r);
-  background:linear-gradient(180deg,var(--surface) 58%,var(--surface2));
-  transition:transform .42s cubic-bezier(.32,.72,0,1);
-  will-change:transform;
+  background:linear-gradient(105deg,var(--surface) 55%,var(--surface2));
+  transition:transform .42s cubic-bezier(.32,.72,0,1);will-change:transform;
 }
 .card-mini.opening .mini-front{transform:translateY(102%)}
 
-.mini-body{position:absolute;inset:0;padding:11px 12px;display:flex;flex-direction:column}
+.mini-body{
+  position:absolute;inset:0;padding:12px 15px;
+  display:flex;align-items:center;gap:12px;
+}
+.mini-l{flex:1;min-width:0}
 .mini-name{
-  font-size:13px;font-weight:650;line-height:1.24;letter-spacing:-.2px;
+  font-size:14px;font-weight:650;line-height:1.22;letter-spacing:-.2px;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
 }
-.mini-time{
-  margin-top:auto;font-size:19px;font-weight:700;color:var(--color1);
-  font-variant-numeric:tabular-nums;letter-spacing:-.5px;
-  transition:color .4s ease;
-}
-.mini-sum{
-  display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;min-height:15px;
-}
+.mini-sub{font-size:10.5px;color:var(--muted);margin-top:3px}
+.mini-sum{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
 .mini-sum span{
   font-size:8.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
   padding:2px 5px;border-radius:4px;
   background:color-mix(in srgb,var(--color1) 15%,transparent);
   color:var(--color1);border:.5px solid color-mix(in srgb,var(--color1) 32%,transparent);
 }
+.mini-r{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.mini-time{
+  font-size:22px;font-weight:700;color:var(--color1);
+  font-variant-numeric:tabular-nums;letter-spacing:-.6px;line-height:1;
+  transition:color .4s ease;
+}
 .mini-dot{
-  position:absolute;top:11px;right:11px;width:7px;height:7px;border-radius:50%;
-  background:var(--color1);box-shadow:0 0 0 3px color-mix(in srgb,var(--color1) 16%,transparent);
-  transition:background .4s ease;
+  width:7px;height:7px;border-radius:50%;background:var(--color1);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--color1) 16%,transparent);
 }
 
-/* stati */
 .slot[data-state="set"]  .card-mini{--color1:var(--st-set)}
 .slot[data-state="done"] .card-mini{--color1:var(--st-done);opacity:.55}
 .slot[data-state="done"] .mini-name{color:var(--muted)}
 .slot[data-state="done"] .mini-back::before{animation:none}
 
-/* ─── DETTAGLIO A SCHERMO PIENO ───────────────────────── */
-.detail{
-  position:fixed;inset:0;z-index:50;background:var(--bg);
-  display:none;flex-direction:column;
-}
+/* ─── DETTAGLIO ───────────────────────────────────────── */
+.detail{position:fixed;inset:0;z-index:50;background:var(--bg);
+  display:none;flex-direction:column}
 .detail.open{display:flex}
 
 .d-head{
-  --color1:var(--st-todo);
-  position:relative;flex-shrink:0;overflow:hidden;
-  padding:calc(14px + env(safe-area-inset-top,0px)) 16px 16px;
+  --color1:var(--st-todo);flex-shrink:0;
+  padding:calc(13px + env(safe-area-inset-top,0px)) 16px 15px;
   border-bottom:1px solid var(--border);
   background:linear-gradient(180deg,
     color-mix(in srgb,var(--color1) 15%,var(--surface)),var(--surface));
@@ -176,7 +188,11 @@ body{
 }
 .d-back:active{transform:scale(.92)}
 .d-name{font-size:17px;font-weight:700;line-height:1.2;letter-spacing:-.3px}
-.d-age{font-size:12px;color:var(--muted);font-weight:500;margin-top:3px}
+.d-meta{
+  display:flex;flex-wrap:wrap;gap:4px 9px;margin-top:5px;
+  font-size:11.5px;color:var(--muted);
+}
+.d-meta b{color:var(--text);font-weight:600}
 /* l'orario cresce come 'hour' nella card originale (1.5em → 3em) */
 .d-time{
   margin-left:auto;font-size:30px;font-weight:700;color:var(--color1);
@@ -200,7 +216,6 @@ body{
   text-transform:uppercase;color:var(--muted);padding-top:3px;
 }
 
-/* suggerimento protocollo */
 .sugg{
   display:flex;align-items:flex-start;gap:11px;padding:12px;
   border:1px solid color-mix(in srgb,var(--accent) 38%,transparent);
@@ -220,7 +235,66 @@ body{
   border-radius:4px;padding:2px 5px;
 }
 
-/* ─── FASI : i due dropdown in combo ──────────────────── */
+/* ─── INFO CLINICHE ───────────────────────────────────── */
+.chk{
+  display:flex;align-items:center;gap:11px;padding:12px 13px;
+  background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  cursor:pointer;
+}
+.chk.on{border-color:color-mix(in srgb,var(--accent) 45%,transparent);
+  background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.chk-b{
+  width:21px;height:21px;border-radius:6px;border:1.5px solid var(--muted);
+  flex-shrink:0;position:relative;transition:.15s;
+}
+.chk.on .chk-b{background:var(--accent);border-color:var(--accent)}
+.chk.on .chk-b::after{
+  content:'';position:absolute;left:6.5px;top:2.5px;width:5px;height:11px;
+  border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(42deg);
+}
+.chk-l{font-size:13.5px;font-weight:600}
+
+.prev-d{display:none;margin-top:9px;gap:8px;align-items:center}
+.prev-d.show{display:flex}
+.prev-d label{font-size:11px;color:var(--muted);flex-shrink:0}
+input[type=date]{
+  flex:1;height:42px;padding:0 12px;border:1px solid var(--border);border-radius:10px;
+  background:var(--surface2);color:var(--text);font-size:13.5px;font-family:inherit;
+  outline:none;
+}
+input[type=date]:focus{border-color:var(--accent)}
+
+/* banner regola fase basale */
+.hint{
+  display:none;margin-top:10px;padding:12px 13px;border-radius:11px;
+  border:1px solid var(--c,var(--accent));
+  background:color-mix(in srgb,var(--c,var(--accent)) 10%,transparent);
+}
+.hint.show{display:block;animation:pop .28s cubic-bezier(.32,.72,0,1)}
+.hint-h{font-size:12.5px;font-weight:700;color:var(--c);display:flex;gap:7px;align-items:center}
+.hint-b{font-size:11.5px;color:var(--text);opacity:.86;margin-top:5px;line-height:1.48}
+.hint-a{
+  margin-top:10px;height:36px;padding:0 15px;border-radius:9px;border:none;
+  background:var(--c);color:#0f1117;font-size:12.5px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+.hint-a:active{transform:scale(.97)}
+.hint.req{--c:var(--warn)}
+.hint.skip{--c:var(--st-set)}
+
+/* paragrafo clinico editabile */
+textarea.notes{
+  width:100%;min-height:92px;padding:12px 13px;
+  border:1px solid var(--border);border-radius:11px;
+  background:var(--surface2);color:var(--text);
+  font-size:14px;font-family:inherit;line-height:1.52;
+  outline:none;resize:none;overflow:hidden;
+}
+textarea.notes:focus{border-color:var(--accent);background:var(--surface)}
+textarea.notes::placeholder{color:var(--muted)}
+.notes-c{font-size:10px;color:var(--muted);text-align:right;margin-top:5px}
+
+/* ─── FASI : dropdown in combo ────────────────────────── */
 .combo{display:flex;gap:8px;align-items:stretch}
 .fld{flex:1;min-width:0;position:relative}
 .fld-l{font-size:9px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
@@ -231,6 +305,7 @@ select.dd,button.dd{
   border:1px solid var(--border);border-radius:10px;background:var(--surface2);
   color:var(--text);font-size:13.5px;font-family:inherit;text-align:left;
   cursor:pointer;appearance:none;outline:none;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 select.dd:focus,button.dd:focus{border-color:var(--accent)}
 .fld::after{
@@ -238,10 +313,10 @@ select.dd:focus,button.dd:focus{border-color:var(--accent)}
   border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);
   transform:rotate(45deg);pointer-events:none;
 }
+.fld.nolabel::after{bottom:18px}
 button.dd.ph{color:var(--muted)}
 button.dd:disabled{opacity:.4;cursor:not-allowed}
 
-/* popover zone (multi-selezione) */
 .pop{
   position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:20;
   background:var(--surface2);border:1px solid var(--border);border-radius:12px;
@@ -249,15 +324,11 @@ button.dd:disabled{opacity:.4;cursor:not-allowed}
   display:none;max-height:262px;overflow-y:auto;
 }
 .pop.open{display:block}
-.pop-i{
-  display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;
-  font-size:13.5px;cursor:pointer;
-}
+.pop-i{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;
+  font-size:13.5px;cursor:pointer}
 .pop-i:active{background:var(--border)}
-.pop-c{
-  width:19px;height:19px;border-radius:5px;border:1.5px solid var(--muted);
-  flex-shrink:0;position:relative;transition:.15s;
-}
+.pop-c{width:19px;height:19px;border-radius:5px;border:1.5px solid var(--muted);
+  flex-shrink:0;position:relative;transition:.15s}
 .pop-i.on .pop-c{background:var(--accent);border-color:var(--accent)}
 .pop-i.on .pop-c::after{
   content:'';position:absolute;left:5.5px;top:2px;width:5px;height:10px;
@@ -273,7 +344,6 @@ button.dd:disabled{opacity:.4;cursor:not-allowed}
 .add:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed}
 .add:not(:disabled):active{transform:scale(.985)}
 
-/* righe fase aggiunte */
 .rows{display:flex;flex-direction:column;gap:7px;margin-top:12px}
 .row{
   display:flex;align-items:center;gap:9px;padding:10px 11px;
@@ -284,35 +354,31 @@ button.dd:disabled{opacity:.4;cursor:not-allowed}
 @keyframes pop{from{opacity:0;transform:translateY(-6px) scale(.97)}}
 .row-n{font-size:12px;font-weight:700;min-width:62px;color:var(--ph)}
 .row-z{display:flex;gap:4px;flex-wrap:wrap;flex:1}
-.row-z span{
-  font-size:9.5px;font-weight:600;padding:2.5px 6px;border-radius:5px;
-  background:var(--surface2);border:1px solid var(--border);color:var(--text);
-}
+.row-z span{font-size:9.5px;font-weight:600;padding:2.5px 6px;border-radius:5px;
+  background:var(--surface2);border:1px solid var(--border);color:var(--text)}
 .row-d{
   width:54px;height:28px;flex-shrink:0;border-radius:7px;border:1px solid var(--border);
   background:var(--surface2);color:var(--text);font-size:11px;text-align:center;
   font-family:inherit;outline:none;
 }
 .row-d:focus{border-color:var(--accent)}
-.row-x{
-  flex-shrink:0;width:26px;height:26px;border-radius:7px;border:none;
-  background:transparent;color:var(--muted);font-size:17px;cursor:pointer;line-height:1;
-}
+.row-x{flex-shrink:0;width:26px;height:26px;border-radius:7px;border:none;
+  background:transparent;color:var(--muted);font-size:17px;cursor:pointer;line-height:1}
 .row-x:active{background:var(--border)}
-.empty{
-  padding:20px;text-align:center;font-size:12px;color:var(--muted);
-  border:1px dashed var(--border);border-radius:10px;margin-top:12px;
-}
+.empty{padding:20px;text-align:center;font-size:12px;color:var(--muted);
+  border:1px dashed var(--border);border-radius:10px;margin-top:12px}
 
-/* mdc */
-.mdc{display:flex;align-items:center;gap:13px;padding:13px;
+/* ─── MDC ─────────────────────────────────────────────── */
+.mdc{margin-top:10px;padding:13px;
   background:var(--surface);border:1px solid var(--border);border-radius:11px}
-.mdc-v{font-size:19px;font-weight:700;letter-spacing:-.4px;color:var(--st-set);
+.mdc-top{display:flex;align-items:flex-start;gap:12px}
+.mdc-v{font-size:21px;font-weight:700;letter-spacing:-.5px;color:var(--st-set);
+  font-variant-numeric:tabular-nums;line-height:1.1}
+.mdc-s{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.45}
+.mdc-c{margin-left:auto;flex-shrink:0;text-align:right;font-size:10.5px;color:var(--muted);
   font-variant-numeric:tabular-nums}
-.mdc-s{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4}
-.mdc-a{margin-left:auto;text-align:right;font-size:10.5px;color:var(--muted)}
 
-/* barra azione */
+/* ─── BARRA AZIONE ────────────────────────────────────── */
 .d-act{
   position:absolute;left:0;right:0;bottom:0;z-index:10;
   padding:12px 16px calc(12px + var(--safe-b));
@@ -326,12 +392,11 @@ button.dd:disabled{opacity:.4;cursor:not-allowed}
 }
 .set-btn:active{transform:scale(.978)}
 .set-btn:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed}
-.set-btn.re{background:var(--surface2);color:var(--text);
-  border:1px solid var(--border)}
+.set-btn.re{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
 
-/* toast */
 .toast{
-  position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%) translateY(14px);
+  position:fixed;left:50%;bottom:calc(84px + var(--safe-b));
+  transform:translateX(-50%) translateY(14px);
   z-index:60;background:var(--surface2);border:1px solid var(--border);
   border-radius:99px;padding:9px 17px;font-size:12.5px;font-weight:600;
   opacity:0;pointer-events:none;transition:.26s cubic-bezier(.32,.72,0,1);
@@ -339,15 +404,12 @@ button.dd:disabled{opacity:.4;cursor:not-allowed}
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ─── VIEW TRANSITION ─────────────────────────────────── */
 @media (prefers-reduced-motion:no-preference){
   ::view-transition-old(card-morph),
   ::view-transition-new(card-morph){
-    animation-duration:.42s;
-    animation-timing-function:cubic-bezier(.32,.72,0,1);
+    animation-duration:.42s;animation-timing-function:cubic-bezier(.32,.72,0,1);
   }
 }
-/* fallback quando la View Transitions API non c'è */
 .detail.fb{animation:fb .34s cubic-bezier(.32,.72,0,1)}
 @keyframes fb{from{opacity:0;transform:scale(.94) translateY(16px)}}
 </style>
@@ -368,7 +430,7 @@ button.dd:disabled{opacity:.4;cursor:not-allowed}
     <span><i style="background:var(--st-set)"></i>impostata</span>
     <span><i style="background:var(--st-done)"></i>completata · swipe ←</span>
   </div>
-  <div class="grid" id="grid"></div>
+  <div id="sessions"></div>
 </main>
 
 <section class="detail" id="detail" aria-hidden="true">
@@ -377,7 +439,7 @@ button.dd:disabled{opacity:.4;cursor:not-allowed}
       <button class="d-back" id="back" aria-label="Indietro">←</button>
       <div style="min-width:0">
         <div class="d-name" id="dName"></div>
-        <div class="d-age" id="dAge"></div>
+        <div class="d-meta" id="dMeta"></div>
       </div>
       <div class="d-time" id="dTime"></div>
     </div>
@@ -401,6 +463,31 @@ button.dd:disabled{opacity:.4;cursor:not-allowed}
           <div class="sugg-w" id="sWhy"></div>
         </div>
         <span class="sugg-src">SIRM</span>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t">Informazioni cliniche</div>
+
+      <div class="chk" id="prevChk">
+        <div class="chk-b"></div>
+        <span class="chk-l">Esame precedente disponibile</span>
+      </div>
+      <div class="prev-d" id="prevWrap">
+        <label for="prevDate">Data</label>
+        <input type="date" id="prevDate">
+      </div>
+      <div class="hint" id="hint">
+        <div class="hint-h"><span id="hintI">●</span><span id="hintT"></span></div>
+        <div class="hint-b" id="hintB"></div>
+        <button class="hint-a" id="hintA"></button>
+      </div>
+
+      <div style="margin-top:14px">
+        <label class="fld-l" for="notes">Note cliniche</label>
+        <textarea class="notes" id="notes"
+          placeholder="GFR, creatinina, allergie note, terapia in corso, accesso venoso, collaborazione del paziente…"></textarea>
+        <div class="notes-c" id="notesC">0 caratteri</div>
       </div>
     </div>
 
@@ -431,12 +518,17 @@ button.dd:disabled{opacity:.4;cursor:not-allowed}
 
     <div class="sec">
       <div class="sec-t">Mezzo di contrasto</div>
+      <div class="fld nolabel">
+        <select class="dd" id="ddAgent"></select>
+      </div>
       <div class="mdc">
-        <div>
-          <div class="mdc-v" id="mdcV">—</div>
-          <div class="mdc-s" id="mdcS">aggiungi una fase con contrasto</div>
+        <div class="mdc-top">
+          <div style="min-width:0">
+            <div class="mdc-v" id="mdcV">—</div>
+            <div class="mdc-s" id="mdcS">aggiungi una fase con contrasto</div>
+          </div>
+          <div class="mdc-c" id="mdcC"></div>
         </div>
-        <div class="mdc-a">Iomeron 400<br>0,40 gI/ml</div>
       </div>
     </div>
   </div>
@@ -451,32 +543,62 @@ button.dd:disabled{opacity:.4;cursor:not-allowed}
 <script>
 'use strict';
 
-/* ═══ DATI FITTIZI ═══════════════════════════════════════ */
+/* ═══ MEZZI DI CONTRASTO (concentrazione in gI/ml) ═══════ */
+const AGENTS = [
+  { id:'iomeron400',   l:'Iomeron 400',   c:0.40 },
+  { id:'iomeron350',   l:'Iomeron 350',   c:0.35 },
+  { id:'omnipaque350', l:'Omnipaque 350', c:0.35 },
+  { id:'xenetix350',   l:'Xenetix 350',   c:0.35 },
+  { id:'ultravist370', l:'Ultravist 370', c:0.37 },
+  { id:'visipaque320', l:'Visipaque 320', c:0.32 },
+];
+let lastAgent = 'iomeron400';        // la boccetta in sala resta la stessa tutto il giorno
+
+/* ═══ DATI FITTIZI ═══════════════════════════════════════
+   basale: 'req'  = il protocollo la richiede comunque
+           'opt'  = opzionale secondo SIRM
+           'skip' = omettibile se esiste un precedente             */
 const PATIENTS = [
-  { id:'0D24001', nome:'ROSSI MARIO', eta:71, ora:'08:30', peso:78,
+  { id:'0D24001', nome:'ROSSI MARIO', nascita:'1954-03-12', ora:'08:30', peso:78,
     esame:'TC TORACE CON E SENZA MDC', quesito:'Sospetta embolia polmonare',
-    sugg:'AngioTC Polmonare', why:'quesito «embolia polmonare» · esame TC torace c.m.' },
-  { id:'0D24002', nome:'BIANCHI GIUSEPPINA', eta:84, ora:'08:50', peso:62,
+    sugg:'AngioTC Polmonare', why:'quesito «embolia polmonare» · esame TC torace c.m.',
+    basale:'opt', basaleNota:'SIRM indica l’acquisizione senza mdc come opzionale in questo protocollo.' },
+  { id:'0D24002', nome:'BIANCHI GIUSEPPINA', nascita:'1941-11-02', ora:'08:50', peso:62,
     esame:'TC ENCEFALO SENZA MDC', quesito:'Trauma cranico, caduta accidentale',
-    sugg:'TC Cranio – Trauma cranico acuto', why:'quesito «trauma cranico» · esame TC encefalo' },
-  { id:'0D24003', nome:'GALIMBERTI NATALE', eta:66, ora:'09:15', peso:91,
+    sugg:'TC Cranio – Trauma cranico acuto', why:'quesito «trauma cranico» · esame TC encefalo',
+    basale:'req', basaleNota:'Protocollo interamente basale: la fase senza mdc è l’esame stesso.' },
+  { id:'0D24003', nome:'GALIMBERTI NATALE', nascita:'1959-06-25', ora:'09:15', peso:91,
     esame:'TC ADDOME COMPLETO CON E SENZA MDC', quesito:'Epatopatia cronica, sorveglianza HCC',
-    sugg:'Fegato cirrotico – Stadiazione', why:'quesito «sorveglianza HCC» · protocollo quadrifasico' },
-  { id:'0D24004', nome:'FERRARI ANNA', eta:58, ora:'09:40', peso:70,
+    sugg:'Fegato cirrotico – Stadiazione', why:'quesito «sorveglianza HCC» · protocollo quadrifasico',
+    basale:'req', basaleNota:'Studio quadrifasico: la basale serve a riconoscere le lesioni spontaneamente iperdense.' },
+  { id:'0D24004', nome:'FERRARI ANNA', nascita:'1967-01-18', ora:'09:40', peso:70,
     esame:'TC TORACE ADDOME CON MDC', quesito:'Restaging neoplasia mammaria',
-    sugg:'Oncologia – Ristadiazione', why:'quesito «restaging» · torace-addome c.m.' },
-  { id:'0D24005', nome:'BRAMBILLA COLOMBO SILVANA', eta:79, ora:'10:05', peso:55,
+    sugg:'Oncologia – Ristadiazione', why:'quesito «restaging» · torace-addome c.m.',
+    basale:'skip', basaleNota:'Nel follow-up oncologico la basale è ridondante se esiste un precedente di confronto.' },
+  { id:'0D24005', nome:'BRAMBILLA COLOMBO SILVANA', nascita:'1946-09-30', ora:'10:05', peso:55,
     esame:'TC ADDOME SUPERIORE CON MDC', quesito:'Dolore addominale, sospetta colecistite',
-    sugg:'Vie biliari – Patologia infiammatoria', why:'quesito «colecistite» · addome superiore' },
-  { id:'0D24006', nome:'ESPOSITO CARMINE', eta:62, ora:'10:30', peso:88,
+    sugg:'Vie biliari – Patologia infiammatoria', why:'quesito «colecistite» · addome superiore',
+    basale:'req', basaleNota:'La basale è necessaria per identificare i calcoli calcifici, mascherati dopo mdc.' },
+  { id:'0D24006', nome:'ESPOSITO CARMINE', nascita:'1963-04-07', ora:'10:30', peso:88,
     esame:'ANGIO TC AORTA ADDOMINALE', quesito:'Controllo endoprotesi aortica, sospetto endoleak',
-    sugg:'AngioTC Aorta Addominale – controllo endoprotesi', why:'quesito «endoleak» · angio-TC' },
-  { id:'0D24007', nome:'MORETTI TERESA', eta:75, ora:'11:00', peso:66,
+    sugg:'AngioTC Aorta – controllo endoprotesi', why:'quesito «endoleak» · angio-TC',
+    basale:'req', basaleNota:'Serve a distinguere le calcificazioni parietali dall’endoleak in fase contrastografica.' },
+  { id:'0D24007', nome:'MORETTI TERESA', nascita:'1950-12-14', ora:'14:15', peso:66,
     esame:'TC ENCEFALO SENZA MDC URGENTE', quesito:'Deficit neurologico acuto, sospetto stroke',
-    sugg:'TC Encefalo + angio-TC – Stroke', why:'quesito «stroke» · protocollo trifasico' },
-  { id:'0D24008', nome:'VILLA ROBERTO', eta:69, ora:'11:25', peso:82,
+    sugg:'TC Encefalo + angio-TC – Stroke', why:'quesito «stroke» · protocollo trifasico',
+    basale:'req', basaleNota:'Obbligatoria per escludere l’emorragia prima di qualunque fase contrastografica.' },
+  { id:'0D24008', nome:'VILLA ROBERTO', nascita:'1956-08-21', ora:'14:45', peso:82,
     esame:'URO TC', quesito:'Ematuria macroscopica',
-    sugg:'UROTC Split Bolus', why:'quesito «ematuria» · protocollo urografico' },
+    sugg:'UROTC Split Bolus', why:'quesito «ematuria» · protocollo urografico',
+    basale:'req', basaleNota:'La basale è indispensabile per la ricerca di calcoli, indistinguibili dopo mdc.' },
+  { id:'0D24009', nome:'CONTI LUCIA', nascita:'1972-02-09', ora:'15:20', peso:64,
+    esame:'TC ADDOME COMPLETO CON MDC', quesito:'Follow-up neoplasia colica operata',
+    sugg:'Oncologia – Follow-up basso rischio', why:'quesito «follow-up» · addome c.m.',
+    basale:'skip', basaleNota:'Nel follow-up la basale è ridondante se esiste un precedente di confronto.' },
+  { id:'0D24010', nome:'RIVA GIOVANNI', nascita:'1948-05-03', ora:'16:00', peso:75,
+    esame:'TC TORACE SENZA MDC', quesito:'Controllo nodulo polmonare, follow-up Lung-RADS',
+    sugg:'HRCT – Nodulo polmonare', why:'quesito «nodulo polmonare» · protocollo low-dose',
+    basale:'req', basaleNota:'Protocollo senza mdc: l’acquisizione basale è l’intero esame.' },
 ];
 
 /* zone disponibili per fase — il secondo dropdown dipende dal primo */
@@ -500,44 +622,93 @@ const PH = {
 };
 
 /* SIRM: IDR target gI/s e quantità di iodio gI/kg (valori d'esempio) */
-const IDR = 1.4, GI_KG = 0.63, CONC = 0.40;   // Iomeron 400
+const IDR = 1.4, GI_KG = 0.63;
+
+/* ═══ UTIL ═══════════════════════════════════════════════ */
+const $  = id => document.getElementById(id);
+const it = (n,d=1) => n.toFixed(d).replace('.', ',');      // decimali all'italiana
+
+function eta(iso){
+  const [y,m,d] = iso.split('-').map(Number);
+  const t = new Date();
+  let a = t.getFullYear() - y;
+  if(t.getMonth()+1 < m || (t.getMonth()+1 === m && t.getDate() < d)) a--;
+  return a;
+}
+const dmy = iso => iso.split('-').reverse().join('/');
 
 /* ═══ STATO ══════════════════════════════════════════════ */
-const state = PATIENTS.map(p => ({ ...p, stato:'todo', fasi:[] }));
+const state = PATIENTS.map(p => ({
+  ...p, stato:'todo', fasi:[], note:'', prev:false, prevDate:'', agent:null
+}));
 let cur = null, pick = [];
 
-const $ = id => document.getElementById(id);
-const grid = $('grid'), detail = $('detail'), board = $('board');
+const grid = $('sessions'), detail = $('detail'), board = $('board');
 
 $('today').textContent = new Date().toLocaleDateString('it-IT',
   { weekday:'long', day:'numeric', month:'long' });
 
-/* ═══ BOARD ══════════════════════════════════════════════ */
-function summary(p){
-  if(!p.fasi.length) return '';
-  return p.fasi.map(f=>`<span>${PH[f.fase].l.slice(0,3)}</span>`).join('');
-}
+AGENTS.forEach(a => {
+  const o = document.createElement('option');
+  o.value = a.id;
+  o.textContent = `${a.l} — ${it(a.c,2)} gI/ml`;
+  $('ddAgent').appendChild(o);
+});
+
+/* ═══ BOARD : lista con checkpoint mattina / pomeriggio ══ */
+const summary = p => p.fasi.map(f=>`<span>${PH[f.fase].l.slice(0,3)}</span>`).join('');
+const isAM    = p => parseInt(p.ora.slice(0,2),10) < 14;
 
 function renderBoard(){
   grid.innerHTML = '';
-  state.forEach(p => {
-    const slot = document.createElement('div');
-    slot.className = 'slot';
-    slot.dataset.state = p.stato;
-    slot.dataset.id = p.id;
-    slot.innerHTML = `
-      <div class="card-mini" data-id="${p.id}">
-        <div class="mini-back"></div>
-        <div class="mini-front"></div>
-        <div class="mini-body">
-          <div class="mini-name">${p.nome}</div>
-          <div class="mini-sum">${summary(p)}</div>
-          <div class="mini-time">${p.ora}</div>
-        </div>
-        <div class="mini-dot"></div>
-      </div>`;
-    grid.appendChild(slot);
-    bindGestures(slot);
+  [['Mattina','🌅',true], ['Pomeriggio','🌇',false]].forEach(([titolo,ico,am]) => {
+    const gruppo = state.filter(p => isAM(p) === am);
+    if(!gruppo.length) return;
+
+    const done = gruppo.filter(p => p.stato === 'done').length;
+    const cp = document.createElement('div');
+    cp.className = 'cp';
+    cp.innerHTML =
+      `<span class="cp-ico">${ico}</span><span class="cp-t">${titolo}</span>
+       <span class="cp-n" data-cp="${am?'am':'pm'}">${done}/${gruppo.length}</span>
+       <span class="cp-line"></span>`;
+    grid.appendChild(cp);
+
+    const list = document.createElement('div');
+    list.className = 'list';
+    gruppo.forEach(p => {
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      slot.dataset.state = p.stato;
+      slot.dataset.id = p.id;
+      slot.innerHTML = `
+        <div class="card-mini" data-id="${p.id}">
+          <div class="mini-back"></div>
+          <div class="mini-front"></div>
+          <div class="mini-body">
+            <div class="mini-l">
+              <div class="mini-name">${p.nome}</div>
+              <div class="mini-sub">${eta(p.nascita)} anni · ${dmy(p.nascita)}</div>
+              <div class="mini-sum">${summary(p)}</div>
+            </div>
+            <div class="mini-r">
+              <div class="mini-dot"></div>
+              <div class="mini-time">${p.ora}</div>
+            </div>
+          </div>
+        </div>`;
+      list.appendChild(slot);
+      bindGestures(slot);
+    });
+    grid.appendChild(list);
+  });
+}
+
+function refreshCounts(){
+  [['am',true],['pm',false]].forEach(([k,am]) => {
+    const g = state.filter(p => isAM(p) === am);
+    const el = grid.querySelector(`[data-cp="${k}"]`);
+    if(el) el.textContent = `${g.filter(p=>p.stato==='done').length}/${g.length}`;
   });
 }
 
@@ -558,13 +729,12 @@ function bindGestures(slot){
     dx=e.clientX-x0; dy=e.clientY-y0;
     if(!decided && (Math.abs(dx)>8 || Math.abs(dy)>8)){
       decided=true;
-      dragging = Math.abs(dx) > Math.abs(dy)*1.3;   // orizzontale → swipe
+      dragging = Math.abs(dx) > Math.abs(dy)*1.3;
       if(dragging){ try{card.setPointerCapture(e.pointerId);}catch(_){} }
     }
     if(dragging){
       e.preventDefault();
       const done = slot.dataset.state === 'done';
-      // done → si trascina a destra per riattivare, altrimenti a sinistra
       const t = done ? Math.max(0, Math.min(dx, 130)) : Math.min(0, Math.max(dx, -130));
       card.style.transform = `translateX(${t}px)`;
       slot.classList.toggle('swiping', Math.abs(t) > 26);
@@ -574,8 +744,7 @@ function bindGestures(slot){
   const end = () => {
     if(!active) return;
     active=false;
-    card.style.transition='';
-    card.style.transform='';
+    card.style.transition=''; card.style.transform='';
     const moved = Math.abs(dx);
     if(dragging && moved > 72){
       const p = state.find(s => s.id === slot.dataset.id);
@@ -587,6 +756,7 @@ function bindGestures(slot){
         toast('Esame completato');
       }
       slot.dataset.state = p.stato;
+      refreshCounts();
     } else if(!dragging && moved < 9 && Math.abs(dy) < 9){
       open(slot.dataset.id, card);
     }
@@ -598,11 +768,11 @@ function bindGestures(slot){
   card.addEventListener('click', e => e.preventDefault());
 }
 
-/* ═══ APERTURA : miniatura → schermo pieno ═══════════════ */
+/* ═══ APERTURA / CHIUSURA ════════════════════════════════ */
 function open(id, card){
-  if(cur) return;                                    // evita doppia apertura
+  if(cur) return;
   cur = state.find(s => s.id === id);
-  card.classList.add('opening');                     // il front scivola via
+  card.classList.add('opening');
 
   const go = () => {
     card.classList.remove('opening');
@@ -627,7 +797,7 @@ function open(id, card){
 }
 
 function close(){
-  /* il callback di startViewTransition è ASINCRONO: va catturato il paziente
+  /* il callback di startViewTransition è ASINCRONO: il paziente va catturato
      in una locale, altrimenti `cur` è già null quando il callback parte. */
   const p = cur;
   if(!p) return;
@@ -645,6 +815,7 @@ function close(){
       slot.dataset.state = p.stato;
       slot.querySelector('.mini-sum').innerHTML = summary(p);
     }
+    refreshCounts();
     if(card) card.style.viewTransitionName = 'card-morph';
   };
 
@@ -659,15 +830,29 @@ function close(){
 function fill(){
   detail.dataset.state = cur.stato;
   $('dName').textContent = cur.nome;
-  $('dAge').textContent  = `${cur.eta} anni · ${cur.peso} kg · ${cur.id}`;
+  $('dMeta').innerHTML =
+    `<span><b>${eta(cur.nascita)}</b> anni</span>
+     <span>nat. <b>${dmy(cur.nascita)}</b></span>
+     <span><b>${cur.peso}</b> kg</span>
+     <span>${cur.id}</span>`;
   $('dTime').textContent = cur.ora;
   $('dExam').textContent = cur.esame;
   $('dQ').textContent    = cur.quesito;
   $('sName').textContent = cur.sugg;
   $('sWhy').textContent  = cur.why;
+
+  $('prevChk').classList.toggle('on', cur.prev);
+  $('prevWrap').classList.toggle('show', cur.prev);
+  $('prevDate').value = cur.prevDate;
+  $('notes').value = cur.note;
+  autoGrow($('notes'));
+  countNotes();
+  $('ddAgent').value = cur.agent || lastAgent;
+
   $('ddPhase').value = '';
   pick = [];
   syncZone();
+  syncHint();
   renderRows();
 }
 
@@ -686,7 +871,9 @@ function renderRows(){
       <div class="row-z">${f.zone.map(z=>`<span>${z}</span>`).join('')}</div>
       ${m.delay!==null ? `<input class="row-d" value="${f.delay}" aria-label="ritardo">` : ''}
       <button class="row-x" aria-label="Rimuovi">×</button>`;
-    row.querySelector('.row-x').onclick = () => { cur.fasi.splice(i,1); renderRows(); };
+    row.querySelector('.row-x').onclick = () => {
+      cur.fasi.splice(i,1); renderRows(); syncHint();
+    };
     const d = row.querySelector('.row-d');
     if(d) d.oninput = e => { f.delay = e.target.value; };
     box.appendChild(row);
@@ -699,20 +886,97 @@ function renderRows(){
   btn.classList.toggle('re', cur.stato !== 'todo');
 }
 
+/* ═══ MDC : calcolo da IDR e gI/kg (metodo SIRM) ═════════ */
 function calcMdc(){
-  const withMdc = cur.fasi.some(f => PH[f.fase].mdc);
-  if(!withMdc){
+  /* agente: scelta esplicita su questa card, altrimenti la boccetta in sala */
+  const ag = AGENTS.find(a => a.id === (cur.agent || lastAgent)) || AGENTS[0];
+  $('mdcC').innerHTML = `${ag.l}<br>${it(ag.c,2)} gI/ml`;
+
+  if(!cur.fasi.some(f => PH[f.fase].mdc)){
     $('mdcV').textContent = '—';
     $('mdcS').textContent = 'nessuna fase con contrasto';
     return;
   }
-  const it   = (n,d=1) => n.toFixed(d).replace('.', ',');   // decimali all'italiana
-  const vol  = (GI_KG * cur.peso) / CONC;
-  const flow = IDR / CONC;
+  const vol  = (GI_KG * cur.peso) / ag.c;
+  const flow = IDR / ag.c;
   $('mdcV').textContent = `${Math.round(vol)} ml  @  ${it(flow)} ml/s`;
   $('mdcS').textContent =
-    `IDR ${it(IDR)} gI/s · ${it(GI_KG,2)} gI/kg × ${cur.peso} kg = ${it(GI_KG*cur.peso)} gI`;
+    `IDR ${it(IDR)} gI/s ÷ ${it(ag.c,2)} gI/ml · ` +
+    `${it(GI_KG,2)} gI/kg × ${cur.peso} kg = ${it(GI_KG*cur.peso)} gI`;
 }
+
+$('ddAgent').onchange = e => {
+  cur.agent = e.target.value;
+  lastAgent = e.target.value;          // resta memorizzato per le card successive
+  calcMdc();
+};
+
+/* ═══ ESAME PRECEDENTE → regola sulla fase basale ════════ */
+$('prevChk').onclick = () => {
+  cur.prev = !cur.prev;
+  $('prevChk').classList.toggle('on', cur.prev);
+  $('prevWrap').classList.toggle('show', cur.prev);
+  if(!cur.prev) cur.prevDate = '';
+  $('prevDate').value = cur.prevDate;
+  syncHint();
+};
+$('prevDate').onchange = e => { cur.prevDate = e.target.value; syncHint(); };
+
+function syncHint(){
+  const h = $('hint');
+  const hasBas = cur.fasi.some(f => f.fase === 'basale');
+
+  if(!cur.prev){ h.className = 'hint'; return; }
+
+  if(cur.basale === 'req'){
+    h.className = 'hint show req';
+    $('hintI').textContent = '⚠';
+    $('hintT').textContent = 'Fase basale comunque necessaria';
+    $('hintB').textContent = cur.basaleNota;
+    $('hintA').style.display = hasBas ? 'none' : 'inline-block';
+    $('hintA').textContent = '+ Aggiungi basale';
+    $('hintA').onclick = () => {
+      addPhase('basale', defaultZones());
+      toast('Fase basale aggiunta');
+    };
+    return;
+  }
+
+  /* 'opt' oppure 'skip' → la basale si può togliere */
+  h.className = 'hint show skip';
+  $('hintI').textContent = '✓';
+  $('hintT').textContent = cur.basale === 'skip'
+    ? 'Fase basale omettibile' : 'Fase basale opzionale';
+  $('hintB').textContent = cur.basaleNota +
+    (cur.prevDate ? ` Precedente del ${dmy(cur.prevDate)} disponibile per confronto.` : '');
+  $('hintA').style.display = hasBas ? 'inline-block' : 'none';
+  $('hintA').textContent = '− Rimuovi basale';
+  $('hintA').onclick = () => {
+    cur.fasi = cur.fasi.filter(f => f.fase !== 'basale');
+    renderRows(); syncHint();
+    toast('Fase basale rimossa');
+  };
+}
+
+/* zone di default per la basale, dedotte da quelle già scelte nelle altre fasi */
+function defaultZones(){
+  const altre = cur.fasi.filter(f => f.fase !== 'basale');
+  if(altre.length) return [...new Set(altre.flatMap(f => f.zone))]
+    .filter(z => ZONES.basale.some(([c]) => c === z));
+  return ['TAc'];
+}
+
+/* ═══ NOTE CLINICHE ══════════════════════════════════════ */
+function autoGrow(ta){ ta.style.height='auto'; ta.style.height = ta.scrollHeight+'px'; }
+function countNotes(){
+  const n = $('notes').value.length;
+  $('notesC').textContent = n === 1 ? '1 carattere' : `${n} caratteri`;
+}
+$('notes').oninput = e => {
+  cur.note = e.target.value;
+  autoGrow(e.target);
+  countNotes();
+};
 
 /* ═══ COMBO : fase → zone ════════════════════════════════ */
 function syncZone(){
@@ -731,35 +995,40 @@ function syncZone(){
 
   btn.disabled = false;
   ZONES[ph].forEach(([code,label]) => {
-    const it = document.createElement('div');
-    it.className = 'pop-i' + (pick.includes(code) ? ' on' : '');
-    it.innerHTML = `<div class="pop-c"></div><span>${code}</span><small>${label}</small>`;
-    it.onclick = e => {
+    const i = document.createElement('div');
+    i.className = 'pop-i' + (pick.includes(code) ? ' on' : '');
+    i.innerHTML = `<div class="pop-c"></div><span>${code}</span><small>${label}</small>`;
+    i.onclick = e => {
       e.stopPropagation();
-      const i = pick.indexOf(code);
-      i < 0 ? pick.push(code) : pick.splice(i,1);
-      it.classList.toggle('on');
+      const k = pick.indexOf(code);
+      k < 0 ? pick.push(code) : pick.splice(k,1);
+      i.classList.toggle('on');
       labelZone();
     };
-    pop.appendChild(it);
+    pop.appendChild(i);
   });
   labelZone();
 }
 
 function labelZone(){
   const btn = $('ddZone');
-  if(!pick.length){
-    btn.className = 'dd ph';
-    btn.textContent = 'Nessuna zona';
-  } else {
-    btn.className = 'dd';
+  if(!pick.length){ btn.className='dd ph'; btn.textContent='Nessuna zona'; }
+  else{
+    btn.className='dd';
     btn.textContent = pick.length <= 2 ? pick.join(', ') : `${pick.length} zone`;
   }
   $('addBtn').disabled = !($('ddPhase').value && pick.length);
 }
 
-$('ddPhase').onchange = () => { pick = []; syncZone(); };
+function addPhase(fase, zone){
+  const ex = cur.fasi.find(f => f.fase === fase);
+  if(ex) zone.forEach(z => { if(!ex.zone.includes(z)) ex.zone.push(z); });
+  else cur.fasi.push({ fase, zone:[...zone], delay:PH[fase].delay || '' });
+  cur.fasi.sort((a,b)=>Object.keys(PH).indexOf(a.fase)-Object.keys(PH).indexOf(b.fase));
+  renderRows(); syncHint();
+}
 
+$('ddPhase').onchange = () => { pick = []; syncZone(); };
 $('ddZone').onclick = e => { e.stopPropagation(); $('pop').classList.toggle('open'); };
 document.addEventListener('click', () => $('pop').classList.remove('open'));
 $('pop').onclick = e => e.stopPropagation();
@@ -767,16 +1036,11 @@ $('pop').onclick = e => e.stopPropagation();
 $('addBtn').onclick = () => {
   const ph = $('ddPhase').value;
   if(!ph || !pick.length) return;
-  const ex = cur.fasi.find(f => f.fase === ph);
-  if(ex){
-    pick.forEach(z => { if(!ex.zone.includes(z)) ex.zone.push(z); });
-    toast(`${PH[ph].l} aggiornata`);
-  } else {
-    cur.fasi.push({ fase:ph, zone:[...pick], delay:PH[ph].delay || '' });
-    cur.fasi.sort((a,b)=>Object.keys(PH).indexOf(a.fase)-Object.keys(PH).indexOf(b.fase));
-  }
+  const esisteva = cur.fasi.some(f => f.fase === ph);
+  addPhase(ph, pick);
+  if(esisteva) toast(`${PH[ph].l} aggiornata`);
   $('ddPhase').value = ''; pick = [];
-  syncZone(); renderRows();
+  syncZone();
 };
 
 $('sugg').onclick = function(){ this.classList.toggle('on'); };
@@ -789,10 +1053,8 @@ $('setBtn').onclick = () => {
   toast('Protocollo impostato');
   setTimeout(close, 380);
 };
-
 $('back').onclick = close;
 
-/* ═══ UTIL ═══════════════════════════════════════════════ */
 let tt;
 function toast(msg){
   const t = $('toast');
@@ -802,9 +1064,7 @@ function toast(msg){
   tt = setTimeout(()=>t.classList.remove('show'), 1700);
 }
 
-document.addEventListener('keydown', e => {
-  if(e.key === 'Escape' && cur) close();
-});
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && cur) close(); });
 
 renderBoard();
 </script>
