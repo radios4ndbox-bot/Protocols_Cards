@@ -225,14 +225,25 @@
     const globale = o.larghezzaPagina
       || calibra(pagine.flatMap(p => (Array.isArray(p) ? p : p.items) || []));
 
-    pagine.forEach((pagina, pi) => {
+    /* Prima passata: ricostruzione delle righe, senza ancora ordinarle. */
+    const perPagina = pagine.map((pagina, pi) => {
       const items = Array.isArray(pagina) ? pagina : pagina.items;
       const larghezza = (Array.isArray(pagina) ? 0 : pagina.larghezza) || globale;
-      if (!larghezza) { avvisi.push(`pagina ${pi+1}: larghezza non determinabile`); return; }
+      if (!larghezza) { avvisi.push(`pagina ${pi + 1}: larghezza non determinabile`); return []; }
       const rs = righe(items, tol, larghezza).filter(r => !r.vuota && !èRumore(r));
-      const dir = o.direzione || direzione(rs.slice().sort((a, b) => a.y - b.y));
-      rs.sort((a, b) => (a.y - b.y) * dir);
       rs.forEach(r => { r.pagina = pi + 1; });
+      return rs;
+    });
+
+    /* Il verso di lettura è una proprietà del documento, non della singola
+       pagina: una pagina di continuazione non contiene righe di accettazione
+       e da sola non offre alcun indizio. Deciderlo pagina per pagina la
+       farebbe leggere al contrario.                                       */
+    const dir = o.direzione
+      || direzione(perPagina.flat().slice().sort((a, b) => a.y - b.y));
+
+    perPagina.forEach(rs => {
+      rs.sort((a, b) => (a.y - b.y) * dir);
       flusso = flusso.concat(rs);
     });
 

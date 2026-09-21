@@ -34,3 +34,13 @@ npm pack qrcode-generator
 
 Le liste RIS reali **non vanno nel repository**: `.gitignore` blocca i PDF.
 Il test usa una fixture sintetica che riproduce il layout con dati inventati.
+
+## Test
+
+```
+node ris-parser.test.js                          # fixture sintetica, nessun dato reale
+RIS_PDF_DIR=/percorso node end-to-end.test.js    # richiede una lista RIS chiamata lista.pdf
+```
+
+Il test end-to-end apre il file costruito da `file://` e verifica anche che
+non parta **nessuna richiesta di rete**.

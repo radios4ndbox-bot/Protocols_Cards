@@ -826,18 +826,22 @@ const AGENTS = [
    kw = termini del quesito · ex = termini dell'esame (disambiguano)     */
 const PROTOCOLS = {
   'angio-polm': { l:'AngioTC Polmonare', idr:1.5, giKg:0.45, basale:'opt',
+    reg:['TO','TAs','TAc'],
     kw:['embolia','tromboembolia','tep'], ex:['torace'],
     nota:'SIRM indica l’acquisizione senza mdc come opzionale in questo protocollo.',
     fasi:[{fase:'arteriosa',zone:['TAs'],delay:'B-T'}] },
   'cranio-trauma': { l:'TC Cranio – Trauma cranico acuto', idr:0, giKg:0, basale:'req',
+    reg:['ENC'],
     kw:['trauma cranico','trauma','caduta'], ex:['encefalo','cranio'],
     nota:'Protocollo interamente basale: la fase senza mdc è l’esame stesso.',
     fasi:[{fase:'basale',zone:['ENC'],delay:'',fix:1}] },
   'encefalo-stroke': { l:'TC Encefalo + angio-TC – Stroke', idr:1.6, giKg:0.35, basale:'req',
+    reg:['ENC'],
     kw:['stroke','ictus','deficit neurologico','ischemia cerebrale'], ex:['encefalo'],
     nota:'Obbligatoria per escludere l’emorragia prima di qualunque fase contrastografica.',
     fasi:[{fase:'basale',zone:['ENC'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1}] },
   'fegato-cirr': { l:'Fegato cirrotico – Stadiazione', idr:1.4, giKg:0.63, basale:'req',
+    reg:['ADs','ADc','TAs','TAc'],
     kw:['hcc','epatocarcinoma','cirrosi','epatopatia','sorveglianza'], ex:['addome'],
     nota:'Studio quadrifasico: la basale serve a riconoscere le lesioni spontaneamente iperdense.',
     fasi:[{fase:'basale',zone:['ADs'],delay:'',fix:1},{fase:'arteriosa',zone:['ADs'],delay:'B-T',fix:1},
@@ -851,36 +855,44 @@ const PROTOCOLS = {
     nota:'Nel follow-up la basale è ridondante se esiste un precedente di confronto.',
     fasi:[{fase:'venosa',zone:['ADc'],delay:'75'}] },
   'vie-biliari': { l:'Vie biliari – Patologia infiammatoria', idr:1.4, giKg:0.60, basale:'req',
+    reg:['ADs','ADc','TAs','TAc'],
     kw:['colecistite','colangite','litiasi biliare'], ex:['addome'],
     nota:'La basale è necessaria per identificare i calcoli calcifici, mascherati dopo mdc.',
     fasi:[{fase:'basale',zone:['ADs'],delay:'',fix:1},{fase:'venosa',zone:['ADs'],delay:'70',fix:1}] },
   'aorta-endop': { l:'AngioTC Aorta – controllo endoprotesi', idr:1.6, giKg:0.55, basale:'req',
+    reg:['ADc','TAc'],
     kw:['endoleak','endoprotesi','evar'], ex:['aorta'],
     nota:'Serve a distinguere le calcificazioni parietali dall’endoleak in fase contrastografica.',
     fasi:[{fase:'basale',zone:['ADc'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1},
           {fase:'tardiva',zone:['ADc'],delay:'300',fix:1}] },
   'aorta-diss': { l:'TC Aorta – Dissezione', idr:1.8, giKg:0.55, basale:'req',
+    reg:['TAc','ADc'],
     kw:['dissezione','sindrome aortica'], ex:['aorta'],
     nota:'La basale individua l’ematoma intramurale, isodenso dopo contrasto.',
     fasi:[{fase:'basale',zone:['TAc'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1}] },
   'urotc-split': { l:'UROTC Split Bolus', idr:1.2, giKg:0.55, basale:'req',
+    reg:['ADc'],
     kw:['ematuria','colica renale','idronefrosi','urolitiasi','calcolosi'], ex:['uro'],
     nota:'La basale è indispensabile per la ricerca di calcoli, indistinguibili dopo mdc.',
     fasi:[{fase:'basale',zone:['ADc'],delay:'',fix:1},{fase:'venosa',zone:['ADc'],delay:'100',fix:1}] },
   'addome-acuto': { l:'TC Addome acuto', idr:1.4, giKg:0.60, basale:'opt',
+    reg:['ADs','ADc','TAs','TAc'],
     kw:['appendicite','diverticolite','occlusione','perforazione','addome acuto','peritonite'],
     ex:['addome'],
     nota:'SIRM indica l’acquisizione senza mdc come opzionale.',
     fasi:[{fase:'venosa',zone:['ADc'],delay:'70'}] },
   'politrauma': { l:'TC Total body – Politrauma', idr:1.6, giKg:0.60, basale:'opt',
+    reg:['TAc'],
     kw:['politrauma','trauma maggiore','incidente stradale'], ex:['total body'],
     nota:'In urgenza la basale è spesso omessa per ridurre i tempi; resta utile sull’encefalo.',
     fasi:[{fase:'arteriosa',zone:['TAc'],delay:'B-T',fix:1},{fase:'venosa',zone:['ADc'],delay:'70',fix:1}] },
   'hrct-nodulo': { l:'HRCT – Nodulo polmonare', idr:0, giKg:0, basale:'req',
+    reg:['TO','TAs','TAc'],
     kw:['nodulo','lungrads','interstiziopatia','fibrosi'], ex:['torace'],
     nota:'Protocollo senza mdc: l’acquisizione basale è l’intero esame.',
     fasi:[{fase:'basale',zone:['TAs'],delay:''}] },
   'torace-mdc': { l:'TC Torace con mdc', idr:1.4, giKg:0.50, basale:'opt',
+    reg:['TO','TAs','TAc'],
     kw:['versamento','ascesso polmonare','mediastino'], ex:['torace'],
     nota:'SIRM indica l’acquisizione senza mdc come opzionale.',
     fasi:[{fase:'venosa',zone:['TAs'],delay:'70'}] },
@@ -918,6 +930,11 @@ const PH = {
 
 /* ═══ UTIL ═══════════════════════════════════════════════ */
 const $  = id => document.getElementById(id);
+/* testo che finisce in innerHTML: proviene dal RIS o dall'operatore e va
+   sempre neutralizzato, altrimenti un carattere < rompe il markup        */
+const esc = v => String(v == null ? '' : v)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const it = (n,d=1) => Number(n).toFixed(d).replace('.', ',');
 const H24 = 24*60*60*1000;
 const pad = n => String(n).padStart(2,'0');
@@ -948,12 +965,21 @@ function normText(s){
    A parità vince il primo in ordine di dichiarazione. Nessuna casualità. */
 function matchProtocol(esame, quesito){
   const tq = normText(quesito), te = normText(esame);
+  const regione = regionOf(esame);
   let best = null, bs = 0;
   for(const [k,v] of Object.entries(PROTOCOLS)){
-    let s = 0;
-    (v.kw||[]).forEach(w => { if(tq.includes(w)) s += w.split(' ').length * 2; });
-    (v.ex||[]).forEach(w => { if(te.includes(w)) s += 1; });
-    if(s > bs){ bs = s; best = k; }
+    /* la regione dell'esame esclude i protocolli che non la coprono:
+       senza questo vincolo «TC torace · trauma toracico» finiva sul
+       protocollo dell'encefalo, perche' il termine «trauma» pesava piu'
+       del distretto indicato dall'esame                                */
+    if(regione && v.reg && !v.reg.includes(regione)) continue;
+    let sKw = 0, sEx = 0;
+    (v.kw||[]).forEach(w => { if(tq.includes(w)) sKw += w.split(' ').length * 2; });
+    (v.ex||[]).forEach(w => { if(te.includes(w)) sEx += 1; });
+    /* il solo distretto non basta a suggerire: senza un riscontro nel
+       quesito il protocollo non e' candidato                           */
+    if(!sKw) continue;
+    if(sKw + sEx > bs){ bs = sKw + sEx; best = k; }
   }
   return bs > 0 ? best : null;
 }
@@ -970,6 +996,8 @@ function regionOf(esame){
   if(/\buro\b|urotc|uro tc|renal|vescic/.test(t))  return 'ADc';
   if(/encefal|cranio|cerebral|capo/.test(t))       return 'ENC';
   if(/\bcollo\b|cervical|tiroide|laring|faring|parotid/.test(t)) return 'Collo';
+  if(/rachide|colonna|vertebr|bacino|femore|ginocchio|spalla|omero|arto|polso|caviglia|piede|mano|massiccio|facciale|temporale|orbit|seni paranasal|mandibol/.test(t))
+    return 'ALTRO';                       // distretto riconosciuto ma fuori tassonomia
   const tor = /torac/.test(t), add = /addom/.test(t), sup = /superior|\bsup\b/.test(t);
   if(tor && add)                                   return sup ? 'TAs' : 'TAc';
   if(tor)                                          return 'TO';
@@ -985,8 +1013,8 @@ function zChip(z){
   const l = ZONE_L[z];
   const nudo = x => x.toLowerCase().replace(/[^a-z0-9]/g,'');
   return (l && nudo(l) !== nudo(z))
-    ? `<span class="zc" data-z="${z}"><b>${z}</b><i>${l}</i></span>`
-    : `<span class="zc plain">${z}</span>`;
+    ? `<span class="zc" data-z="${esc(z)}"><b>${esc(z)}</b><i>${esc(l)}</i></span>`
+    : `<span class="zc plain">${esc(z)}</span>`;
 }
 
 /* Applica la regione dell'esame alle fasi del protocollo. Le fasi marcate
@@ -1322,16 +1350,16 @@ function renderBoard(){
       const slot = document.createElement('div');
       slot.className='slot'; slot.dataset.state=p.stato; slot.dataset.id=p.id;
       slot.innerHTML = `
-        <div class="card-mini" data-id="${p.id}">
+        <div class="card-mini" data-id="${esc(p.id)}">
           <div class="mini-back"></div><div class="mini-front"></div>
           <div class="mini-body">
             <div class="mini-l">
-              <div class="mini-name">${p.nome}</div>
-              <div class="mini-sub">${eta(p.nascita)} anni · ${dmy(p.nascita)}</div>
+              <div class="mini-name">${esc(p.nome)}</div>
+              <div class="mini-sub">${esc(eta(p.nascita))} anni · ${esc(dmy(p.nascita))}</div>
               <div class="mini-sum">${summary(p)}</div>
             </div>
             <div class="mini-r"><div class="mini-dot"></div>
-              <div class="mini-time">${p.ora}</div></div>
+              <div class="mini-time">${esc(p.ora)}</div></div>
           </div>
         </div>`;
       ul.appendChild(slot);
@@ -1441,8 +1469,8 @@ function fill(){
   detail.dataset.state = cur.stato;
   $('dName').textContent = cur.nome;
   $('dMeta').innerHTML =
-    `<span><b>${eta(cur.nascita)}</b> anni</span><span>nat. <b>${dmy(cur.nascita)}</b></span>
-     <span><b>${cur.peso}</b> kg</span><span>${cur.id}</span>`;
+    `<span><b>${esc(eta(cur.nascita))}</b> anni</span><span>nat. <b>${esc(dmy(cur.nascita))}</b></span>
+     <span><b>${esc(cur.peso)}</b> kg</span><span>${esc(cur.id)}</span>`;
   $('dUrg').style.display = cur.modo==='emergenza' ? 'inline-block' : 'none';
   $('dTime').textContent = cur.ora;
   $('dExam').textContent = cur.esame;
@@ -1482,8 +1510,8 @@ function renderOpts(){
     const el=document.createElement('div');
     el.className='opt'+(i===selOpt?' on':'');
     el.innerHTML = `<div class="opt-r"></div><div style="min-width:0">
-      <div class="opt-n">${o.nome}</div><div class="opt-w">${o.why}</div></div>
-      <span class="tag ${o.tag}">${o.tagT}</span>`;
+      <div class="opt-n">${esc(o.nome)}</div><div class="opt-w">${esc(o.why)}</div></div>
+      <span class="tag ${esc(o.tag)}">${esc(o.tagT)}</span>`;
     el.onclick = () => { selOpt=i; renderOpts(); };
     box.appendChild(el);
   });
@@ -1533,7 +1561,7 @@ function renderRows(){
     row.className='row'; row.style.setProperty('--ph',m.c);
     row.innerHTML = `<span class="row-n">${m.l}</span>
       <div class="row-z">${f.zone.map(zChip).join('')}</div>
-      ${m.delay!==null?`<input class="row-d" value="${f.delay}" aria-label="ritardo">`:''}
+      ${m.delay!==null?`<input class="row-d" value="${esc(f.delay)}" aria-label="ritardo">`:''}
       <button class="row-x" aria-label="Rimuovi">×</button>`;
     row.querySelector('.row-x').onclick = () => { cur.fasi.splice(i,1); renderRows(); syncHint(); };
     const d=row.querySelector('.row-d');
@@ -1766,8 +1794,8 @@ function renderTrash(){
     const el=document.createElement('div');
     el.className='item';
     el.innerHTML = `<div class="item-h"><div style="min-width:0;flex:1">
-        <div class="item-n">${t.nome}</div>
-        <div class="item-s">${dmy(t.data)} · ${t.ora} · ${t.modo} · ${t.esame}</div>
+        <div class="item-n">${esc(t.nome)}</div>
+        <div class="item-s">${esc(dmy(t.data))} · ${esc(t.ora)} · ${esc(t.modo)} · ${esc(t.esame)}</div>
       </div><button class="mini-b">Ripristina</button></div>
       <div class="ttl">eliminazione definitiva fra ${ttl(H24-(Date.now()-t.deletedAt))}</div>`;
     el.querySelector('.mini-b').onclick = () => {
@@ -1801,11 +1829,11 @@ function renderSettings(){
     el.className='item';
     el.innerHTML = `<div class="item-h"><div style="min-width:0;flex:1">
         <div class="item-n">${L.fasi.map(f=>PH[f.fase].l).join(' + ')||'nessuna fase'}</div>
-        <div class="item-s">${L.esame}<br>«${L.quesito||'—'}»</div>
+        <div class="item-s">${esc(L.esame)}<br>«${esc(L.quesito||'—')}»</div>
         <div class="item-s" style="margin-top:5px">usato <b>${L.count}</b>
           ${L.count===1?'volta':'volte'} · ${it(L.giKg,2)} gI/kg · IDR ${it(L.idr)}</div>
       </div><button class="mini-x" aria-label="Elimina">×</button></div>
-      <div class="sig">${sig}</div>`;
+      <div class="sig">${esc(sig)}</div>`;
     el.querySelector('.mini-x').onclick = () => {
       delete learned[sig]; persist(); renderSettings(); toast('Protocollo appreso eliminato'); };
     box.appendChild(el);

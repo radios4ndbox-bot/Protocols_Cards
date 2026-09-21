@@ -95,7 +95,7 @@ main{flex:1;overflow-y:auto;padding:26px}
 .tab tr:last-child td{border-bottom:none}
 .tab tr.warn td{background:var(--warn-s)}
 .tab tr.esclusa td{opacity:.42}
-.cel{width:100%;border:1px solid transparent;border-radius:7px;padding:5px 7px;
+.cel{width:100%;min-height:30px;border:1px solid transparent;border-radius:7px;padding:5px 7px;
   background:transparent;font-size:13px;color:var(--text);outline:none;resize:none;
   line-height:1.45;overflow:hidden}
 .cel:hover{border-color:var(--border2);background:var(--surface)}
@@ -2815,14 +2815,25 @@ var qrcode = function() {
     const globale = o.larghezzaPagina
       || calibra(pagine.flatMap(p => (Array.isArray(p) ? p : p.items) || []));
 
-    pagine.forEach((pagina, pi) => {
+    /* Prima passata: ricostruzione delle righe, senza ancora ordinarle. */
+    const perPagina = pagine.map((pagina, pi) => {
       const items = Array.isArray(pagina) ? pagina : pagina.items;
       const larghezza = (Array.isArray(pagina) ? 0 : pagina.larghezza) || globale;
-      if (!larghezza) { avvisi.push(`pagina ${pi+1}: larghezza non determinabile`); return; }
+      if (!larghezza) { avvisi.push(`pagina ${pi + 1}: larghezza non determinabile`); return []; }
       const rs = righe(items, tol, larghezza).filter(r => !r.vuota && !èRumore(r));
-      const dir = o.direzione || direzione(rs.slice().sort((a, b) => a.y - b.y));
-      rs.sort((a, b) => (a.y - b.y) * dir);
       rs.forEach(r => { r.pagina = pi + 1; });
+      return rs;
+    });
+
+    /* Il verso di lettura è una proprietà del documento, non della singola
+       pagina: una pagina di continuazione non contiene righe di accettazione
+       e da sola non offre alcun indizio. Deciderlo pagina per pagina la
+       farebbe leggere al contrario.                                       */
+    const dir = o.direzione
+      || direzione(perPagina.flat().slice().sort((a, b) => a.y - b.y));
+
+    perPagina.forEach(rs => {
+      rs.sort((a, b) => (a.y - b.y) * dir);
       flusso = flusso.concat(rs);
     });
 
@@ -2898,11 +2909,21 @@ async function leggi(file) {
     for (let i = 1; i <= doc.numPages; i++) {
       const pag = await doc.getPage(i);
       const c = await pag.getTextContent();
-      /* la larghezza viene da pdf.js: le frazioni di colonna del parser
-         diventano così indipendenti dalla scala del documento */
-      pagine.push({ items: c.items, larghezza: pag.getViewport({ scale: 1 }).width });
+      /* Larghezza in spazio utente, presa dal MediaBox: è lo stesso spazio
+         in cui stanno le coordinate degli elementi. Il viewport terrebbe
+         conto della rotazione di pagina e falserebbe le frazioni su un
+         documento con /Rotate 90.                                        */
+      const v = pag.view;
+      const larghezza = (v && v.length === 4)
+        ? Math.abs(v[2] - v[0])
+        : pag.getViewport({ scale: 1, rotation: 0 }).width;
+      pagine.push({ items: c.items, larghezza });
     }
     const r = RisParser.parseRis(pagine);
+    if (r.avvisi && r.avvisi.length) {
+      dice('Attenzione: ' + r.avvisi.join(' · ')
+         + '. I pazienti di quelle pagine non compaiono in elenco.', 'err');
+    }
     if (!r.pazienti.length) {
       dice('Nessun paziente riconosciuto. Il PDF potrebbe avere un formato diverso '
          + 'da quello previsto (' + doc.numPages + ' pagine lette).', 'err');
@@ -2926,7 +2947,7 @@ function vai(n) {
     p.classList.toggle('on', k===n);
     p.classList.toggle('fatto', k<n);
   });
-  if (n === 3) preparaTrasferimento();
+  if (n === 3) preparaTrasferimento(); else fermaRotazione();
 }
 $('indietro1').onclick = () => { $('file').value=''; vai(1); };
 $('indietro2').onclick = () => vai(2);
@@ -2958,7 +2979,7 @@ function disegnaTabella() {
       <td><button class="togli" title="Escludi dalla lista">✕</button></td>`;
 
     tr.querySelectorAll('.cel').forEach(c => {
-      if (c.tagName === 'TEXTAREA') { cresci(c); c.addEventListener('input', () => cresci(c)); }
+      if (c.tagName === 'TEXTAREA') c.addEventListener('input', () => cresci(c));
       c.addEventListener('input', () => {
         pazienti[i][c.dataset.k] = c.value;
         if (['nomeCompleto','nascita','ora','quesito'].includes(c.dataset.k)) ricontrolla(i, tr);
@@ -2971,6 +2992,10 @@ function disegnaTabella() {
     };
     tb.appendChild(tr);
   });
+  /* l'adattamento in altezza va fatto a riga inserita: su un elemento
+     ancora staccato dal documento scrollHeight vale 0 e le textarea
+     resterebbero invisibili                                            */
+  tb.querySelectorAll('textarea.cel').forEach(cresci);
   aggiornaConteggi();
 }
 
@@ -3054,10 +3079,13 @@ function checksum(s) {
 }
 
 const MAX_FRAME = 1200;          // caratteri per codice, con margine
-let frames = [], iFrame = 0, timer = null;
+let frames = [], iFrame = 0, timer = null, giro = 0;
+
+function fermaRotazione() { clearInterval(timer); timer = null; }
 
 async function preparaTrasferimento() {
-  clearInterval(timer);
+  fermaRotazione();
+  const mio = ++giro;                 // solo l'ultima esecuzione può avviare il timer
   const a = attivi();
   const json = JSON.stringify(payload());
   const { dati, metodo } = await comprimi(json);
@@ -3083,6 +3111,8 @@ async function preparaTrasferimento() {
     : `La lista è divisa in <b>${n} codici</b> che si alternano ogni secondo.
        Tieni il telefono inquadrato finché non li ha raccolti tutti.`;
 
+  if (mio !== giro) return;           // nel frattempo ne è partita un'altra
+  fermaRotazione();
   iFrame = 0;
   mostraFrame();
   if (n > 1) timer = setInterval(() => { iFrame = (iFrame+1) % frames.length; mostraFrame(); }, 1000);

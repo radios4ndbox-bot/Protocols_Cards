@@ -1,5 +1,11 @@
 node_modules/
+package.json
+package-lock.json
 *.log
+
+# schermate di verifica: artefatti di test, non sorgenti
+shot-*.png
+
 # liste RIS reali: non devono mai entrare nel repository
 *.pdf
 ris-items.json
