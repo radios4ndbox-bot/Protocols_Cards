@@ -501,12 +501,27 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
   box-shadow:var(--sh-l);white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-@media (prefers-reduced-motion:no-preference){
-  ::view-transition-old(card-morph),::view-transition-new(card-morph){
-    animation-duration:.42s;animation-timing-function:cubic-bezier(.32,.72,0,1)}
+/* ═══ ESPANSIONE A TUTTO SCHERMO ═══════════════════════
+   Un clone della card viene portato da posizione fissa alle dimensioni
+   dello schermo in un solo movimento. La coreografia interna della card
+   (pannello che scivola, numero che cresce, icona che ruota) gira in
+   parallelo, non in sequenza: una sola animazione, non due.          */
+.ghost{
+  position:fixed;z-index:60;margin:0;pointer-events:none;
+  will-change:top,left,width,height;
 }
-.detail.fb{animation:fb .34s cubic-bezier(.32,.72,0,1)}
-@keyframes fb{from{opacity:0;transform:scale(.94) translateY(16px)}}
+/* la coreografia interna dura quanto l'espansione: una sola animazione */
+.ghost,.ghost *{transition-duration:var(--gd)!important}
+
+/* comparsa scaglionata dei contenuti */
+.rise{opacity:0;transform:translateY(18px)}
+.rise.go{animation:riseK .42s cubic-bezier(.22,.9,.24,1) both}
+.rise.out{opacity:1;transform:none;animation:fallK .17s ease-in both}
+@keyframes riseK{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes fallK{from{opacity:1;transform:none}to{opacity:0;transform:translateY(10px)}}
+@media (prefers-reduced-motion:reduce){
+  .rise,.rise.go,.rise.out{animation:none;opacity:1;transform:none}
+}
 </style>
 </head>
 <body>
@@ -1044,13 +1059,122 @@ function show(v){
   if(v==='settings') renderSettings();
   if(v==='trash')    renderTrash();
 }
-$('navBack').onclick = () => {
-  if(view==='board')        show('session');
+$('navBack').onclick = async () => {
+  if(busy) return;
+  if(view==='board'){
+    busy = true;
+    await staggerOut(boardNodes());
+    await shrink(selMode==='emergenza' ? $('tcEm') : $('tcEl'), () => show('session'));
+    busy = false;
+  }
   else if(view==='newcard') show('board');
   else show('calendar');
 };
 $('btnSet').onclick   = () => show(view==='settings' ? 'calendar' : 'settings');
 $('btnTrash').onclick = () => show(view==='trash'    ? 'calendar' : 'trash');
+
+/* ═══ ESPANSIONE A TUTTO SCHERMO E RITORNO ═══════════════
+   Un clone della card viene animato dal suo rettangolo alle dimensioni
+   dello schermo. La coreografia interna della card gira in parallelo:
+   una sola animazione continua, non due in sequenza.                 */
+const EASE = 'cubic-bezier(.32,.72,0,1)';
+const GROW = 420, FADE = 170, SHRINK = 380;
+let busy = false;
+
+const boxOf = el => { const r = el.getBoundingClientRect();
+  return { t:r.top, l:r.left, w:r.width, h:r.height }; };
+const frame = b => ({ top:b.t+'px', left:b.l+'px', width:b.w+'px', height:b.h+'px' });
+
+function cloneOf(el, inner){
+  const g = el.cloneNode(true);
+  g.removeAttribute('id');
+  g.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+  g.classList.add('ghost');
+  if(inner) g.classList.add(inner);
+  return g;
+}
+
+/* apre: la card si allarga fino a riempire lo schermo */
+function grow(el, inner, mid){
+  return new Promise(res => {
+    const b = boxOf(el), R = getComputedStyle(el).borderRadius;
+    const g = cloneOf(el);
+    Object.assign(g.style, frame(b), { borderRadius:R, '--gd':GROW+'ms' });
+    document.body.appendChild(g);
+    el.style.visibility = 'hidden';
+    if(inner) requestAnimationFrame(() => g.classList.add(inner));  // coreografia in parallelo
+
+    g.animate(
+      [{ ...frame(b), borderRadius:R },
+       { top:'0px', left:'0px', width:innerWidth+'px', height:innerHeight+'px', borderRadius:'0px' }],
+      { duration:GROW, easing:EASE, fill:'forwards' }
+    ).onfinish = () => {
+      mid();
+      res();                                   // input gia' disponibile
+      g.animate([{opacity:1},{opacity:0}], {duration:FADE, easing:'ease-out', fill:'forwards'})
+       .onfinish = () => { g.remove(); el.style.visibility=''; };
+    };
+  });
+}
+
+/* chiude: lo schermo intero si richiude sulla card di partenza */
+function shrink(el, pre){
+  return new Promise(res => {
+    const g = cloneOf(el);
+    Object.assign(g.style, { top:'0px', left:'0px', '--gd':SHRINK+'ms',
+      width:innerWidth+'px', height:innerHeight+'px', borderRadius:'0px' });
+    document.body.appendChild(g);      // copre lo scambio di vista
+    pre();
+    const b = boxOf(el), R = getComputedStyle(el).borderRadius;
+    el.style.visibility = 'hidden';
+
+    g.animate(
+      [{ top:'0px', left:'0px', width:innerWidth+'px', height:innerHeight+'px', borderRadius:'0px' },
+       { ...frame(b), borderRadius:R }],
+      { duration:SHRINK, easing:EASE, fill:'forwards' }
+    ).onfinish = () => { g.remove(); el.style.visibility=''; res(); };
+  });
+}
+
+/* comparsa scaglionata dall'alto verso il basso, e inversa in chiusura */
+function staggerIn(nodes, step=38){
+  nodes.forEach((n,i) => {
+    n.classList.remove('out','go');
+    n.classList.add('rise');
+    n.style.animationDelay = (i*step)+'ms';
+    void n.offsetWidth;
+    n.classList.add('go');
+  });
+  setTimeout(() => nodes.forEach(n => {
+    n.classList.remove('rise','go'); n.style.animationDelay='';
+  }), (nodes.length-1)*step + 440);
+}
+function staggerOut(nodes, step=10){
+  return new Promise(res => {
+    if(!nodes.length) return res();
+    nodes.forEach((n,i) => {
+      n.classList.remove('rise','go');
+      n.style.animationDelay = ((nodes.length-1-i)*step)+'ms';   // dal basso verso l'alto
+      n.classList.add('rise','out');
+    });
+    setTimeout(() => { nodes.forEach(n => {
+      n.classList.remove('rise','out'); n.style.animationDelay='';
+    }); res(); }, (nodes.length-1)*step + 185);
+  });
+}
+
+const boardNodes = () => [
+  ...(selMode==='emergenza' ? [$('btnNew')] : []),
+  $('board').querySelector('.legend'),
+  ...grid.querySelectorAll('.cp, .slot'),
+  $('btnEod'),
+].filter(Boolean);
+
+const detailNodes = () => [
+  detail.querySelector('.d-head'),
+  ...detail.querySelectorAll('.d-scroll .sec'),
+  detail.querySelector('.d-act'),
+].filter(Boolean);
 
 /* ═══ CALENDARIO ═════════════════════════════════════════ */
 const byDay = d => ({
@@ -1097,17 +1221,13 @@ function renderSession(){
   ['tcEl','tcEm'].forEach(i => $(i).classList.remove('is-open'));
 }
 
-/* apertura: prima la coreografia della card, poi il morph verso la board */
-function openSession(el){
-  if(el.classList.contains('is-open')) return;
-  const m = el.dataset.m;
-  el.classList.add('is-open');
-  setTimeout(() => {
-    selMode = m;
-    const go = () => { el.classList.remove('is-open'); show('board'); };
-    if(document.startViewTransition) document.startViewTransition(go);
-    else go();
-  }, 340);
+/* la card si allarga a tutto schermo, poi le schede entrano scaglionate */
+async function openSession(el){
+  if(busy) return;
+  busy = true;
+  selMode = el.dataset.m;
+  await grow(el, 'is-open', () => { show('board'); staggerIn(boardNodes()); });
+  busy = false;
 }
 $('tcEl').onclick = () => openSession($('tcEl'));
 $('tcEm').onclick = () => openSession($('tcEm'));
@@ -1217,45 +1337,44 @@ function bindGestures(slot){
 }
 
 /* ═══ APERTURA / CHIUSURA SCHEDA ═════════════════════════ */
-function open(id, card){
-  if(cur) return;
+/* stessa espansione delle card di seduta: la miniatura si allarga a tutto
+   schermo, poi le sezioni della scheda entrano scaglionate.            */
+async function open(id, card){
+  if(cur || busy) return;
+  busy = true;
   cur = state.find(s => s.id===id);
-  card.classList.add('opening');
-  const go = () => {
-    card.classList.remove('opening'); card.style.viewTransitionName='';
-    fill(); $('board').classList.add('hidden');
-    detail.classList.add('open'); detail.setAttribute('aria-hidden','false');
-    detail.style.viewTransitionName='card-morph';
-  };
-  setTimeout(() => {
-    if(document.startViewTransition){
-      card.style.viewTransitionName='card-morph';
-      document.startViewTransition(go);
-    } else { go(); detail.classList.add('fb');
-             setTimeout(()=>detail.classList.remove('fb'),360); }
-  }, 120);
+  await grow(card, 'opening', () => {
+    fill();
+    $('board').classList.add('hidden');
+    detail.classList.add('open');
+    detail.setAttribute('aria-hidden','false');
+    staggerIn(detailNodes());
+  });
+  busy = false;
 }
-function close(){
-  /* il callback di startViewTransition è ASINCRONO: il paziente va catturato
-     in una locale, altrimenti `cur` è già null quando il callback parte. */
-  const p = cur; if(!p) return;
-  cur = null; persist();
+
+async function close(){
+  /* il paziente va catturato in una locale: `cur` viene azzerato subito,
+     ma i callback dell'animazione girano dopo.                          */
+  const p = cur; if(!p || busy) return;
+  cur = null; busy = true; persist();
+
   const slot = grid.querySelector(`.slot[data-id="${p.id}"]`);
   const card = slot && slot.querySelector('.card-mini');
-  const go = () => {
-    detail.style.viewTransitionName='';
-    detail.classList.remove('open'); detail.setAttribute('aria-hidden','true');
+
+  await staggerOut(detailNodes());
+
+  const chiudi = () => {
+    detail.classList.remove('open');
+    detail.setAttribute('aria-hidden','true');
     $('board').classList.remove('hidden');
-    if(slot){ slot.dataset.state=p.stato;
-              slot.querySelector('.mini-sum').innerHTML=summary(p); }
+    if(slot){ slot.dataset.state = p.stato;
+              slot.querySelector('.mini-sum').innerHTML = summary(p); }
     refreshCounts();
-    if(card) card.style.viewTransitionName='card-morph';
   };
-  if(document.startViewTransition){
-    detail.style.viewTransitionName='card-morph';
-    document.startViewTransition(go).finished
-      .finally(()=>{ if(card) card.style.viewTransitionName=''; });
-  } else go();
+  if(card) await shrink(card, chiudi);
+  else chiudi();
+  busy = false;
 }
 
 /* ═══ DETTAGLIO ══════════════════════════════════════════ */
