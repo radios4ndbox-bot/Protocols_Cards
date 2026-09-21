@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<title>Protocol Cards</title>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   PROTOCOL CARDS — prototipo interazione
+   Animazione card ispirata a Uiverse.io / Novaxlo (card-time-cloud),
+   ri-agganciata a stato invece che :hover e portata a schermo pieno
+   tramite View Transitions API.
+   ═══════════════════════════════════════════════════════════ */
+
+:root{
+  --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a; --border:#2e3350;
+  --text:#e8ecf4; --muted:#7a82a0; --accent:#4f8ef7;
+
+  /* stati — il --color1 della card originale diventa canale di stato */
+  --st-todo:#ed782a;   /* da protocollare : arancio (colore originale) */
+  --st-set:#2ec4a0;    /* impostata       : verde acqua                */
+  --st-done:#6d7488;   /* completata      : grigio                     */
+
+  --r:14px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'SF Pro Text',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  overflow:hidden;
+}
+
+/* ─── APP BAR ─────────────────────────────────────────── */
+.appbar{
+  position:fixed;top:0;left:0;right:0;z-index:40;
+  padding:14px 16px 12px;background:rgba(15,17,23,.92);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.appbar h1{font-size:16px;font-weight:650;letter-spacing:-.2px}
+.appbar .date{font-size:11px;color:var(--muted);margin-top:1px;
+  font-variant-numeric:tabular-nums}
+.appbar .proto{
+  margin-left:auto;font-size:9px;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:3px 9px;
+}
+
+/* ─── BOARD ───────────────────────────────────────────── */
+.board{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  padding:74px 14px calc(28px + var(--safe-b));
+  -webkit-overflow-scrolling:touch;
+}
+.board.hidden{display:none}
+
+.legend{
+  display:flex;gap:14px;flex-wrap:wrap;
+  padding:2px 2px 14px;font-size:10.5px;color:var(--muted);
+}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;
+  margin-right:5px;vertical-align:1px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+
+/* ─── MINIATURA ───────────────────────────────────────── */
+.slot{position:relative;border-radius:var(--r)}
+
+/* strato rivelato dallo swipe */
+.slot::after{
+  content:'✓  completato';position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:flex-end;
+  padding-right:16px;border-radius:var(--r);
+  background:linear-gradient(90deg,transparent,rgba(109,116,136,.22));
+  font-size:11px;font-weight:600;color:var(--st-done);
+  opacity:0;transition:opacity .2s;pointer-events:none;
+}
+.slot.swiping::after{opacity:1}
+.slot[data-state="done"]::after{content:'↩  riattiva';
+  background:linear-gradient(90deg,transparent,rgba(237,120,42,.18));color:var(--st-todo)}
+
+.card-mini{
+  --color1:var(--st-todo);
+  position:relative;height:104px;border-radius:var(--r);
+  border:1.5px solid var(--color1);
+  background:var(--surface);overflow:hidden;cursor:pointer;
+  transition:transform .28s cubic-bezier(.32,.72,0,1),
+             border-color .4s ease, box-shadow .3s ease, opacity .3s ease;
+  box-shadow:0 1px 0 rgba(0,0,0,.3);
+  touch-action:pan-y;
+  will-change:transform;
+}
+.card-mini:active{transform:scale(.955)}
+
+/* strato "cielo" — il back della card originale */
+.mini-back{
+  position:absolute;inset:0;border-radius:var(--r);overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 118%,
+    color-mix(in srgb,var(--color1) 42%,transparent) 0%,transparent 62%);
+}
+.mini-back::before{
+  content:'';position:absolute;width:190%;aspect-ratio:1;left:-45%;top:14%;
+  background:radial-gradient(closest-side,
+    color-mix(in srgb,var(--color1) 20%,transparent),transparent 72%);
+  animation:rotate-cloud 18s linear infinite;
+}
+@keyframes rotate-cloud{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.mini-back::before{animation:none}}
+
+/* strato "front" — scivola via in apertura */
+.mini-front{
+  position:absolute;inset:0;border-radius:var(--r);
+  background:linear-gradient(180deg,var(--surface) 58%,var(--surface2));
+  transition:transform .42s cubic-bezier(.32,.72,0,1);
+  will-change:transform;
+}
+.card-mini.opening .mini-front{transform:translateY(102%)}
+
+.mini-body{position:absolute;inset:0;padding:11px 12px;display:flex;flex-direction:column}
+.mini-name{
+  font-size:13px;font-weight:650;line-height:1.24;letter-spacing:-.2px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.mini-time{
+  margin-top:auto;font-size:19px;font-weight:700;color:var(--color1);
+  font-variant-numeric:tabular-nums;letter-spacing:-.5px;
+  transition:color .4s ease;
+}
+.mini-sum{
+  display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;min-height:15px;
+}
+.mini-sum span{
+  font-size:8.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
+  padding:2px 5px;border-radius:4px;
+  background:color-mix(in srgb,var(--color1) 15%,transparent);
+  color:var(--color1);border:.5px solid color-mix(in srgb,var(--color1) 32%,transparent);
+}
+.mini-dot{
+  position:absolute;top:11px;right:11px;width:7px;height:7px;border-radius:50%;
+  background:var(--color1);box-shadow:0 0 0 3px color-mix(in srgb,var(--color1) 16%,transparent);
+  transition:background .4s ease;
+}
+
+/* stati */
+.slot[data-state="set"]  .card-mini{--color1:var(--st-set)}
+.slot[data-state="done"] .card-mini{--color1:var(--st-done);opacity:.55}
+.slot[data-state="done"] .mini-name{color:var(--muted)}
+.slot[data-state="done"] .mini-back::before{animation:none}
+
+/* ─── DETTAGLIO A SCHERMO PIENO ───────────────────────── */
+.detail{
+  position:fixed;inset:0;z-index:50;background:var(--bg);
+  display:none;flex-direction:column;
+}
+.detail.open{display:flex}
+
+.d-head{
+  --color1:var(--st-todo);
+  position:relative;flex-shrink:0;overflow:hidden;
+  padding:calc(14px + env(safe-area-inset-top,0px)) 16px 16px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--color1) 15%,var(--surface)),var(--surface));
+}
+.detail[data-state="set"]  .d-head{--color1:var(--st-set)}
+.detail[data-state="done"] .d-head{--color1:var(--st-done)}
+
+.d-top{display:flex;align-items:flex-start;gap:12px}
+.d-back{
+  flex-shrink:0;width:36px;height:36px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text);font-size:17px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.d-back:active{transform:scale(.92)}
+.d-name{font-size:17px;font-weight:700;line-height:1.2;letter-spacing:-.3px}
+.d-age{font-size:12px;color:var(--muted);font-weight:500;margin-top:3px}
+/* l'orario cresce come 'hour' nella card originale (1.5em → 3em) */
+.d-time{
+  margin-left:auto;font-size:30px;font-weight:700;color:var(--color1);
+  font-variant-numeric:tabular-nums;letter-spacing:-1px;line-height:1;
+}
+
+.d-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 16px calc(96px + var(--safe-b))}
+
+.sec{padding:16px 0;border-bottom:1px solid var(--border)}
+.sec:last-child{border-bottom:none}
+.sec-t{
+  font-size:9.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:10px;
+}
+
+.ris{display:flex;flex-direction:column;gap:9px}
+.ris-row{display:flex;gap:10px;font-size:13px;line-height:1.42}
+.ris-row b{
+  flex-shrink:0;width:60px;font-size:9.5px;font-weight:700;letter-spacing:.7px;
+  text-transform:uppercase;color:var(--muted);padding-top:3px;
+}
+
+/* suggerimento protocollo */
+.sugg{
+  display:flex;align-items:flex-start;gap:11px;padding:12px;
+  border:1px solid color-mix(in srgb,var(--accent) 38%,transparent);
+  background:color-mix(in srgb,var(--accent) 9%,transparent);
+  border-radius:11px;cursor:pointer;
+}
+.sugg:active{transform:scale(.985)}
+.sugg-r{flex-shrink:0;width:16px;height:16px;border-radius:50%;margin-top:1px;
+  border:2px solid var(--accent);position:relative}
+.sugg.on .sugg-r::after{content:'';position:absolute;inset:2.5px;border-radius:50%;
+  background:var(--accent)}
+.sugg-n{font-size:13.5px;font-weight:650}
+.sugg-w{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+.sugg-src{
+  margin-left:auto;flex-shrink:0;font-size:8.5px;font-weight:700;letter-spacing:.5px;
+  color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);
+  border-radius:4px;padding:2px 5px;
+}
+
+/* ─── FASI : i due dropdown in combo ──────────────────── */
+.combo{display:flex;gap:8px;align-items:stretch}
+.fld{flex:1;min-width:0;position:relative}
+.fld-l{font-size:9px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px;display:block}
+
+select.dd,button.dd{
+  width:100%;height:44px;padding:0 30px 0 12px;
+  border:1px solid var(--border);border-radius:10px;background:var(--surface2);
+  color:var(--text);font-size:13.5px;font-family:inherit;text-align:left;
+  cursor:pointer;appearance:none;outline:none;
+}
+select.dd:focus,button.dd:focus{border-color:var(--accent)}
+.fld::after{
+  content:'';position:absolute;right:12px;bottom:17px;width:7px;height:7px;
+  border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);
+  transform:rotate(45deg);pointer-events:none;
+}
+button.dd.ph{color:var(--muted)}
+button.dd:disabled{opacity:.4;cursor:not-allowed}
+
+/* popover zone (multi-selezione) */
+.pop{
+  position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:20;
+  background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+  padding:6px;box-shadow:0 14px 34px rgba(0,0,0,.55);
+  display:none;max-height:262px;overflow-y:auto;
+}
+.pop.open{display:block}
+.pop-i{
+  display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;
+  font-size:13.5px;cursor:pointer;
+}
+.pop-i:active{background:var(--border)}
+.pop-c{
+  width:19px;height:19px;border-radius:5px;border:1.5px solid var(--muted);
+  flex-shrink:0;position:relative;transition:.15s;
+}
+.pop-i.on .pop-c{background:var(--accent);border-color:var(--accent)}
+.pop-i.on .pop-c::after{
+  content:'';position:absolute;left:5.5px;top:2px;width:5px;height:10px;
+  border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(42deg);
+}
+.pop-i small{margin-left:auto;color:var(--muted);font-size:10.5px}
+
+.add{
+  width:100%;height:42px;margin-top:10px;border-radius:10px;border:none;
+  background:var(--accent);color:#fff;font-size:13.5px;font-weight:650;
+  font-family:inherit;cursor:pointer;
+}
+.add:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed}
+.add:not(:disabled):active{transform:scale(.985)}
+
+/* righe fase aggiunte */
+.rows{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+.row{
+  display:flex;align-items:center;gap:9px;padding:10px 11px;
+  background:var(--surface);border:1px solid var(--border);
+  border-left:3px solid var(--ph,var(--accent));border-radius:9px;
+  animation:pop .26s cubic-bezier(.32,.72,0,1);
+}
+@keyframes pop{from{opacity:0;transform:translateY(-6px) scale(.97)}}
+.row-n{font-size:12px;font-weight:700;min-width:62px;color:var(--ph)}
+.row-z{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.row-z span{
+  font-size:9.5px;font-weight:600;padding:2.5px 6px;border-radius:5px;
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+}
+.row-d{
+  width:54px;height:28px;flex-shrink:0;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text);font-size:11px;text-align:center;
+  font-family:inherit;outline:none;
+}
+.row-d:focus{border-color:var(--accent)}
+.row-x{
+  flex-shrink:0;width:26px;height:26px;border-radius:7px;border:none;
+  background:transparent;color:var(--muted);font-size:17px;cursor:pointer;line-height:1;
+}
+.row-x:active{background:var(--border)}
+.empty{
+  padding:20px;text-align:center;font-size:12px;color:var(--muted);
+  border:1px dashed var(--border);border-radius:10px;margin-top:12px;
+}
+
+/* mdc */
+.mdc{display:flex;align-items:center;gap:13px;padding:13px;
+  background:var(--surface);border:1px solid var(--border);border-radius:11px}
+.mdc-v{font-size:19px;font-weight:700;letter-spacing:-.4px;color:var(--st-set);
+  font-variant-numeric:tabular-nums}
+.mdc-s{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4}
+.mdc-a{margin-left:auto;text-align:right;font-size:10.5px;color:var(--muted)}
+
+/* barra azione */
+.d-act{
+  position:absolute;left:0;right:0;bottom:0;z-index:10;
+  padding:12px 16px calc(12px + var(--safe-b));
+  background:linear-gradient(180deg,transparent,var(--bg) 24%);
+}
+.set-btn{
+  width:100%;height:52px;border-radius:13px;border:none;
+  background:var(--st-set);color:#06231b;font-size:15.5px;font-weight:750;
+  font-family:inherit;cursor:pointer;letter-spacing:.2px;
+  transition:transform .12s, background .25s;
+}
+.set-btn:active{transform:scale(.978)}
+.set-btn:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed}
+.set-btn.re{background:var(--surface2);color:var(--text);
+  border:1px solid var(--border)}
+
+/* toast */
+.toast{
+  position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%) translateY(14px);
+  z-index:60;background:var(--surface2);border:1px solid var(--border);
+  border-radius:99px;padding:9px 17px;font-size:12.5px;font-weight:600;
+  opacity:0;pointer-events:none;transition:.26s cubic-bezier(.32,.72,0,1);
+  box-shadow:0 10px 30px rgba(0,0,0,.5);white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ─── VIEW TRANSITION ─────────────────────────────────── */
+@media (prefers-reduced-motion:no-preference){
+  ::view-transition-old(card-morph),
+  ::view-transition-new(card-morph){
+    animation-duration:.42s;
+    animation-timing-function:cubic-bezier(.32,.72,0,1);
+  }
+}
+/* fallback quando la View Transitions API non c'è */
+.detail.fb{animation:fb .34s cubic-bezier(.32,.72,0,1)}
+@keyframes fb{from{opacity:0;transform:scale(.94) translateY(16px)}}
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <div>
+    <h1>Protocol Cards</h1>
+    <div class="date" id="today">—</div>
+  </div>
+  <span class="proto">prototipo · dati fittizi</span>
+</div>
+
+<main class="board" id="board">
+  <div class="legend">
+    <span><i style="background:var(--st-todo)"></i>da protocollare</span>
+    <span><i style="background:var(--st-set)"></i>impostata</span>
+    <span><i style="background:var(--st-done)"></i>completata · swipe ←</span>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<section class="detail" id="detail" aria-hidden="true">
+  <div class="d-head">
+    <div class="d-top">
+      <button class="d-back" id="back" aria-label="Indietro">←</button>
+      <div style="min-width:0">
+        <div class="d-name" id="dName"></div>
+        <div class="d-age" id="dAge"></div>
+      </div>
+      <div class="d-time" id="dTime"></div>
+    </div>
+  </div>
+
+  <div class="d-scroll">
+    <div class="sec">
+      <div class="sec-t">Richiesta RIS</div>
+      <div class="ris">
+        <div class="ris-row"><b>Esame</b><span id="dExam"></span></div>
+        <div class="ris-row"><b>Quesito</b><span id="dQ"></span></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t">Protocollo suggerito</div>
+      <div class="sugg on" id="sugg">
+        <div class="sugg-r"></div>
+        <div style="min-width:0">
+          <div class="sugg-n" id="sName"></div>
+          <div class="sugg-w" id="sWhy"></div>
+        </div>
+        <span class="sugg-src">SIRM</span>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t">Fasi di acquisizione</div>
+      <div class="combo">
+        <div class="fld">
+          <label class="fld-l" for="ddPhase">Fase</label>
+          <select class="dd" id="ddPhase">
+            <option value="">Seleziona…</option>
+            <option value="basale">Basale</option>
+            <option value="arteriosa">Arteriosa</option>
+            <option value="venosa">Venosa</option>
+            <option value="tardiva">Eq. tardiva</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label class="fld-l" for="ddZone">Zone</label>
+          <button class="dd ph" id="ddZone" disabled>Scegli la fase</button>
+          <div class="pop" id="pop"></div>
+        </div>
+      </div>
+      <button class="add" id="addBtn" disabled>+ Aggiungi fase</button>
+
+      <div class="rows" id="rows"></div>
+      <div class="empty" id="empty">Nessuna fase impostata</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t">Mezzo di contrasto</div>
+      <div class="mdc">
+        <div>
+          <div class="mdc-v" id="mdcV">—</div>
+          <div class="mdc-s" id="mdcS">aggiungi una fase con contrasto</div>
+        </div>
+        <div class="mdc-a">Iomeron 400<br>0,40 gI/ml</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-act">
+    <button class="set-btn" id="setBtn" disabled>Imposta</button>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ═══ DATI FITTIZI ═══════════════════════════════════════ */
+const PATIENTS = [
+  { id:'0D24001', nome:'ROSSI MARIO', eta:71, ora:'08:30', peso:78,
+    esame:'TC TORACE CON E SENZA MDC', quesito:'Sospetta embolia polmonare',
+    sugg:'AngioTC Polmonare', why:'quesito «embolia polmonare» · esame TC torace c.m.' },
+  { id:'0D24002', nome:'BIANCHI GIUSEPPINA', eta:84, ora:'08:50', peso:62,
+    esame:'TC ENCEFALO SENZA MDC', quesito:'Trauma cranico, caduta accidentale',
+    sugg:'TC Cranio – Trauma cranico acuto', why:'quesito «trauma cranico» · esame TC encefalo' },
+  { id:'0D24003', nome:'GALIMBERTI NATALE', eta:66, ora:'09:15', peso:91,
+    esame:'TC ADDOME COMPLETO CON E SENZA MDC', quesito:'Epatopatia cronica, sorveglianza HCC',
+    sugg:'Fegato cirrotico – Stadiazione', why:'quesito «sorveglianza HCC» · protocollo quadrifasico' },
+  { id:'0D24004', nome:'FERRARI ANNA', eta:58, ora:'09:40', peso:70,
+    esame:'TC TORACE ADDOME CON MDC', quesito:'Restaging neoplasia mammaria',
+    sugg:'Oncologia – Ristadiazione', why:'quesito «restaging» · torace-addome c.m.' },
+  { id:'0D24005', nome:'BRAMBILLA COLOMBO SILVANA', eta:79, ora:'10:05', peso:55,
+    esame:'TC ADDOME SUPERIORE CON MDC', quesito:'Dolore addominale, sospetta colecistite',
+    sugg:'Vie biliari – Patologia infiammatoria', why:'quesito «colecistite» · addome superiore' },
+  { id:'0D24006', nome:'ESPOSITO CARMINE', eta:62, ora:'10:30', peso:88,
+    esame:'ANGIO TC AORTA ADDOMINALE', quesito:'Controllo endoprotesi aortica, sospetto endoleak',
+    sugg:'AngioTC Aorta Addominale – controllo endoprotesi', why:'quesito «endoleak» · angio-TC' },
+  { id:'0D24007', nome:'MORETTI TERESA', eta:75, ora:'11:00', peso:66,
+    esame:'TC ENCEFALO SENZA MDC URGENTE', quesito:'Deficit neurologico acuto, sospetto stroke',
+    sugg:'TC Encefalo + angio-TC – Stroke', why:'quesito «stroke» · protocollo trifasico' },
+  { id:'0D24008', nome:'VILLA ROBERTO', eta:69, ora:'11:25', peso:82,
+    esame:'URO TC', quesito:'Ematuria macroscopica',
+    sugg:'UROTC Split Bolus', why:'quesito «ematuria» · protocollo urografico' },
+];
+
+/* zone disponibili per fase — il secondo dropdown dipende dal primo */
+const ZONES = {
+  basale:   [['ENC','Encefalo'],['Collo','Collo'],['ADs','Addome sup.'],['ADc','Addome compl.'],
+             ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']],
+  arteriosa:[['ADs','Addome sup.'],['ADc','Addome compl.'],['TAs','Torace-addome sup.'],
+             ['TAc','Torace-addome compl.'],['Collo TAs','Collo + tor-add sup.'],
+             ['Collo TAc','Collo + tor-add compl.'],['Angio TC','Angio-TC']],
+  venosa:   [['ADs','Addome sup.'],['ADc','Addome compl.'],['TAs','Torace-addome sup.'],
+             ['TAc','Torace-addome compl.'],['Collo TAs','Collo + tor-add sup.'],
+             ['Collo TAc','Collo + tor-add compl.']],
+  tardiva:  [['ADs','Addome sup.'],['ADc','Addome compl.'],['TAs','Torace-addome sup.'],
+             ['TAc','Torace-addome compl.'],['ENC','Encefalo']],
+};
+const PH = {
+  basale:   { l:'Basale',      c:'#7a82a0', mdc:false, delay:null },
+  arteriosa:{ l:'Arteriosa',   c:'#4f8ef7', mdc:true,  delay:'B-T' },
+  venosa:   { l:'Venosa',      c:'#4f8ef7', mdc:true,  delay:'70' },
+  tardiva:  { l:'Eq. tardiva', c:'#e2703a', mdc:true,  delay:'300' },
+};
+
+/* SIRM: IDR target gI/s e quantità di iodio gI/kg (valori d'esempio) */
+const IDR = 1.4, GI_KG = 0.63, CONC = 0.40;   // Iomeron 400
+
+/* ═══ STATO ══════════════════════════════════════════════ */
+const state = PATIENTS.map(p => ({ ...p, stato:'todo', fasi:[] }));
+let cur = null, pick = [];
+
+const $ = id => document.getElementById(id);
+const grid = $('grid'), detail = $('detail'), board = $('board');
+
+$('today').textContent = new Date().toLocaleDateString('it-IT',
+  { weekday:'long', day:'numeric', month:'long' });
+
+/* ═══ BOARD ══════════════════════════════════════════════ */
+function summary(p){
+  if(!p.fasi.length) return '';
+  return p.fasi.map(f=>`<span>${PH[f.fase].l.slice(0,3)}</span>`).join('');
+}
+
+function renderBoard(){
+  grid.innerHTML = '';
+  state.forEach(p => {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    slot.dataset.state = p.stato;
+    slot.dataset.id = p.id;
+    slot.innerHTML = `
+      <div class="card-mini" data-id="${p.id}">
+        <div class="mini-back"></div>
+        <div class="mini-front"></div>
+        <div class="mini-body">
+          <div class="mini-name">${p.nome}</div>
+          <div class="mini-sum">${summary(p)}</div>
+          <div class="mini-time">${p.ora}</div>
+        </div>
+        <div class="mini-dot"></div>
+      </div>`;
+    grid.appendChild(slot);
+    bindGestures(slot);
+  });
+}
+
+/* ═══ GESTI : tap vs swipe ═══════════════════════════════ */
+function bindGestures(slot){
+  const card = slot.querySelector('.card-mini');
+  let x0=0, y0=0, dx=0, dy=0, dragging=false, decided=false, active=false;
+
+  card.addEventListener('pointerdown', e => {
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+    active=true; decided=false; dragging=false;
+    x0=e.clientX; y0=e.clientY; dx=0; dy=0;
+    card.style.transition='none';
+  });
+
+  card.addEventListener('pointermove', e => {
+    if(!active) return;
+    dx=e.clientX-x0; dy=e.clientY-y0;
+    if(!decided && (Math.abs(dx)>8 || Math.abs(dy)>8)){
+      decided=true;
+      dragging = Math.abs(dx) > Math.abs(dy)*1.3;   // orizzontale → swipe
+      if(dragging){ try{card.setPointerCapture(e.pointerId);}catch(_){} }
+    }
+    if(dragging){
+      e.preventDefault();
+      const done = slot.dataset.state === 'done';
+      // done → si trascina a destra per riattivare, altrimenti a sinistra
+      const t = done ? Math.max(0, Math.min(dx, 130)) : Math.min(0, Math.max(dx, -130));
+      card.style.transform = `translateX(${t}px)`;
+      slot.classList.toggle('swiping', Math.abs(t) > 26);
+    }
+  });
+
+  const end = () => {
+    if(!active) return;
+    active=false;
+    card.style.transition='';
+    card.style.transform='';
+    const moved = Math.abs(dx);
+    if(dragging && moved > 72){
+      const p = state.find(s => s.id === slot.dataset.id);
+      if(slot.dataset.state === 'done' && dx > 0){
+        p.stato = p.fasi.length ? 'set' : 'todo';
+        toast('Scheda riattivata');
+      } else if(slot.dataset.state !== 'done' && dx < 0){
+        p.stato = 'done';
+        toast('Esame completato');
+      }
+      slot.dataset.state = p.stato;
+    } else if(!dragging && moved < 9 && Math.abs(dy) < 9){
+      open(slot.dataset.id, card);
+    }
+    slot.classList.remove('swiping');
+    dragging=false;
+  };
+  card.addEventListener('pointerup', end);
+  card.addEventListener('pointercancel', end);
+  card.addEventListener('click', e => e.preventDefault());
+}
+
+/* ═══ APERTURA : miniatura → schermo pieno ═══════════════ */
+function open(id, card){
+  if(cur) return;                                    // evita doppia apertura
+  cur = state.find(s => s.id === id);
+  card.classList.add('opening');                     // il front scivola via
+
+  const go = () => {
+    card.classList.remove('opening');
+    card.style.viewTransitionName = '';
+    fill();
+    board.classList.add('hidden');
+    detail.classList.add('open');
+    detail.setAttribute('aria-hidden','false');
+    detail.style.viewTransitionName = 'card-morph';
+  };
+
+  setTimeout(() => {
+    if(document.startViewTransition){
+      card.style.viewTransitionName = 'card-morph';
+      document.startViewTransition(go);
+    } else {
+      go();
+      detail.classList.add('fb');
+      setTimeout(()=>detail.classList.remove('fb'), 360);
+    }
+  }, 120);
+}
+
+function close(){
+  /* il callback di startViewTransition è ASINCRONO: va catturato il paziente
+     in una locale, altrimenti `cur` è già null quando il callback parte. */
+  const p = cur;
+  if(!p) return;
+  cur = null;
+
+  const slot = grid.querySelector(`.slot[data-id="${p.id}"]`);
+  const card = slot && slot.querySelector('.card-mini');
+
+  const go = () => {
+    detail.style.viewTransitionName = '';
+    detail.classList.remove('open');
+    detail.setAttribute('aria-hidden','true');
+    board.classList.remove('hidden');
+    if(slot){
+      slot.dataset.state = p.stato;
+      slot.querySelector('.mini-sum').innerHTML = summary(p);
+    }
+    if(card) card.style.viewTransitionName = 'card-morph';
+  };
+
+  if(document.startViewTransition){
+    detail.style.viewTransitionName = 'card-morph';
+    const vt = document.startViewTransition(go);
+    vt.finished.finally(()=>{ if(card) card.style.viewTransitionName=''; });
+  } else go();
+}
+
+/* ═══ DETTAGLIO ══════════════════════════════════════════ */
+function fill(){
+  detail.dataset.state = cur.stato;
+  $('dName').textContent = cur.nome;
+  $('dAge').textContent  = `${cur.eta} anni · ${cur.peso} kg · ${cur.id}`;
+  $('dTime').textContent = cur.ora;
+  $('dExam').textContent = cur.esame;
+  $('dQ').textContent    = cur.quesito;
+  $('sName').textContent = cur.sugg;
+  $('sWhy').textContent  = cur.why;
+  $('ddPhase').value = '';
+  pick = [];
+  syncZone();
+  renderRows();
+}
+
+function renderRows(){
+  const box = $('rows');
+  box.innerHTML = '';
+  $('empty').style.display = cur.fasi.length ? 'none' : 'block';
+
+  cur.fasi.forEach((f, i) => {
+    const m = PH[f.fase];
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.style.setProperty('--ph', m.c);
+    row.innerHTML = `
+      <span class="row-n">${m.l}</span>
+      <div class="row-z">${f.zone.map(z=>`<span>${z}</span>`).join('')}</div>
+      ${m.delay!==null ? `<input class="row-d" value="${f.delay}" aria-label="ritardo">` : ''}
+      <button class="row-x" aria-label="Rimuovi">×</button>`;
+    row.querySelector('.row-x').onclick = () => { cur.fasi.splice(i,1); renderRows(); };
+    const d = row.querySelector('.row-d');
+    if(d) d.oninput = e => { f.delay = e.target.value; };
+    box.appendChild(row);
+  });
+
+  calcMdc();
+  const btn = $('setBtn');
+  btn.disabled = !cur.fasi.length;
+  btn.textContent = cur.stato === 'todo' ? 'Imposta' : 'Aggiorna';
+  btn.classList.toggle('re', cur.stato !== 'todo');
+}
+
+function calcMdc(){
+  const withMdc = cur.fasi.some(f => PH[f.fase].mdc);
+  if(!withMdc){
+    $('mdcV').textContent = '—';
+    $('mdcS').textContent = 'nessuna fase con contrasto';
+    return;
+  }
+  const it   = (n,d=1) => n.toFixed(d).replace('.', ',');   // decimali all'italiana
+  const vol  = (GI_KG * cur.peso) / CONC;
+  const flow = IDR / CONC;
+  $('mdcV').textContent = `${Math.round(vol)} ml  @  ${it(flow)} ml/s`;
+  $('mdcS').textContent =
+    `IDR ${it(IDR)} gI/s · ${it(GI_KG,2)} gI/kg × ${cur.peso} kg = ${it(GI_KG*cur.peso)} gI`;
+}
+
+/* ═══ COMBO : fase → zone ════════════════════════════════ */
+function syncZone(){
+  const ph  = $('ddPhase').value;
+  const btn = $('ddZone'), pop = $('pop');
+  pop.classList.remove('open');
+  pop.innerHTML = '';
+
+  if(!ph){
+    btn.disabled = true;
+    btn.className = 'dd ph';
+    btn.textContent = 'Scegli la fase';
+    $('addBtn').disabled = true;
+    return;
+  }
+
+  btn.disabled = false;
+  ZONES[ph].forEach(([code,label]) => {
+    const it = document.createElement('div');
+    it.className = 'pop-i' + (pick.includes(code) ? ' on' : '');
+    it.innerHTML = `<div class="pop-c"></div><span>${code}</span><small>${label}</small>`;
+    it.onclick = e => {
+      e.stopPropagation();
+      const i = pick.indexOf(code);
+      i < 0 ? pick.push(code) : pick.splice(i,1);
+      it.classList.toggle('on');
+      labelZone();
+    };
+    pop.appendChild(it);
+  });
+  labelZone();
+}
+
+function labelZone(){
+  const btn = $('ddZone');
+  if(!pick.length){
+    btn.className = 'dd ph';
+    btn.textContent = 'Nessuna zona';
+  } else {
+    btn.className = 'dd';
+    btn.textContent = pick.length <= 2 ? pick.join(', ') : `${pick.length} zone`;
+  }
+  $('addBtn').disabled = !($('ddPhase').value && pick.length);
+}
+
+$('ddPhase').onchange = () => { pick = []; syncZone(); };
+
+$('ddZone').onclick = e => { e.stopPropagation(); $('pop').classList.toggle('open'); };
+document.addEventListener('click', () => $('pop').classList.remove('open'));
+$('pop').onclick = e => e.stopPropagation();
+
+$('addBtn').onclick = () => {
+  const ph = $('ddPhase').value;
+  if(!ph || !pick.length) return;
+  const ex = cur.fasi.find(f => f.fase === ph);
+  if(ex){
+    pick.forEach(z => { if(!ex.zone.includes(z)) ex.zone.push(z); });
+    toast(`${PH[ph].l} aggiornata`);
+  } else {
+    cur.fasi.push({ fase:ph, zone:[...pick], delay:PH[ph].delay || '' });
+    cur.fasi.sort((a,b)=>Object.keys(PH).indexOf(a.fase)-Object.keys(PH).indexOf(b.fase));
+  }
+  $('ddPhase').value = ''; pick = [];
+  syncZone(); renderRows();
+};
+
+$('sugg').onclick = function(){ this.classList.toggle('on'); };
+
+/* ═══ IMPOSTA ════════════════════════════════════════════ */
+$('setBtn').onclick = () => {
+  if(!cur.fasi.length) return;
+  cur.stato = 'set';
+  detail.dataset.state = 'set';
+  toast('Protocollo impostato');
+  setTimeout(close, 380);
+};
+
+$('back').onclick = close;
+
+/* ═══ UTIL ═══════════════════════════════════════════════ */
+let tt;
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(tt);
+  tt = setTimeout(()=>t.classList.remove('show'), 1700);
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && cur) close();
+});
+
+renderBoard();
+</script>
+</body>
+</html>
