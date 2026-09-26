@@ -139,6 +139,16 @@
     return giu > su ? -1 : 1;            // +1 = il blocco prosegue in +y
   }
 
+  /* La colonna «Paziente» è stretta: un nome lungo va a capo su più righe
+     e una parola può iniziare oltre il confine, finendo nella colonna
+     della data di nascita. Da quella cella si prende la data; il resto è
+     nome che ha sforato.                                                 */
+  const RE_DATA_IN = /\b\d{2}\/\d{2}\/\d{4}\b/;
+  function separaNascita(testo) {
+    const t = (testo || '').trim(), m = t.match(RE_DATA_IN);
+    return { data: m ? m[0] : '', resto: (m ? t.replace(m[0], ' ') : t).replace(/\s+/g, ' ').trim() };
+  }
+
   /* ── un blocco → un paziente ──────────────────────────────────────── */
   function leggiBlocco(blocco) {
     const capo = blocco[0].c;
@@ -158,7 +168,9 @@
       incerto:     [],
     };
     if (RE_DATA.test((capo.orario || '').trim())) p.data = capo.orario.trim();
-    if (RE_DATA.test((capo.nascita || '').trim())) p.nascita = capo.nascita.trim();
+    const n0 = separaNascita(capo.nascita);
+    p.nascita = n0.data;
+    if (n0.resto) p.cognome = (p.cognome + ' ' + n0.resto).trim();
 
     let negliEsami = false;
     const quesiti = [];
@@ -180,17 +192,22 @@
         continue;
       }
 
-      /* riga a tutta larghezza, senza codice riconoscibile → quesito */
-      const soloTesto = cod && !RE_CODICE.test(cod) && !RE_ACC.test(cod)
-                        && !c.paziente && !c.orario && !c.nascita;
-      if (soloTesto) { quesiti.push(cod); continue; }
+      /* testo nella prima colonna, senza codice riconoscibile → quesito.
+         La stessa riga può contenere anche l'ultima riga di un nome lungo:
+         il quesito si prende comunque, e il resto della riga prosegue sotto. */
+      const testo = cod && !RE_CODICE.test(cod) && !RE_ACC.test(cod);
+      if (testo) quesiti.push(cod);
+      if (testo && !c.paziente && !c.orario && !c.nascita) continue;
 
       /* altrimenti è il proseguimento delle celle andate a capo */
       const ora = (c.orario || '').trim();
       if (RE_ORA.test(ora)) p.ora = ora;
       else if (ora && !p.data && RE_DATA.test(ora)) p.data = ora;
 
-      if (c.paziente)    p.nome        = (p.nome + ' ' + c.paziente).trim();
+      const n = separaNascita(c.nascita);
+      if (n.data && !p.nascita) p.nascita = n.data;
+      const pezzo = [c.paziente, n.resto].filter(Boolean).join(' ');
+      if (pezzo)         p.nome        = (p.nome + ' ' + pezzo).trim();
       if (c.diagnostica) p.diagnostica = (p.diagnostica + ' ' + c.diagnostica).trim();
       if (c.provenienza) p.provenienza = (p.provenienza + ' ' + c.provenienza).trim();
       if (c.urgenza && !p.urgenza) p.urgenza = c.urgenza.trim();
@@ -200,14 +217,14 @@
     p.quesito = quesiti.join(' ').replace(/\s+/g, ' ').trim();
     p.nomeCompleto = (p.cognome + ' ' + p.nome).replace(/\s+/g, ' ').trim();
 
-    /* ── segnalazioni: cosa il parser non è riuscito a ricavare ─────── */
-    if (!p.nomeCompleto)           p.incerto.push('nome');
+    /* ── segnalazioni: cosa il parser non è riuscito a ricavare ───────
+       Solo i campi che servono: il nome del paziente non entra nella scelta
+       del protocollo, quindi non genera segnalazioni, qualunque sia la sua
+       lunghezza o forma.                                                */
     if (!p.nascita)                p.incerto.push('data di nascita');
     if (!p.ora)                    p.incerto.push('orario');
     if (!p.esami.length)           p.incerto.push('nessun esame');
     if (!p.quesito)                p.incerto.push('quesito');
-    if (p.nomeCompleto && p.nomeCompleto.split(/\s+/).length < 2)
-      p.incerto.push('nome incompleto');
 
     return p;
   }

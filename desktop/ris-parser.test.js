@@ -154,6 +154,35 @@ ok('stesso esito su documento con assi invertiti',
 ok('nomi identici', rc.pazienti.map(p => p.nomeCompleto).join('|')
    === r.pazienti.map(p => p.nomeCompleto).join('|'));
 
+/* Nomi lunghi: quattro nomi vanno a capo su più righe della colonna
+   stretta «Paziente». Due casi limite visti nei generatori PDF:
+   · una parola che inizia oltre il confine finisce nella colonna della
+     data di nascita, sulla stessa riga della data;
+   · l'ultima riga del nome cade alla stessa altezza del quesito.       */
+console.log('\n── PAZIENTE CON QUATTRO O PIÙ NOMI ─────');
+{
+  const it = [];
+  const y = 100, acc = '0D10000077';
+  const riga = (dy, celle) => Object.entries(celle).forEach(([col, t]) => it.push({ x: X[col], y: y + dy, t }));
+  riga(0,  { codice: acc, orario: '21/09/2026', paziente: 'BRAMBILLA', nascita: '03/02/1948', diagnostica: 'TAC', provenienza: 'DES-RAD', stato: 'Da eseguire' });
+  it.push({ x: 372, y, t: 'COLOMBO' });                         // sfora nella colonna nascita
+  riga(12, { orario: '10:45', paziente: 'MARIA', diagnostica: 'BASE', provenienza: 'TAC' });
+  riga(24, { paziente: 'GIUSEPPINA' });
+  riga(36, { paziente: 'ANTONIETTA' });
+  riga(49, { codice: 'sospetta embolia polmonare', paziente: 'LUCIA' });   // stessa riga del quesito
+  riga(75, { codice: 'Codice', descrizione: 'Descrizione', urgenza: 'Stato esame', tariffario: 'Tariffario', dose: 'Dose' });
+  riga(92, { codice: '6988020', descrizione: 'TC TORACE CON MDC', statoEsame: 'Da eseguire' });
+  const r4 = parseRis([it], { larghezzaPagina: (961 - 64) / (0.8562 - 0.0567) });
+  const p4 = r4.pazienti[0] || {};
+  ok('un paziente', r4.pazienti.length === 1, r4.pazienti.length + '');
+  ok('tutti e sei i nomi, nell’ordine', p4.nomeCompleto === 'BRAMBILLA COLOMBO MARIA GIUSEPPINA ANTONIETTA LUCIA', p4.nomeCompleto);
+  ok('data di nascita non contaminata dal nome', p4.nascita === '03/02/1948', p4.nascita);
+  ok('quesito recuperato anche sulla riga del nome', p4.quesito === 'sospetta embolia polmonare', p4.quesito);
+  ok('orario', p4.ora === '10:45', p4.ora);
+  ok('esame', (p4.esami || []).length === 1 && p4.esami[0].descrizione === 'TC TORACE CON MDC');
+  ok('nessuna segnalazione', !(p4.incerto || []).length, (p4.incerto || []).join(', '));
+}
+
 console.log('\n── SEGNALAZIONI SU DATI INCOMPLETI ─────');
 const monco = [[{ x:X.codice, y:100, t:'0D10000009' },
                 { x:X.orario, y:100, t:'21/09/2026' },
@@ -162,7 +191,7 @@ const rm = parseRis(monco);
 ok('rileva il paziente comunque', rm.pazienti.length === 1);
 ok('segnala i campi mancanti', rm.pazienti[0].incerto.length >= 3,
    rm.pazienti[0].incerto.join(', '));
-ok('segnala nome assente', rm.pazienti[0].incerto.includes('nome'));
+ok('il nome non genera segnalazioni', !rm.pazienti[0].incerto.some(x => /nome/.test(x)), rm.pazienti[0].incerto.join(', '));
 ok('segnala esami assenti', rm.pazienti[0].incerto.includes('nessun esame'));
 
 console.log('\n────────────────────────────────────────');

@@ -907,6 +907,9 @@ function cresci(t){ t.style.height='auto'; t.style.height = t.scrollHeight+'px';
    e il telefono le riceverà entrambe per poter cambiare idea in reparto.
    Gli esami di un paziente si leggono insieme, come un'unica dicitura. */
 const esameDi = p => p.esami.map(e => e.descrizione).join(' · ');
+/* il nome del paziente è irrilevante per il protocollo: fuori dalla
+   tabella di verifica un caso si indica con orario e accettazione      */
+const casoDi = p => `Caso delle ${p.ora || '—'}${p.accession ? ' · ' + p.accession : ''}`;
 const suggerimentoDi = p => PR.suggerisci(libs.ufficiale.protocolli, libs.personale.protocolli, esameDi(p), p.quesito);
 const opzioniDi = p => PR.opzioni(libs.ufficiale.protocolli, libs.personale.protocolli, esameDi(p), p.quesito);
 const trova = id => (id && (libs.personale.protocolli.find(x => x.id === id)
@@ -965,7 +968,7 @@ let popI = null;
 function apriScelta(i, ancora) {
   popI = i;
   const p = pazienti[i];
-  $('popTit').textContent = p.nomeCompleto || 'Paziente';
+  $('popTit').textContent = casoDi(p);
   $('popSub').textContent = `${esameDi(p) || 'nessun esame'} — ${p.quesito || 'nessun quesito'}`;
   $('popCerca').value = '';
   disegnaScelta();
@@ -1063,7 +1066,7 @@ function disegnaTabella() {
     tr.innerHTML = `
       <td class="${seg('orario')}"><input class="cel mono corto" data-k="ora" value="${esc(p.ora)}"></td>
       <td><input class="cel mono" data-k="accession" value="${esc(p.accession)}"></td>
-      <td class="${seg('nome')}"><textarea class="cel" rows="1" data-k="nomeCompleto">${esc(p.nomeCompleto)}</textarea>
+      <td><textarea class="cel" rows="1" data-k="nomeCompleto">${esc(p.nomeCompleto)}</textarea>
         <div class="avvisi">${p.incerto.map(a=>`<span>${esc(a)}</span>`).join('')}</div></td>
       <td class="${seg('nascita')}"><input class="cel mono corto" data-k="nascita" value="${esc(p.nascita)}"></td>
       <td class="${seg('quesito')}"><textarea class="cel" rows="1" data-k="quesito">${esc(p.quesito)}</textarea></td>
@@ -1078,7 +1081,7 @@ function disegnaTabella() {
       if (c.tagName === 'TEXTAREA') c.addEventListener('input', () => cresci(c));
       c.addEventListener('input', () => {
         pazienti[i][c.dataset.k] = c.value;
-        if (['nomeCompleto','nascita','ora','quesito'].includes(c.dataset.k)) ricontrolla(i, tr);
+        if (['nascita','ora','quesito'].includes(c.dataset.k)) ricontrolla(i, tr);
         if (c.dataset.k === 'quesito') cellaProtocollo(tr.querySelector('.c-proto'), pazienti[i], i);
       });
     });
@@ -1100,16 +1103,15 @@ function disegnaTabella() {
    l'evidenziazione sparisce senza dover ricaricare                        */
 function ricontrolla(i, tr) {
   const p = pazienti[i];
+  /* il nome non entra nella scelta del protocollo: non si controlla */
   const a = [];
-  if (!p.nomeCompleto.trim())                          a.push('nome');
-  else if (p.nomeCompleto.trim().split(/\s+/).length<2) a.push('nome incompleto');
   if (!/^\d{2}\/\d{2}\/\d{4}$/.test(p.nascita.trim())) a.push('data di nascita');
   if (!/^\d{2}:\d{2}$/.test(p.ora.trim()))             a.push('orario');
   if (!p.esami.length)                                 a.push('nessun esame');
   if (!p.quesito.trim())                               a.push('quesito');
   p.incerto = a;
   tr.classList.toggle('warn', a.length > 0);
-  const colonna = { 'orario':0, 'nome':2, 'nome incompleto':2, 'data di nascita':3, 'quesito':4 };
+  const colonna = { 'orario':0, 'data di nascita':3, 'quesito':4 };
   tr.querySelectorAll('td').forEach(td => td.classList.remove('segn'));
   const tds = tr.querySelectorAll('td');
   a.forEach(x => { const k = colonna[x]; if (k !== undefined && tds[k]) tds[k].classList.add('segn'); });
@@ -1884,8 +1886,11 @@ function adottaEsempio(e) {
   if (a.regione && !(bozza.reg || []).includes(a.regione)) bozza.reg = [...(bozza.reg || []), a.regione];
 }
 
-/* il caso di un paziente apre il builder già avviato: esempio, termini
-   e, come punto di partenza, il protocollo ufficiale riconosciuto      */
+/* un esempio preso da un paziente porta con sé le parole del nome, solo
+   per escluderle: se compaiono nel quesito non vanno proposte come termini */
+const daPaziente = p => ({ esame: esameDi(p), quesito: p.quesito,
+  escludi: PR.normText(p.nomeCompleto).split(' ').filter(Boolean) });
+
 /* Il paziente segnato con «Insegna» apre il builder già avviato: il suo
    caso come primo esempio, i termini ricavati dal quesito e, come punto
    di partenza, il protocollo in uso per lui (se non ne ha, l'ufficiale
@@ -1900,7 +1905,7 @@ function insegna(i) {
   const p = pazienti[i], base = protocolloDi(p).pr || trova(opzioniDi(p).ufficiale);
   nuovaBozza(base);
   bozza.l = base ? base.l.replace(/ · .*$/, '') + ' · reparto' : '';
-  esempi = [{ esame: esameDi(p), quesito: p.quesito }];
+  esempi = [daPaziente(p)];
   adottaEsempio(esempi[0]);
   bOrigine = i;
   mostraArea('builder');
@@ -1935,6 +1940,7 @@ function statoPassi() {
 function htmlAnalisi(e, j) {
   if (!e.quesito.trim() && !e.esame.trim()) return '<span class="muted">Scrivi esame e quesito: qui compaiono i termini ricavati.</span>';
   const a = PR.analizzaEsempio(e.esame, e.quesito);
+  a.parole = a.parole.filter(w => !(e.escludi || []).includes(w));
   const ch = (tipo, w, on, extra = '') => `<button class="ch ${tipo}${on ? ' on' : ''}" data-bact="${tipo}" data-w="${esc(w)}"${extra}>${esc(w)}</button>`;
   const reg = a.regione ? ch('reg', a.regione, (bozza.reg || []).includes(a.regione), ` title="${esc(PR.ZONE_L[a.regione])}"`) : '';
   const r = esitoEsempio(e);
@@ -1956,7 +1962,7 @@ function disegnaBuilder() {
   <div class="bpassi" id="bTrack"></div>
   ${origine ? `<div class="plate da-paziente">
      <span class="tile t-viola">${ICONE.app}</span>
-     <div><b>Insegni il caso di ${esc(origine.nomeCompleto)}</b>
+     <div><b>Insegni il ${esc(casoDi(origine).replace(/^Caso/, 'caso'))}</b>
        <span>${esc(esameDi(origine))} — ${esc(origine.quesito)}</span>
        <small>${trova(bozza.base) ? `Fasi e contrasto partono da «${esc(trova(bozza.base).l)}», il protocollo in uso: modificali qui sotto.`
          : 'Nessun protocollo in uso: componi le fasi al passo 3.'} Al salvataggio il paziente userà il nuovo protocollo e tornerai alla verifica.</small></div>
@@ -2074,7 +2080,7 @@ bRad.addEventListener('change', e => {
   const t = e.target;
   if (t.dataset.es === 'quesito' || t.dataset.es === 'esame') { adottaEsempio(esempi[+t.dataset.j]); disegnaBuilder(); }
   if (t.dataset.bactSel === 'dalla-lista' && t.value !== '') {
-    const p = pazienti[+t.value], e = { esame: esameDi(p), quesito: p.quesito };
+    const p = pazienti[+t.value], e = daPaziente(p);
     const vuoto = esempi.findIndex(x => !x.esame.trim() && !x.quesito.trim());
     if (vuoto >= 0) esempi[vuoto] = e; else esempi.push(e);
     adottaEsempio(e); disegnaBuilder();
