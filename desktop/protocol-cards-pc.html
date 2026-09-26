@@ -124,7 +124,8 @@ main{padding:30px 0 60px}
 .area.on{display:block}
 .intro{display:flex;align-items:flex-end;gap:24px;margin:10px 4px 26px;flex-wrap:wrap}
 .intro h2{font-size:clamp(1.8rem,3vw,2.5rem);margin-top:10px}
-.intro .lede{color:var(--ink-2);max-width:60ch;margin-top:8px}
+.intro > div:first-child{flex:1 1 520px;min-width:0}
+.intro .lede{color:var(--ink-2);max-width:78ch;margin-top:8px}
 
 /* ═══ LISTA DEL GIORNO ═══════════════════════════════════════════ */
 .passi{display:flex;gap:6px;padding:6px;border-radius:99px;background:var(--sunk);box-shadow:var(--well)}
@@ -167,9 +168,9 @@ main{padding:30px 0 60px}
 .chip.ok{background:var(--jade-s);color:var(--jade-ink)}
 .chip.warn{background:var(--amber-s);color:var(--amber-ink)}
 
-.tabwrap{border-radius:var(--r-md);box-shadow:var(--clay);overflow:hidden;
+.tabwrap{border-radius:var(--r-md);box-shadow:var(--clay);overflow-x:auto;scrollbar-width:thin;
   background:linear-gradient(160deg,#FAFCFF,var(--plate) 46%,var(--plate-2))}
-.tab{width:100%;border-collapse:collapse}
+.tab{width:100%;min-width:1120px;border-collapse:collapse}
 .tab th{text-align:left;font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
   color:var(--ink-2);padding:14px 12px;background:rgba(220,228,243,.55);white-space:nowrap}
 .tab td{padding:8px 12px;border-top:1px solid var(--line);vertical-align:top;font-size:.86rem}
@@ -373,12 +374,78 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .toast button{border:0;cursor:pointer;padding:7px 14px;border-radius:99px;font-size:.8rem;font-weight:700;color:#0E3A2E;background-image:var(--gloss-jade)}
 .toast button:empty{display:none}
 
+/* ── ricerca, schede delle librerie ── */
+.cerca{position:relative;display:block}
+.cerca svg{position:absolute;left:18px;top:50%;width:20px;height:20px;transform:translateY(-50%);fill:none;stroke:var(--ink-2);
+  stroke-width:2;stroke-linecap:round;pointer-events:none}
+.lib .cerca .field{height:54px;padding-left:50px;font-size:1rem;border-radius:18px}
+.cerca .field::placeholder{color:var(--ink-3)}
+.cerca .field::-webkit-search-cancel-button{cursor:pointer}
+.lib-tabs{display:flex;margin:0 0 14px}
+.lib-tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px}
+.lib-tabs button span{min-width:22px;height:20px;padding:0 6px;border-radius:99px;font-size:.7rem;display:inline-flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.7);color:var(--ink-2)}
+.lib-tabs button.on span{background:var(--jade-s);color:var(--jade-ink)}
+.pv-app{margin-left:auto;font-weight:700;color:#5B3FA0;background:#EEE8FA;padding:1px 8px;border-radius:99px}
+.pv-app + .pv-oggi{margin-left:0}
+.vuoto.guida{text-align:left;line-height:1.6;padding:16px 10px}
+.vuoto.guida b{color:var(--ink)}
+
+/* ── voce appresa ── */
+.t-viola{background:linear-gradient(155deg,#F5F1FD,#EEE8FA)}.t-viola svg{stroke:#5B3FA0}
+.volte{margin-left:auto;font-size:.76rem;font-weight:700;color:#5B3FA0;background:#EEE8FA;padding:5px 12px;border-radius:99px;box-shadow:var(--well-s)}
+.firma{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.firma > div{padding:14px 16px;border-radius:var(--r-sm);background:var(--sunk);box-shadow:var(--well-s);min-width:0}
+.firma .lbl{margin:0 0 6px}
+.firma b{font-size:.92rem;font-weight:600;word-break:break-word}
+.firma .mini{display:flex;flex-wrap:wrap;gap:5px}
+.firma .mini span{font-size:.76rem;font-weight:600;padding:2px 10px;border-radius:99px;background:#fff;box-shadow:var(--clay-sm)}
+.link{border:0;background:none;padding:0;cursor:pointer;font:inherit;font-weight:600;color:var(--jade-ink);text-decoration:underline;text-underline-offset:3px;text-align:left}
+
+/* ── scelta del protocollo per paziente ── */
+.c-proto{position:relative}
+.pchip{width:100%;justify-content:flex-start}
+.pchip .pn{flex:1;min-width:0}
+.pchip .caret{flex:0 0 auto;opacity:.55;font-size:.7rem}
+.pchip.pers{background:#EEE8FA;color:#5B3FA0}
+.pchip.pers:hover{background:#E4DBF8}
+.pchip.nessuno{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(35,45,60,.14);color:var(--ink-3);cursor:pointer}
+.ptag{display:inline-block;margin:5px 0 0 8px;font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.pop{position:absolute;z-index:80;width:400px;max-width:calc(100vw - 24px);display:none;flex-direction:column;padding:16px;max-height:470px}
+.pop.on{display:flex}
+.pop-h b{display:block;font-size:.92rem}
+.pop-h small{display:block;font-size:.76rem;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pop .field{height:44px;margin:12px 0 8px;padding-left:46px}
+.pop .cerca svg{left:16px;width:18px;height:18px}
+.pop-list{flex:1;overflow-y:auto;margin:0 -6px;padding:0 6px;scrollbar-width:thin}
+.pop-g{font-size:.64rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:10px 8px 4px}
+.po{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;cursor:pointer;text-align:left;padding:9px 10px;border-radius:12px;font-size:.84rem}
+.po:hover,.po:focus-visible{background:rgba(255,255,255,.8);box-shadow:var(--clay-sm);outline:none}
+.po .fdots{flex:0 0 auto}
+.po .fdots i{width:10px}
+.po span.n{flex:1;min-width:0}
+.po small{color:var(--ink-3);font-size:.72rem;white-space:nowrap}
+.po.att{font-weight:700}
+.po.att::after{content:"✓";color:var(--jade-ink);font-weight:700}
+.pop-f{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.pop-f .btn{flex:1}
+
 @media (max-width:1100px){
+  .pgrid{grid-template-columns:300px minmax(0,1fr);gap:20px}
+  .cards{grid-template-columns:1fr}
+  .qr-griglia{grid-template-columns:1fr}
+  .firma{grid-template-columns:1fr}
+  .fase{grid-template-columns:34px minmax(0,1fr) auto}
+  .fase select.field{grid-column:2;grid-row:1;max-width:220px}
+  .fase-ctl{grid-column:3;grid-row:1}
+  .fase .rit{grid-column:2/-1;grid-row:2}
+  .ed-top .eyebrow{flex:1 1 100%}
+  .prio{margin-left:0;margin-right:auto}
+}
+@media (max-width:900px){
   .pgrid{grid-template-columns:1fr}
   .lib{position:static;max-height:none}
   .lib-list{max-height:320px}
-  .cards{grid-template-columns:1fr}
-  .qr-griglia{grid-template-columns:1fr}
 }
 @media (max-width:760px){
   .bar{flex-wrap:wrap;border-radius:26px}
@@ -526,14 +593,21 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
       <span class="eyebrow">Libreria protocolli</span>
       <h2>Come si acquisisce, per ogni quesito.</h2>
       <p class="lede">Qui si decide cosa suggerirà il telefono: fasi, zone, mezzo di contrasto
-        e i termini del quesito che fanno riconoscere il protocollo.</p>
+        e i termini del quesito che fanno riconoscere il protocollo. I <b>personali</b> hanno la
+        precedenza sugli ufficiali, e si arricchiscono da soli con le scelte fatte in verifica.</p>
     </div>
   </div>
 
   <div class="pgrid">
     <aside class="plate lib">
-      <div class="lib-head"><h3>Libreria</h3><span class="n" id="libN"></span></div>
-      <input class="field" id="libCerca" type="search" placeholder="Cerca per nome o termine…" aria-label="Cerca protocollo">
+      <div class="seg lg lib-tabs" role="tablist" aria-label="Libreria">
+        <button role="tab" data-lib="ufficiale">Ufficiali <span id="nUff"></span></button>
+        <button role="tab" data-lib="personale">Personali <span id="nPers"></span></button>
+      </div>
+      <label class="cerca">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
+        <input class="field" id="libCerca" type="search" placeholder="Cerca per nome o termine…" aria-label="Cerca protocollo">
+      </label>
       <div class="lib-list" id="libList"></div>
       <div class="lib-act">
         <button class="btn solid wide sm" id="libNuovo">+ Nuovo protocollo</button>
@@ -557,6 +631,18 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   <div class="plate modal">
     <h3 id="mTitolo"></h3><p id="mTesto"></p>
     <div class="azioni"><button class="btn sm" id="mNo">Annulla</button><button class="btn solid sm" id="mSi">Conferma</button></div>
+  </div>
+</div>
+<div class="plate pop" id="pop" role="dialog" aria-label="Scegli il protocollo">
+  <div class="pop-h"><b id="popTit"></b><small id="popSub"></small></div>
+  <label class="cerca">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
+    <input class="field" id="popCerca" type="search" placeholder="Cerca protocollo…" aria-label="Cerca protocollo">
+  </label>
+  <div class="pop-list" id="popList"></div>
+  <div class="pop-f">
+    <button class="btn xs" id="popPers" title="Crea un protocollo personale per questo caso e aprilo nell'editor">Personalizza per questo caso</button>
+    <button class="btn xs" id="popApri">Apri nell'editor</button>
   </div>
 </div>
 <div class="toast" id="toast" role="status"><span id="toastT"></span><button id="toastA"></button></div>
@@ -3372,6 +3458,78 @@ var qrcode = function() {
     return { id: best ? best.id : null, regione, candidati };
   }
 
+  /* ═══ APPRENDIMENTO ════════════════════════════════════════════════
+     Come nel prototipo: un caso è identificato da una firma deterministica
+     (esame normalizzato + termini clinici del quesito). Quando per un caso
+     si sceglie un protocollo diverso da quello suggerito, la scelta viene
+     ricordata sotto quella firma, e il caso identico successivo la ritrova. */
+  const LEXICON = ['embolia','dissezione','aneurisma','endoleak','trauma','stroke','ischemia',
+    'emorragia','hcc','cirrosi','epatopatia','colecistite','litiasi','calcoli','ematuria',
+    'idronefrosi','appendicite','diverticolite','occlusione','pielonefrite','nodulo','sarcoidosi',
+    'restaging','ristadiazione','stadiazione','followup','recidiva','neoplasia','metastasi',
+    'linfoma','ascesso','flogosi','infezione','pancreatite','sanguinamento','politrauma','versamento'];
+
+  function normEx(s) {
+    return (s || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/\b(CON E SENZA|SENZA E CON|CON|SENZA)\s+(MDC|CONTRASTO)\b/g, '')
+      .replace(/\b(URGENTE|URG|MDC|CONTRASTO)\b/g, '')
+      .replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  const termini = q => { const t = normText(q);
+    return [...new Set(LEXICON.filter(k => t.includes(k)))].sort(); };
+  const firmaCaso = (esame, quesito) => normEx(esame) + '|' + termini(quesito).join(',');
+
+  /* Suggerimento completo, nell'ordine in cui lo farà il telefono:
+       1. protocollo personale appreso con la stessa firma del caso
+       2. protocolli personali riconosciuti dai loro termini
+       3. protocolli ufficiali riconosciuti dai loro termini
+     I personali vengono prima: sono le scelte del reparto.            */
+  function suggerisci(ufficiali, personali, esame, quesito) {
+    const firma = firmaCaso(esame, quesito);
+    const pers = personali || [];
+    const app = pers.find(p => p.appreso && p.appreso.firma === firma);
+    const rp = riconosci(pers, esame, quesito);
+    const ru = riconosci(ufficiali || [], esame, quesito);
+    let id = null, fonte = null;
+    if (app)        { id = app.id;  fonte = 'appreso'; }
+    else if (rp.id) { id = rp.id;   fonte = 'personale'; }
+    else if (ru.id) { id = ru.id;   fonte = 'ufficiale'; }
+    return { id, fonte, firma, regione: ru.regione, personali: rp, ufficiali: ru };
+  }
+
+  /* Registra una scelta nella libreria personale. Restituisce la voce
+     appresa: nuova, oppure quella esistente per la stessa firma, con il
+     conteggio aggiornato se la configurazione è la stessa o azzerato se
+     è cambiata (come nel prototipo).                                   */
+  function impara(personali, sorgente, esame, quesito, ora) {
+    ora = ora || Date.now();
+    const firma = firmaCaso(esame, quesito);
+    const conf = p => JSON.stringify(canonico({ ...p, id: '', l: '', kw: [], ex: [], reg: null, nota: '' }).fasi)
+                    + '|' + (+p.idr || 0) + '|' + (+p.giKg || 0) + '|' + p.basale;
+    let voce = personali.find(p => p.appreso && p.appreso.firma === firma);
+    if (voce) {
+      if (voce === sorgente || conf(voce) === conf(sorgente)) voce.appreso.volte++;
+      else {
+        Object.assign(voce, { fasi: clona(sorgente.fasi), idr: sorgente.idr, giKg: sorgente.giKg,
+          basale: sorgente.basale, nota: sorgente.nota, base: sorgente.appreso ? sorgente.base : sorgente.id });
+        voce.appreso.volte = 1;
+      }
+      voce.appreso.ultimo = ora;
+      return voce;
+    }
+    const t = termini(quesito);
+    const nome = `${(sorgente.l || 'Protocollo').replace(/ · .*$/, '')} · ${normEx(esame) || 'esame'}${t.length ? ' · ' + t.join(', ') : ''}`;
+    voce = { id: idPersonale(personali, nome), l: nome, idr: sorgente.idr, giKg: sorgente.giKg,
+      basale: sorgente.basale, kw: [], ex: [], nota: sorgente.nota || '', fasi: clona(sorgente.fasi),
+      base: sorgente.appreso ? sorgente.base : sorgente.id,
+      /* della richiesta si conserva solo la firma: esame normalizzato e
+         termini clinici. Il testo libero del quesito può contenere dati
+         del paziente e non resta salvato.                               */
+      appreso: { firma, esame: normEx(esame), termini: t, volte: 1, creato: ora, ultimo: ora } };
+    personali.unshift(voce);
+    return voce;
+  }
+
   /* Applica la regione dell'esame alle fasi del protocollo. Le fasi `fix`
      conservano la propria zona: è intrinseca al protocollo.            */
   function fitZones(fasi, esame) {
@@ -3411,7 +3569,9 @@ var qrcode = function() {
     const hasBas = (p.fasi || []).some(f => f.fase === 'basale');
     if (p.basale === 'req' && !hasBas) add('basale', 'Basale indicata come richiesta ma assente dalle fasi');
     if (p.basale !== 'req' && hasBas) add('basale', 'Basale presente nelle fasi ma indicata come non richiesta');
-    if (!(p.kw || []).length) add('kw', 'Nessun termine del quesito: il protocollo non verrà mai suggerito');
+    /* una voce appresa si riconosce dalla firma del caso: i termini sono
+       facoltativi e servono solo a estenderla a casi simili              */
+    if (!(p.kw || []).length && !p.appreso) add('kw', 'Nessun termine del quesito: il protocollo non verrà mai suggerito');
     return e;
   }
 
@@ -3421,10 +3581,16 @@ var qrcode = function() {
   function nuovaLibreria() {
     return { v: 1, base: 'SIRM 2022', modificata: 0, protocolli: clona(SIRM_2022) };
   }
+  function nuovaLibreriaPersonale() {
+    return { v: 1, base: 'personale', modificata: 0, protocolli: [] };
+  }
 
   function slug(s) {
     return normText(s).replace(/ /g, '-').slice(0, 40) || 'protocollo';
   }
+  /* i protocolli personali hanno sempre il prefisso p-: non possono mai
+     collidere con quelli ufficiali, e dall'id si capisce la libreria    */
+  function idPersonale(protocolli, nome) { return idLibero(protocolli, 'p ' + nome); }
   function idLibero(protocolli, nome) {
     const base = slug(nome);
     let id = base, n = 2;
@@ -3445,6 +3611,10 @@ var qrcode = function() {
         return x;
       }) };
     if (p.reg && p.reg.length) o.reg = p.reg.slice();
+    if (p.base) o.base = p.base;
+    if (p.appreso) o.appreso = { firma: p.appreso.firma, esame: p.appreso.esame || '',
+      termini: (p.appreso.termini || []).slice(),
+      volte: +p.appreso.volte || 1, creato: +p.appreso.creato || 0, ultimo: +p.appreso.ultimo || 0 };
     return o;
   }
 
@@ -3478,9 +3648,10 @@ var qrcode = function() {
     return { v: 1, base: (j && j.base) || 'importata', modificata: Date.now(), protocolli: out };
   }
 
-  const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022,
-    normText, regionOf, riconosci, fitZones, valida,
-    nuovaLibreria, idLibero, canonico, firma, leggiLibreria, clona };
+  const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022, LEXICON,
+    normText, normEx, termini, regionOf, riconosci, fitZones, valida,
+    firmaCaso, suggerisci, impara,
+    nuovaLibreria, nuovaLibreriaPersonale, idLibero, idPersonale, canonico, firma, leggiLibreria, clona };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Protocolli = api;
@@ -3596,27 +3767,132 @@ $('avanti').onclick    = () => vai(3);
 /* ═══ passo 2 · tabella modificabile ═════════════════════════════════ */
 function cresci(t){ t.style.height='auto'; t.style.height = t.scrollHeight+'px'; }
 
-/* il protocollo che il telefono suggerirà: stesso riconoscimento, stessa
-   libreria. Gli esami di un paziente si leggono insieme, come un'unica
-   dicitura, perché la regione può venire da uno qualunque di essi.     */
+/* ═══ protocollo di ciascun paziente ═════════════════════════════════
+   Di base è il suggerimento che farà il telefono: stesso riconoscimento,
+   stesse librerie. Gli esami di un paziente si leggono insieme, come
+   un'unica dicitura, perché la regione può venire da uno qualunque.
+   Se qui si sceglie un protocollo diverso, la scelta viene appresa nella
+   libreria personale e vale per tutti i casi con la stessa firma.     */
+const esameDi = p => p.esami.map(e => e.descrizione).join(' · ');
+const suggerimentoDi = p => PR.suggerisci(libs.ufficiale.protocolli, libs.personale.protocolli, esameDi(p), p.quesito);
+const trova = id => (id && (libs.personale.protocolli.find(x => x.id === id)
+                          || libs.ufficiale.protocolli.find(x => x.id === id))) || null;
+const libDi = id => /^p-/.test(id || '') ? 'personale' : 'ufficiale';
+
+/* p.scelta: assente = segue il suggerimento · null = nessun protocollo,
+   si imposterà sul telefono. Una scelta verso un protocollo poi eliminato
+   torna al suggerimento.                                                */
 function protocolloDi(p) {
-  const r = PR.riconosci(lib.protocolli, p.esami.map(e => e.descrizione).join(' · '), p.quesito);
-  return r.id ? lib.protocolli.find(x => x.id === r.id) : null;
+  if (p.scelta === null) return { pr: null, fonte: 'nessuno' };
+  const s = suggerimentoDi(p);
+  return { pr: trova(s.id), fonte: s.fonte };
 }
-function cellaProtocollo(td, p) {
-  const pr = protocolloDi(p);
-  td.innerHTML = pr
-    ? `<button class="pchip" data-apri="${esc(pr.id)}" title="Apri il protocollo"><span class="dots">${
-        pr.fasi.map(f => `<i style="background:${PR.FASI[f.fase].c}"></i>`).join('')}</span>${esc(pr.l)}</button>`
-    : '<span class="pchip nessuno">nessun suggerimento</span>';
+function cellaProtocollo(td, p, i) {
+  const { pr, fonte } = protocolloDi(p);
+  const pers = pr && libDi(pr.id) === 'personale';
+  const tag = fonte === 'appreso' ? `appreso · ${pr.appreso.volte} ${pr.appreso.volte === 1 ? 'volta' : 'volte'}`
+            : fonte === 'personale' ? 'personale'
+            : fonte === 'nessuno' ? 'si imposta sul telefono' : '';
+  td.innerHTML = `<button class="pchip${pr ? '' : ' nessuno'}${pers ? ' pers' : ''}" data-scegli="${i}" title="Scegli il protocollo">${
+      pr ? `<span class="dots">${pr.fasi.map(f => `<i style="background:${PR.FASI[f.fase].c}"></i>`).join('')}</span>` : ''}
+      <span class="pn">${pr ? esc(pr.l) : fonte === 'nessuno' ? 'nessun protocollo' : 'nessun suggerimento'}</span><span class="caret">▾</span></button>${
+      tag ? `<span class="ptag">${tag}</span>` : ''}`;
 }
 function aggiornaColonnaProtocolli() {
-  document.querySelectorAll('#righe tr').forEach((tr, i) => cellaProtocollo(tr.querySelector('.c-proto'), pazienti[i]));
+  document.querySelectorAll('#righe tr').forEach((tr, i) => cellaProtocollo(tr.querySelector('.c-proto'), pazienti[i], i));
 }
 $('righe').addEventListener('click', e => {
-  const b = e.target.closest('[data-apri]');
-  if (b) { selId = b.dataset.apri; filtro = ''; $('libCerca').value = ''; mostraArea('proto'); }
+  const b = e.target.closest('[data-scegli]');
+  if (b) { e.stopPropagation(); apriScelta(+b.dataset.scegli, b); }
 });
+
+/* ── finestra di scelta ── */
+let popI = null;
+function apriScelta(i, ancora) {
+  popI = i;
+  const p = pazienti[i];
+  $('popTit').textContent = p.nomeCompleto || 'Paziente';
+  $('popSub').textContent = `${esameDi(p) || 'nessun esame'} — ${p.quesito || 'nessun quesito'}`;
+  $('popCerca').value = '';
+  disegnaScelta();
+  /* si apre dal lato con più spazio e non esce mai dalla finestra */
+  const pop = $('pop'), r = ancora.getBoundingClientRect();
+  const sotto = innerHeight - r.bottom - 16, sopra = r.top - 16, giu = sotto >= 360 || sotto >= sopra;
+  pop.style.maxHeight = Math.min(470, giu ? sotto : sopra) + 'px';
+  pop.classList.add('on');
+  const w = pop.offsetWidth, h = pop.offsetHeight;
+  pop.style.left = Math.max(12, Math.min(r.right - w, innerWidth - w - 12)) + scrollX + 'px';
+  pop.style.top  = (giu ? r.bottom + 8 : r.top - h - 8) + scrollY + 'px';
+  $('popCerca').focus();
+}
+function chiudiScelta() { $('pop').classList.remove('on'); popI = null; }
+function disegnaScelta() {
+  const p = pazienti[popI], s = suggerimentoDi(p), att = protocolloDi(p).pr;
+  const q = PR.normText($('popCerca').value);
+  const passa = x => !q || PR.normText([x.l, ...x.kw].join(' ')).includes(q);
+  const voce = (x, nota) => `<button class="po${att && att.id === x.id ? ' att' : ''}" data-id="${esc(x.id)}">${fdots(x)}
+      <span class="n">${esc(x.l)}</span>${nota ? `<small>${nota}</small>` : ''}</button>`;
+  const sug = trova(s.id);
+  const pers = libs.personale.protocolli.filter(x => passa(x) && x !== sug);
+  const uff  = libs.ufficiale.protocolli.filter(x => passa(x) && x !== sug);
+  $('popList').innerHTML =
+      (sug && passa(sug) ? `<div class="pop-g">Suggerito</div>${voce(sug, s.fonte === 'appreso' ? `appreso ×${sug.appreso.volte}` : s.fonte)}` : '')
+    + (pers.length ? `<div class="pop-g">Personali</div>${pers.map(x => voce(x, x.appreso ? 'appreso' : '')).join('')}` : '')
+    + (uff.length ? `<div class="pop-g">Ufficiali</div>${uff.map(x => voce(x)).join('')}` : '')
+    + (!q ? `<div class="pop-g">Altro</div><button class="po${p.scelta === null ? ' att' : ''}" data-id=""><span class="n">Nessun protocollo — si imposta sul telefono</span></button>` : '')
+    || '<div class="vuoto">Nessun protocollo corrisponde</div>';
+}
+$('popCerca').addEventListener('input', disegnaScelta);
+$('popCerca').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { const b = $('popList').querySelector('.po'); if (b) b.click(); }
+  if (e.key === 'ArrowDown') { e.preventDefault(); const b = $('popList').querySelector('.po'); if (b) b.focus(); }
+});
+$('popList').addEventListener('keydown', e => {
+  const b = e.target.closest('.po'); if (!b) return;
+  const tutte = [...$('popList').querySelectorAll('.po')], k = tutte.indexOf(b);
+  if (e.key === 'ArrowDown' && tutte[k + 1]) { e.preventDefault(); tutte[k + 1].focus(); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); (tutte[k - 1] || $('popCerca')).focus(); }
+});
+$('popList').addEventListener('click', e => { const b = e.target.closest('.po'); if (b) scegli(b.dataset.id); });
+document.addEventListener('click', e => { if (popI !== null && !$('pop').contains(e.target)) chiudiScelta(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && popI !== null) chiudiScelta(); });
+addEventListener('resize', () => { if (popI !== null) chiudiScelta(); });
+
+function scegli(id) {
+  const i = popI, p = pazienti[i], s = suggerimentoDi(p);
+  chiudiScelta();
+  if (!id) { p.scelta = null; aggiornaColonnaProtocolli(); return toast('Nessun protocollo: si imposterà sul telefono'); }
+  delete p.scelta;
+  /* il suggerimento dei termini accettato così com'è non insegna nulla;
+     confermare una voce appresa invece ne aumenta il conteggio          */
+  if (s.id === id && s.fonte !== 'appreso') { aggiornaColonnaProtocolli(); return; }
+  const prima = PR.clona(libs.personale);
+  const voce = PR.impara(libs.personale.protocolli, trova(id), esameDi(p), p.quesito);
+  salvaLibreria('personale');
+  aggiornaColonnaProtocolli(); aggiornaNav();
+  const uguali = pazienti.filter(x => x !== p && x.scelta === undefined && suggerimentoDi(x).id === voce.id).length;
+  toast(voce.appreso.volte > 1 ? `Confermato · ${voce.appreso.volte} volte per questo caso`
+        : `Appreso nei protocolli personali${uguali ? ` · vale anche per ${uguali === 1 ? 'un altro paziente' : `altri ${uguali} pazienti`} in lista` : ''}`,
+    'Annulla', () => { ripristinaPersonale(prima); aggiornaColonnaProtocolli(); });
+}
+$('popApri').onclick = () => {
+  const pr = protocolloDi(pazienti[popI]).pr; chiudiScelta();
+  if (!pr) return toast('Nessun protocollo da aprire');
+  apriProtocollo(pr.id);
+};
+$('popPers').onclick = () => {
+  /* crea (o ritrova) la voce appresa per questo caso partendo dal protocollo
+     attuale, e la apre nell'editor per modificarne fasi e zone          */
+  const p = pazienti[popI], att = protocolloDi(p).pr;
+  chiudiScelta();
+  const base = att || { l: 'Protocollo', idr: 1.4, giKg: 0.5, basale: 'opt', nota: '', fasi: [{ fase: 'venosa', zone: ['TAc'], delay: '70' }] };
+  const prima = PR.clona(libs.personale);
+  const voce = PR.impara(libs.personale.protocolli, base, esameDi(p), p.quesito);
+  delete p.scelta;
+  salvaLibreria('personale');
+  apriProtocollo(voce.id);
+  toast('Protocollo personale per questo caso', 'Annulla', () => { ripristinaPersonale(prima); disegnaLibreria(); disegnaEditor(); });
+};
 
 function disegnaTabella() {
   const tb = $('righe');
@@ -3637,14 +3913,14 @@ function disegnaTabella() {
             : '<span style="color:var(--amber-ink)">nessun esame</span>'}</div></td>
       <td class="c-proto"></td>
       <td><button class="togli" title="Escludi dalla lista">✕</button></td>`;
-    cellaProtocollo(tr.querySelector('.c-proto'), p);
+    cellaProtocollo(tr.querySelector('.c-proto'), p, i);
 
     tr.querySelectorAll('.cel').forEach(c => {
       if (c.tagName === 'TEXTAREA') c.addEventListener('input', () => cresci(c));
       c.addEventListener('input', () => {
         pazienti[i][c.dataset.k] = c.value;
         if (['nomeCompleto','nascita','ora','quesito'].includes(c.dataset.k)) ricontrolla(i, tr);
-        if (c.dataset.k === 'quesito') cellaProtocollo(tr.querySelector('.c-proto'), pazienti[i]);
+        if (c.dataset.k === 'quesito') cellaProtocollo(tr.querySelector('.c-proto'), pazienti[i], i);
       });
     });
     tr.querySelector('.togli').onclick = () => {
@@ -3824,7 +4100,10 @@ function disegnaQR(canvas, testo) {
    cura. Ogni modifica si salva subito; la firma identifica la versione
    che verrà sincronizzata sul telefono.
    ═══════════════════════════════════════════════════════════════════ */
-const CHIAVE_LIB = 'protocol-cards.pc.libreria';
+/* due librerie con la stessa forma: gli ufficiali (SIRM, curati a mano)
+   e i personali (creati dal reparto o appresi dalle scelte in verifica) */
+const CHIAVI = { ufficiale: 'protocol-cards.pc.libreria', personale: 'protocol-cards.pc.personali' };
+const NUOVA  = { ufficiale: PR.nuovaLibreria, personale: PR.nuovaLibreriaPersonale };
 
 /* mezzi di contrasto per l'anteprima dei volumi: sul telefono la scelta
    è dell'operatore, qui serve solo a dare un ordine di grandezza        */
@@ -3834,61 +4113,104 @@ const AGENTI = [
 ];
 let agenteProva = 0, pesoProva = 70;
 
-function caricaLibreria() {
+function caricaLibreria(nome) {
   try {
-    const t = localStorage.getItem(CHIAVE_LIB);
+    const t = localStorage.getItem(CHIAVI[nome]);
     if (t) {
       const l = PR.leggiLibreria(t), j = JSON.parse(t);
-      l.base = j.base || l.base; l.modificata = j.modificata || 0;
+      l.base = j.base || NUOVA[nome]().base; l.modificata = j.modificata || 0;
       return l;
     }
-  } catch (e) { console.warn('libreria salvata illeggibile, uso quella di partenza:', e.message); }
-  return PR.nuovaLibreria();
+  } catch (e) { console.warn(`libreria ${nome} salvata illeggibile, riparto da zero:`, e.message); }
+  return NUOVA[nome]();
 }
-let lib = caricaLibreria();
-let selId = lib.protocolli[0] && lib.protocolli[0].id;
+const libs = { ufficiale: caricaLibreria('ufficiale'), personale: caricaLibreria('personale') };
+let tab = 'ufficiale', lib = libs.ufficiale;
+const primoId = nome => (libs[nome].protocolli[0] || {}).id;
+const selezione = { ufficiale: primoId('ufficiale'), personale: primoId('personale') };
+let selId = selezione.ufficiale;
 let filtro = '';
 
-function salvaLibreria() {
-  lib.modificata = Date.now();
-  try { localStorage.setItem(CHIAVE_LIB, JSON.stringify(lib)); }
+/* passa a una libreria, ricordando il protocollo aperto nell'altra */
+function usaLibreria(nome, id) {
+  selezione[tab] = selId;
+  tab = nome; lib = libs[nome];
+  selId = id !== undefined ? id : selezione[nome];
+  if (!lib.protocolli.some(p => p.id === selId)) selId = primoId(nome);
+  prova.per = null;
+}
+function apriProtocollo(id) {
+  usaLibreria(libDi(id), id);
+  filtro = ''; $('libCerca').value = '';
+  mostraArea('proto');
+}
+function ripristinaPersonale(copia) {
+  libs.personale = copia;
+  if (tab === 'personale') { lib = copia; if (!lib.protocolli.some(p => p.id === selId)) selId = primoId('personale'); }
+  salvaLibreria('personale'); aggiornaNav();
+}
+
+function salvaLibreria(nome = tab) {
+  libs[nome].modificata = Date.now();
+  try { localStorage.setItem(CHIAVI[nome], JSON.stringify(libs[nome])); }
   catch (e) { toast('Impossibile salvare la libreria in questo browser'); }
+}
+function aggiornaNav() {
+  $('navN').textContent = libs.ufficiale.protocolli.length + libs.personale.protocolli.length;
+  $('nUff').textContent = libs.ufficiale.protocolli.length;
+  $('nPers').textContent = libs.personale.protocolli.length;
 }
 const sel = () => lib.protocolli.find(p => p.id === selId);
 const conMdc = p => p.fasi.some(f => PR.FASI[f.fase].mdc);
 const fdots = p => `<span class="fdots">${p.fasi.map(f =>
   `<i style="background:${PR.FASI[f.fase].c}" title="${esc(PR.FASI[f.fase].l)}"></i>`).join('')}</span>`;
+const data = ms => new Date(ms).toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'numeric' });
 
 /* quanti pazienti della lista caricata finiscono su ciascun protocollo */
 function usoOggi() {
   const u = {};
-  attivi().forEach(p => { const pr = protocolloDi(p); if (pr) u[pr.id] = (u[pr.id] || 0) + 1; });
+  attivi().forEach(p => { const { pr } = protocolloDi(p); if (pr) u[pr.id] = (u[pr.id] || 0) + 1; });
   return u;
 }
 
 /* ── elenco ── */
 function disegnaLibreria() {
   const q = PR.normText(filtro), uso = usoOggi();
-  const vis = lib.protocolli.filter(p => !q || PR.normText([p.l, ...p.kw, ...p.ex].join(' ')).includes(q));
+  document.querySelectorAll('.lib-tabs button').forEach(b => {
+    b.classList.toggle('on', b.dataset.lib === tab); b.setAttribute('aria-selected', b.dataset.lib === tab);
+  });
+  const vis = lib.protocolli.filter(p => !q || PR.normText([p.l, ...p.kw, ...p.ex, (p.appreso || {}).esame || ''].join(' ')).includes(q));
   $('libList').innerHTML = vis.map(p => {
     const e = PR.valida(p, lib.protocolli), g = e.some(x => x.grave);
     return `<button class="pv${p.id === selId ? ' on' : ''}" data-id="${esc(p.id)}">
       <span class="pv-top"><span class="pv-nome">${esc(p.l || 'Senza nome')}</span>${
         e.length ? `<i class="pv-stato ${g ? 'grave' : 'avviso'}" title="${e.length} segnalazion${e.length > 1 ? 'i' : 'e'}"></i>` : ''}</span>
       <span class="pv-sotto">${fdots(p)}<span>${p.fasi.length} fas${p.fasi.length === 1 ? 'e' : 'i'} · ${conMdc(p) ? 'con mdc' : 'senza mdc'}</span>${
+        p.appreso ? `<span class="pv-app" title="appreso dalle scelte in verifica">appreso ×${p.appreso.volte}</span>` : ''}${
         uso[p.id] ? `<span class="pv-oggi" title="pazienti della lista caricata">${uso[p.id]} oggi</span>` : ''}</span>
     </button>`;
-  }).join('') || '<div class="vuoto">Nessun protocollo corrisponde alla ricerca</div>';
-  $('libN').textContent = `${lib.protocolli.length} protocolli`;
-  $('navN').textContent = lib.protocolli.length;
+  }).join('') || (lib.protocolli.length || tab === 'ufficiale'
+    ? '<div class="vuoto">Nessun protocollo corrisponde alla ricerca</div>'
+    : `<div class="vuoto guida"><b>Nessun protocollo personale, per ora.</b><br>
+        Nascono da soli: quando in <b>Verifica</b> scegli per un paziente un protocollo diverso da
+        quello suggerito, il tool lo impara per i casi uguali. Puoi anche crearne uno qui sotto,
+        o copiarne uno ufficiale con «Copia nei personali».</div>`);
+  $('libNuovo').textContent = tab === 'ufficiale' ? '+ Nuovo protocollo' : '+ Nuovo protocollo personale';
+  $('libReset').textContent = tab === 'ufficiale' ? 'Ripristina' : 'Svuota';
+  $('libReset').title = tab === 'ufficiale' ? 'Torna alla libreria SIRM 2022' : 'Elimina tutti i protocolli personali';
+  aggiornaNav();
   const d = lib.modificata ? new Date(lib.modificata) : null;
-  $('libVer').innerHTML = `Versione <code>${PR.firma(lib.protocolli)}</code> · base ${esc(lib.base)}<br>${
+  $('libVer').innerHTML = `Versione <code>${PR.firma(lib.protocolli)}</code> · ${tab === 'ufficiale' ? 'base ' + esc(lib.base) : 'libreria personale'}<br>${
     d ? 'modificata il ' + d.toLocaleDateString('it-IT') + ' alle ' + d.toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' })
       : 'nessuna modifica locale'}`;
 }
 $('libList').addEventListener('click', e => {
   const b = e.target.closest('.pv'); if (!b) return;
   selId = b.dataset.id; disegnaLibreria(); disegnaEditor();
+});
+document.querySelectorAll('.lib-tabs button').forEach(b => b.onclick = () => {
+  if (b.dataset.lib === tab) return;
+  usaLibreria(b.dataset.lib); disegnaLibreria(); disegnaEditor();
 });
 $('libCerca').addEventListener('input', e => { filtro = e.target.value; disegnaLibreria(); });
 
@@ -3898,13 +4220,21 @@ const ICONE = {
   mdc:   '<svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
   bas:   '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>',
   ric:   '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>',
+  app:   '<svg viewBox="0 0 24 24"><path d="M4 18c3-1 4-4 8-4s5 3 8 4"/><circle cx="12" cy="8" r="4"/><path d="M19 4l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/></svg>',
 };
 const etichettaRitardo = f => f.fase === 'basale' ? 'senza contrasto'
   : f.delay === 'B-T' ? 'bolus tracking' : f.delay ? `+${f.delay} s` : 'ritardo da indicare';
 const prova = { esame: '', quesito: '', per: null };
 
+/* esempio di partenza per la prova: per una voce appresa è il suo stesso
+   caso, così la prova mostra subito la corrispondenza esatta           */
 function esempioProva(p) {
   prova.per = p.id;
+  if (p.appreso && !p.kw.length) {
+    prova.esame = p.appreso.esame;
+    prova.quesito = p.appreso.termini.length ? 'Sospetto ' + p.appreso.termini.join(', ') : '';
+    return;
+  }
   prova.esame = p.ex[0] ? 'TC ' + p.ex[0].toUpperCase() : 'TC ';
   prova.quesito = p.kw[0] ? 'Sospetto ' + p.kw[0] : '';
 }
@@ -3912,8 +4242,13 @@ function esempioProva(p) {
 function disegnaEditor() {
   const p = sel(), ed = $('editor');
   if (!p) {
-    ed.innerHTML = `<div class="plate card"><div class="vuoto">La libreria è vuota.
-      Crea un protocollo o ripristina la libreria SIRM.</div></div>`;
+    ed.innerHTML = tab === 'ufficiale'
+      ? `<div class="plate card"><div class="vuoto">La libreria è vuota. Crea un protocollo o ripristina la libreria SIRM.</div></div>`
+      : `<div class="plate card"><div class="card-h"><span class="tile t-viola">${ICONE.app}</span><h3>Protocolli personali</h3></div>
+          <p class="card-d" style="margin:10px 0 0;max-width:70ch">Sono le varianti del reparto, e vengono suggerite <b>prima</b> degli
+          ufficiali. Si creano in tre modi: scegliendo in <b>Verifica</b> un protocollo diverso da quello suggerito (il tool lo
+          impara per i casi con lo stesso esame e gli stessi termini clinici), con «Personalizza per questo caso», oppure con
+          «+ Nuovo protocollo personale» o «Copia nei personali» da un protocollo ufficiale.</p></div>`;
     return;
   }
   if (prova.per !== p.id) esempioProva(p);
@@ -3925,13 +4260,14 @@ function disegnaEditor() {
   ed.innerHTML = `
   <div class="plate ed-head">
     <div class="ed-top">
-      <span class="eyebrow">Protocollo · <code>${esc(p.id)}</code></span>
+      <span class="eyebrow">${tab === 'ufficiale' ? 'Protocollo ufficiale' : p.appreso ? 'Protocollo appreso' : 'Protocollo personale'} · <code>${esc(p.id)}</code></span>
       <span class="oggi" id="edOggi" style="display:none"></span>
       <span class="prio" title="A parità di punteggio il telefono suggerisce il protocollo che viene prima">
         Priorità ${i + 1} di ${n}
         <button class="btn ico xs" data-act="su" ${i === 0 ? 'disabled' : ''} aria-label="Sposta su">↑</button>
         <button class="btn ico xs" data-act="giu" ${i === n - 1 ? 'disabled' : ''} aria-label="Sposta giù">↓</button>
       </span>
+      ${tab === 'ufficiale' ? '<button class="btn xs" data-act="copia-pers" title="Crea una variante personale di questo protocollo">Copia nei personali</button>' : ''}
       <button class="btn xs" data-act="duplica">Duplica</button>
       <button class="btn xs danger" data-act="elimina">Elimina</button>
     </div>
@@ -3939,7 +4275,22 @@ function disegnaEditor() {
     <div class="seq" id="edSeq"></div>
   </div>
 
-  <div class="cards">
+  <div class="cards">${p.appreso ? `
+    <div class="plate card span">
+      <div class="card-h"><span class="tile t-viola">${ICONE.app}</span><h3>Appreso dall'uso</h3>
+        <span class="volte">scelto ${p.appreso.volte} ${p.appreso.volte === 1 ? 'volta' : 'volte'}</span></div>
+      <p class="card-d">Suggerito per primo quando un caso ha <b>lo stesso esame e gli stessi termini clinici</b>.
+        Per usarlo anche in casi simili aggiungi dei termini del quesito in «Riconoscimento».</p>
+      <div class="firma">
+        <div><span class="lbl">Esame</span><b>${esc(p.appreso.esame || '—')}</b></div>
+        <div><span class="lbl">Termini clinici</span>${p.appreso.termini.length
+          ? `<div class="mini">${p.appreso.termini.map(w => `<span>${esc(w)}</span>`).join('')}</div>`
+          : '<b style="color:var(--ink-3)">nessuno riconosciuto</b>'}</div>
+        <div><span class="lbl">Origine</span>${trova(p.base)
+          ? `<button class="link" data-act="vai-base">${esc(trova(p.base).l)}</button>`
+          : '<b style="color:var(--ink-3)">creato a mano</b>'}<br><small class="muted">dal ${data(p.appreso.creato)} · ultimo uso ${data(p.appreso.ultimo)}</small></div>
+      </div>
+    </div>` : ''}
     <div class="plate card span">
       <div class="segnala" id="edSegnala"></div>
       <div class="card-h"><span class="tile t-sky">${ICONE.fasi}</span><h3>Acquisizioni</h3></div>
@@ -4059,26 +4410,37 @@ function aggiornaEditor() {
   aggiornaProva();
 }
 
+/* la prova segue lo stesso ordine del telefono: voce appresa con la
+   stessa firma, poi personali, poi ufficiali. I candidati mostrano da
+   quale libreria vengono e perché sono stati scartati.                */
 function aggiornaProva() {
   const p = sel(); if (!p) return;
-  const r = PR.riconosci(lib.protocolli, prova.esame, prova.quesito);
-  const nome = id => { const x = lib.protocolli.find(q => q.id === id); return x ? x.l : id; };
+  const r = PR.suggerisci(libs.ufficiale.protocolli, libs.personale.protocolli, prova.esame, prova.quesito);
+  const nome = id => { const x = trova(id); return x ? x.l : id; };
   const reg = r.regione === 'ALTRO' ? 'distretto fuori tassonomia'
             : r.regione ? `${PR.ZONE_L[r.regione]} (${r.regione})` : 'non riconosciuta';
+  const da = { appreso: 'appreso per questo caso esatto', personale: 'dai protocolli personali', ufficiale: 'dai protocolli ufficiali' };
   let cls, tit;
-  if (!prova.quesito.trim()) { cls = 'no'; tit = 'Scrivi un quesito per vedere cosa suggerirebbe il telefono'; }
-  else if (r.id === p.id)    { cls = 'si'; tit = '✓ Il telefono suggerisce questo protocollo'; }
-  else if (r.id)             { cls = 'altro'; tit = `Il telefono suggerisce un altro protocollo: «${esc(nome(r.id))}»`; }
-  else                       { cls = 'no'; tit = 'Nessun protocollo suggerito: si imposterà a mano'; }
+  if (!prova.quesito.trim() && r.fonte !== 'appreso') { cls = 'no'; tit = 'Scrivi un quesito per vedere cosa suggerirebbe il telefono'; }
+  else if (r.id === p.id) { cls = 'si'; tit = `✓ Il telefono suggerisce questo protocollo — ${da[r.fonte]}`; }
+  else if (r.id)          { cls = 'altro'; tit = `Il telefono suggerisce un altro protocollo: «${esc(nome(r.id))}», ${da[r.fonte]}`; }
+  else                    { cls = 'no'; tit = 'Nessun protocollo suggerito: si imposterà a mano'; }
   const motivo = c => c.id === r.id ? 'scelto'
-    : c.fuori ? 'escluso: regione dell\'esame non compatibile'
-    : !c.kw.length ? 'escluso: solo termini dell\'esame, nessuno nel quesito'
+    : c.fuori ? 'escluso: regione dell’esame non compatibile'
+    : !c.kw.length ? 'escluso: solo termini dell’esame, nessuno nel quesito'
+    : r.fonte === 'appreso' ? 'superato dalla voce appresa'
+    : c.lib === 'ufficiale' && (r.fonte === 'personale') ? 'superato da un protocollo personale'
     : 'punteggio inferiore o a parità ma dopo in elenco';
+  const cand = [...r.personali.candidati.map(c => ({ ...c, lib: 'personale' })),
+                ...r.ufficiali.candidati.map(c => ({ ...c, lib: 'ufficiale' }))];
+  if (r.fonte === 'appreso' && !cand.some(c => c.id === r.id))
+    cand.unshift({ id: r.id, lib: 'personale', punteggio: '=', kw: [], ex: [], esatta: true });
   $('edEsito').innerHTML = `<div class="esito ${cls}"><div class="tit">${tit}</div>
-    <div class="reg">Regione dall'esame: ${esc(reg)}</div>
-    ${r.candidati.length ? `<div class="cand">${r.candidati.slice(0, 5).map(c => `
-      <div class="${c.id === r.id ? 'scelto' : ''}"><span>${esc(nome(c.id))}</span><span class="pt">${c.punteggio} pt</span>
-        <small>${[...c.kw, ...c.ex].map(w => `<mark>${esc(w)}</mark>`).join(' ')} — ${motivo(c)}</small></div>`).join('')}</div>` : ''}
+    <div class="reg">Regione dall'esame: ${esc(reg)} · firma del caso <code>${esc(r.firma)}</code></div>
+    ${cand.length ? `<div class="cand">${cand.slice(0, 6).map(c => `
+      <div class="${c.id === r.id ? 'scelto' : ''}"><span>${esc(nome(c.id))}${c.lib === 'personale' ? ' <small style="display:inline;color:#5B3FA0">· personale</small>' : ''}</span>
+        <span class="pt">${c.esatta ? 'firma' : c.punteggio + ' pt'}</span>
+        <small>${c.esatta ? 'stessa firma del caso appreso' : [...c.kw, ...c.ex].map(w => `<mark>${esc(w)}</mark>`).join(' ')} — ${motivo(c)}</small></div>`).join('')}</div>` : ''}
   </div>`;
 }
 
@@ -4187,27 +4549,65 @@ ed.addEventListener('click', e => {
     case 'giu': scambia(L, pos, pos + 1); return modificato(true);
     case 'duplica': {
       const c = PR.clona(p);
-      c.l = p.l + ' (copia)'; c.id = PR.idLibero(L, c.l);
+      /* la copia di una voce appresa è un protocollo personale normale:
+         due voci con la stessa firma si contenderebbero lo stesso caso  */
+      delete c.appreso;
+      c.l = p.l + ' (copia)'; c.id = nuovoId(L, c.l);
       L.splice(pos + 1, 0, c); selId = c.id;
       modificato(true); toast('Protocollo duplicato');
       const n = ed.querySelector('.ed-nome'); n.focus(); n.select();
       return;
     }
+    case 'copia-pers': {
+      const P = libs.personale.protocolli, c = PR.clona(p);
+      c.base = p.id; c.l = p.l + ' (personale)'; c.id = PR.idPersonale(P, p.l);
+      P.unshift(c);
+      salvaLibreria('personale');
+      usaLibreria('personale', c.id);
+      disegnaLibreria(); disegnaEditor();
+      toast('Copiato nei personali: ora ha la precedenza sull’ufficiale');
+      const n = ed.querySelector('.ed-nome'); n.focus(); n.select();
+      return;
+    }
+    case 'vai-base': return apriProtocollo(p.base);
     case 'elimina':
-      return chiedi('Eliminare il protocollo?',
-        `«${p.l}» non verrà più suggerito dal telefono dopo la prossima sincronizzazione.`, 'Elimina', () => {
+      return chiedi(p.appreso ? 'Dimenticare questo protocollo appreso?' : 'Eliminare il protocollo?',
+        p.appreso ? `I casi con esame «${p.appreso.esame}» torneranno al suggerimento normale.`
+                  : `«${p.l}» non verrà più suggerito dal telefono dopo la prossima sincronizzazione.`,
+        p.appreso ? 'Dimentica' : 'Elimina', () => {
           L.splice(pos, 1);
           selId = (L[pos] || L[pos - 1] || {}).id;
           modificato(true);
-          toast('Protocollo eliminato', 'Annulla', () => { L.splice(pos, 0, p); selId = p.id; modificato(true); });
+          toast(p.appreso ? 'Protocollo appreso dimenticato' : 'Protocollo eliminato', 'Annulla', () => { L.splice(pos, 0, p); selId = p.id; modificato(true); });
         });
   }
 });
 
+/* gli id personali hanno sempre il prefisso p-, gli ufficiali mai */
+function nuovoId(L, nome) {
+  if (tab === 'personale') return PR.idPersonale(L, nome);
+  const id = PR.idLibero(L, nome);
+  return /^p-/.test(id) ? PR.idLibero(L, 'u ' + nome) : id;
+}
+function adattaId(nuova, nome) {
+  const visti = new Set();
+  nuova.protocolli.forEach(p => {
+    const giusto = nome === 'personale' ? /^p-/.test(p.id) : !/^p-/.test(p.id);
+    if (!giusto) p.id = nome === 'personale' ? 'p-' + p.id : 'u-' + p.id.slice(2);
+    while (visti.has(p.id)) p.id += '-2';
+    visti.add(p.id);
+  });
+  return nuova;
+}
+function sostituisciLibreria(nuova, nome) {
+  libs[nome] = nuova;
+  if (tab === nome) { lib = nuova; selId = primoId(nome); prova.per = null; }
+}
+
 $('libNuovo').onclick = () => {
-  const L = lib.protocolli;
-  let k = 1; while (L.some(p => p.l === `Nuovo protocollo ${k}`)) k++;
-  const p = { id: PR.idLibero(L, `nuovo protocollo ${k}`), l: `Nuovo protocollo ${k}`, idr: 1.4, giKg: 0.5,
+  const L = lib.protocolli, base = tab === 'ufficiale' ? 'Nuovo protocollo' : 'Nuovo protocollo personale';
+  let k = 1; while (L.some(p => p.l === `${base} ${k}`)) k++;
+  const p = { id: nuovoId(L, `nuovo ${k}`), l: `${base} ${k}`, idr: 1.4, giKg: 0.5,
               basale: 'opt', kw: [], ex: [], nota: '', fasi: [{ fase: 'venosa', zone: ['TAc'], delay: '70' }] };
   L.push(p); selId = p.id; filtro = ''; $('libCerca').value = '';
   modificato(true);
@@ -4217,34 +4617,43 @@ $('libNuovo').onclick = () => {
 
 $('libEsporta').onclick = () => {
   const f = PR.firma(lib.protocolli);
-  scarica(`protocolli-${f}.json`, { v: 1, base: lib.base, modificata: lib.modificata, firma: f,
-                                    protocolli: lib.protocolli.map(PR.canonico) });
+  scarica(`protocolli-${tab === 'ufficiale' ? 'ufficiali' : 'personali'}-${f}.json`,
+    { v: 1, base: lib.base, modificata: lib.modificata, firma: f, protocolli: lib.protocolli.map(PR.canonico) });
 };
 $('libImporta').onclick = () => $('libFile').click();
 $('libFile').onchange = async e => {
   const f = e.target.files[0]; e.target.value = '';
   if (!f) return;
+  const nome = tab, cosa = nome === 'ufficiale' ? 'la libreria ufficiale' : 'la libreria personale';
   let nuova;
-  try { nuova = PR.leggiLibreria(await f.text()); }
+  try { nuova = adattaId(PR.leggiLibreria(await f.text()), nome); }
   catch (err) { return chiedi('File non valido', `«${f.name}»: ${err.message}. La libreria attuale non è stata toccata.`, null); }
-  chiedi('Sostituire la libreria?',
-    `La libreria attuale (${lib.protocolli.length} protocolli, versione ${PR.firma(lib.protocolli)}) verrà sostituita da quella del file
-     (${nuova.protocolli.length} protocolli, versione ${PR.firma(nuova.protocolli)}).`, 'Sostituisci', () => {
-      const vecchia = lib;
-      lib = nuova; selId = (lib.protocolli[0] || {}).id; prova.per = null;
-      modificato(true);
-      toast('Libreria importata', 'Annulla', () => { lib = vecchia; selId = (lib.protocolli[0] || {}).id; prova.per = null; modificato(true); });
+  if (nome === 'personale') nuova.base = 'personale';
+  chiedi(`Sostituire ${cosa}?`,
+    `I ${libs[nome].protocolli.length} protocolli attuali (versione ${PR.firma(libs[nome].protocolli)}) verranno sostituiti dai
+     ${nuova.protocolli.length} del file (versione ${PR.firma(nuova.protocolli)}).`, 'Sostituisci', () => {
+      const vecchia = libs[nome];
+      sostituisciLibreria(nuova, nome); salvaLibreria(nome);
+      disegnaEditor(); disegnaLibreria();
+      toast('Libreria importata', 'Annulla', () => { sostituisciLibreria(vecchia, nome); salvaLibreria(nome); disegnaEditor(); disegnaLibreria(); });
     });
 };
-$('libReset').onclick = () => chiedi('Ripristinare la libreria SIRM 2022?',
-  'Tutte le modifiche locali ai protocolli andranno perse. Se vuoi conservarle, esportale prima.', 'Ripristina', () => {
-    const vecchia = lib;
-    lib = PR.nuovaLibreria(); selId = lib.protocolli[0].id; prova.per = null;
-    salvaLibreria(); lib.modificata = 0;
-    try { localStorage.removeItem(CHIAVE_LIB); } catch (_) {}
-    disegnaEditor(); disegnaLibreria();
-    toast('Libreria ripristinata', 'Annulla', () => { lib = vecchia; selId = (lib.protocolli[0] || {}).id; prova.per = null; modificato(true); });
-  });
+$('libReset').onclick = () => {
+  const nome = tab, uff = nome === 'ufficiale';
+  if (!uff && !libs.personale.protocolli.length) return toast('La libreria personale è già vuota');
+  chiedi(uff ? 'Ripristinare la libreria SIRM 2022?' : 'Svuotare la libreria personale?',
+    uff ? 'Tutte le modifiche locali ai protocolli ufficiali andranno perse. Se vuoi conservarle, esportale prima.'
+        : `${libs.personale.protocolli.length} protocolli personali, compresi quelli appresi, verranno eliminati. Se vuoi conservarli, esportali prima.`,
+    uff ? 'Ripristina' : 'Svuota', () => {
+      const vecchia = libs[nome];
+      sostituisciLibreria(NUOVA[nome](), nome);
+      try { localStorage.removeItem(CHIAVI[nome]); } catch (_) {}
+      disegnaEditor(); disegnaLibreria(); aggiornaColonnaProtocolli();
+      toast(uff ? 'Libreria ripristinata' : 'Libreria personale svuotata', 'Annulla', () => {
+        sostituisciLibreria(vecchia, nome); salvaLibreria(nome); disegnaEditor(); disegnaLibreria(); aggiornaColonnaProtocolli();
+      });
+    });
+};
 
 /* ── modale e avvisi ── */
 function chiedi(titolo, testo, si, fatto) {
@@ -4272,7 +4681,7 @@ function toast(msg, azione, cb) {
   tToast = setTimeout(() => $('toast').classList.remove('on'), azione ? 6000 : 2400);
 }
 
-$('navN').textContent = lib.protocolli.length;
+aggiornaNav();
 aggiornaConteggi();
 </script>
 </body>

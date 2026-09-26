@@ -188,6 +188,78 @@
     return { id: best ? best.id : null, regione, candidati };
   }
 
+  /* ═══ APPRENDIMENTO ════════════════════════════════════════════════
+     Come nel prototipo: un caso è identificato da una firma deterministica
+     (esame normalizzato + termini clinici del quesito). Quando per un caso
+     si sceglie un protocollo diverso da quello suggerito, la scelta viene
+     ricordata sotto quella firma, e il caso identico successivo la ritrova. */
+  const LEXICON = ['embolia','dissezione','aneurisma','endoleak','trauma','stroke','ischemia',
+    'emorragia','hcc','cirrosi','epatopatia','colecistite','litiasi','calcoli','ematuria',
+    'idronefrosi','appendicite','diverticolite','occlusione','pielonefrite','nodulo','sarcoidosi',
+    'restaging','ristadiazione','stadiazione','followup','recidiva','neoplasia','metastasi',
+    'linfoma','ascesso','flogosi','infezione','pancreatite','sanguinamento','politrauma','versamento'];
+
+  function normEx(s) {
+    return (s || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/\b(CON E SENZA|SENZA E CON|CON|SENZA)\s+(MDC|CONTRASTO)\b/g, '')
+      .replace(/\b(URGENTE|URG|MDC|CONTRASTO)\b/g, '')
+      .replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  const termini = q => { const t = normText(q);
+    return [...new Set(LEXICON.filter(k => t.includes(k)))].sort(); };
+  const firmaCaso = (esame, quesito) => normEx(esame) + '|' + termini(quesito).join(',');
+
+  /* Suggerimento completo, nell'ordine in cui lo farà il telefono:
+       1. protocollo personale appreso con la stessa firma del caso
+       2. protocolli personali riconosciuti dai loro termini
+       3. protocolli ufficiali riconosciuti dai loro termini
+     I personali vengono prima: sono le scelte del reparto.            */
+  function suggerisci(ufficiali, personali, esame, quesito) {
+    const firma = firmaCaso(esame, quesito);
+    const pers = personali || [];
+    const app = pers.find(p => p.appreso && p.appreso.firma === firma);
+    const rp = riconosci(pers, esame, quesito);
+    const ru = riconosci(ufficiali || [], esame, quesito);
+    let id = null, fonte = null;
+    if (app)        { id = app.id;  fonte = 'appreso'; }
+    else if (rp.id) { id = rp.id;   fonte = 'personale'; }
+    else if (ru.id) { id = ru.id;   fonte = 'ufficiale'; }
+    return { id, fonte, firma, regione: ru.regione, personali: rp, ufficiali: ru };
+  }
+
+  /* Registra una scelta nella libreria personale. Restituisce la voce
+     appresa: nuova, oppure quella esistente per la stessa firma, con il
+     conteggio aggiornato se la configurazione è la stessa o azzerato se
+     è cambiata (come nel prototipo).                                   */
+  function impara(personali, sorgente, esame, quesito, ora) {
+    ora = ora || Date.now();
+    const firma = firmaCaso(esame, quesito);
+    const conf = p => JSON.stringify(canonico({ ...p, id: '', l: '', kw: [], ex: [], reg: null, nota: '' }).fasi)
+                    + '|' + (+p.idr || 0) + '|' + (+p.giKg || 0) + '|' + p.basale;
+    let voce = personali.find(p => p.appreso && p.appreso.firma === firma);
+    if (voce) {
+      if (voce === sorgente || conf(voce) === conf(sorgente)) voce.appreso.volte++;
+      else {
+        Object.assign(voce, { fasi: clona(sorgente.fasi), idr: sorgente.idr, giKg: sorgente.giKg,
+          basale: sorgente.basale, nota: sorgente.nota, base: sorgente.appreso ? sorgente.base : sorgente.id });
+        voce.appreso.volte = 1;
+      }
+      voce.appreso.ultimo = ora;
+      return voce;
+    }
+    const t = termini(quesito);
+    const nome = `${(sorgente.l || 'Protocollo').replace(/ · .*$/, '')} · ${normEx(esame) || 'esame'}${t.length ? ' · ' + t.join(', ') : ''}`;
+    voce = { id: idPersonale(personali, nome), l: nome, idr: sorgente.idr, giKg: sorgente.giKg,
+      basale: sorgente.basale, kw: [], ex: [], nota: sorgente.nota || '', fasi: clona(sorgente.fasi),
+      base: sorgente.appreso ? sorgente.base : sorgente.id,
+      /* della richiesta si conserva solo la firma: esame normalizzato e
+         termini clinici. Il testo libero del quesito può contenere dati
+         del paziente e non resta salvato.                               */
+      appreso: { firma, esame: normEx(esame), termini: t, volte: 1, creato: ora, ultimo: ora } };
+    personali.unshift(voce);
+    return voce;
+  }
+
   /* Applica la regione dell'esame alle fasi del protocollo. Le fasi `fix`
      conservano la propria zona: è intrinseca al protocollo.            */
   function fitZones(fasi, esame) {
@@ -227,7 +299,9 @@
     const hasBas = (p.fasi || []).some(f => f.fase === 'basale');
     if (p.basale === 'req' && !hasBas) add('basale', 'Basale indicata come richiesta ma assente dalle fasi');
     if (p.basale !== 'req' && hasBas) add('basale', 'Basale presente nelle fasi ma indicata come non richiesta');
-    if (!(p.kw || []).length) add('kw', 'Nessun termine del quesito: il protocollo non verrà mai suggerito');
+    /* una voce appresa si riconosce dalla firma del caso: i termini sono
+       facoltativi e servono solo a estenderla a casi simili              */
+    if (!(p.kw || []).length && !p.appreso) add('kw', 'Nessun termine del quesito: il protocollo non verrà mai suggerito');
     return e;
   }
 
@@ -237,10 +311,16 @@
   function nuovaLibreria() {
     return { v: 1, base: 'SIRM 2022', modificata: 0, protocolli: clona(SIRM_2022) };
   }
+  function nuovaLibreriaPersonale() {
+    return { v: 1, base: 'personale', modificata: 0, protocolli: [] };
+  }
 
   function slug(s) {
     return normText(s).replace(/ /g, '-').slice(0, 40) || 'protocollo';
   }
+  /* i protocolli personali hanno sempre il prefisso p-: non possono mai
+     collidere con quelli ufficiali, e dall'id si capisce la libreria    */
+  function idPersonale(protocolli, nome) { return idLibero(protocolli, 'p ' + nome); }
   function idLibero(protocolli, nome) {
     const base = slug(nome);
     let id = base, n = 2;
@@ -261,6 +341,10 @@
         return x;
       }) };
     if (p.reg && p.reg.length) o.reg = p.reg.slice();
+    if (p.base) o.base = p.base;
+    if (p.appreso) o.appreso = { firma: p.appreso.firma, esame: p.appreso.esame || '',
+      termini: (p.appreso.termini || []).slice(),
+      volte: +p.appreso.volte || 1, creato: +p.appreso.creato || 0, ultimo: +p.appreso.ultimo || 0 };
     return o;
   }
 
@@ -294,9 +378,10 @@
     return { v: 1, base: (j && j.base) || 'importata', modificata: Date.now(), protocolli: out };
   }
 
-  const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022,
-    normText, regionOf, riconosci, fitZones, valida,
-    nuovaLibreria, idLibero, canonico, firma, leggiLibreria, clona };
+  const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022, LEXICON,
+    normText, normEx, termini, regionOf, riconosci, fitZones, valida,
+    firmaCaso, suggerisci, impara,
+    nuovaLibreria, nuovaLibreriaPersonale, idLibero, idPersonale, canonico, firma, leggiLibreria, clona };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Protocolli = api;

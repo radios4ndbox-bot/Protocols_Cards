@@ -107,6 +107,42 @@ ok('rifiuta id doppi', rifiuta(JSON.stringify([L[0], L[0]]), /doppio/));
 ok('rifiuta fasi sconosciute', rifiuta(JSON.stringify([{ ...L[0], fasi: [{ fase: 'portale', zone: ['TO'] }] }]), /portale/));
 ok('id libero da un nome', P.idLibero(L, 'Torace mdc') === 'torace-mdc-2');
 
+sez('APPRENDIMENTO E PROTOCOLLI PERSONALI');
+{
+  const U = P.nuovaLibreria().protocolli;
+  const pers = P.nuovaLibreriaPersonale().protocolli;
+  const es = 'TC TORACE CON E SENZA MDC', q = 'Sospetta embolia polmonare';
+  ok('firma come nel prototipo', P.firmaCaso(es, q) === 'TC TORACE|embolia', P.firmaCaso(es, q));
+  ok('firma ignora mdc e urgenza', P.firmaCaso('TC TORACE SENZA MDC URGENTE', 'EMBOLIA?') === P.firmaCaso(es, q));
+  ok('senza personali vince l’ufficiale', (() => { const s = P.suggerisci(U, pers, es, q); return s.fonte === 'ufficiale' && s.id === 'angio-polm'; })());
+
+  const scelto = U.find(p => p.id === 'torace-mdc');
+  const v = P.impara(pers, scelto, es, q, 1000);
+  ok('la scelta diversa crea una voce appresa', pers.length === 1 && v.appreso.volte === 1);
+  ok('id personale con prefisso p-', /^p-/.test(v.id), v.id);
+  ok('ricorda il protocollo di partenza', v.base === 'torace-mdc');
+  ok('non conserva il testo del quesito', !JSON.stringify(v).includes('Sospetta') && v.appreso.termini.join() === 'embolia');
+  ok('copia le fasi, non le condivide', v.fasi !== scelto.fasi && JSON.stringify(v.fasi) === JSON.stringify(scelto.fasi));
+  ok('nessun errore grave sulla voce appresa', !P.valida(v, pers).some(e => e.grave), P.valida(v, pers).map(e => e.msg).join(' | '));
+  ok('niente avviso sui termini per una voce appresa', !P.valida(v, pers).some(e => e.campo === 'kw'));
+  const s1 = P.suggerisci(U, pers, 'TC TORACE CON MDC', 'embolia');
+  ok('lo stesso caso ora suggerisce la voce appresa', s1.fonte === 'appreso' && s1.id === v.id, s1.fonte + ' ' + s1.id);
+  ok('un caso diverso no', P.suggerisci(U, pers, 'TC ADDOME', 'embolia').fonte !== 'appreso');
+
+  P.impara(pers, scelto, es, q, 2000);
+  ok('stessa scelta: conteggio +1', pers.length === 1 && v.appreso.volte === 2 && v.appreso.ultimo === 2000);
+  P.impara(pers, v, es, q, 3000);
+  ok('confermare la voce appresa conta come uso', v.appreso.volte === 3);
+  P.impara(pers, U.find(p => p.id === 'angio-polm'), es, q, 4000);
+  ok('scelta diversa: configurazione sostituita, conteggio da 1', v.appreso.volte === 1 && v.base === 'angio-polm' && v.fasi[0].fase === 'arteriosa');
+
+  v.kw = ['tromboembolia'];
+  const s2 = P.suggerisci(U, pers, 'ANGIO TC TORACE', 'tromboembolia acuta');
+  ok('con termini propri riconosce anche casi simili', s2.fonte === 'personale' && s2.id === v.id, s2.fonte);
+  const giro2 = P.leggiLibreria(JSON.stringify({ protocolli: pers }));
+  ok('esporta → importa conserva l’apprendimento', giro2.protocolli[0].appreso.firma === 'TC TORACE|embolia' && giro2.protocolli[0].base === 'angio-polm');
+}
+
 console.log('\n────────────────────────────────────────');
 console.log(fail ? `✗ ${fail} CONTROLLI FALLITI` : '✓ TUTTI I CONTROLLI PASSATI');
 process.exit(fail ? 1 : 0);
