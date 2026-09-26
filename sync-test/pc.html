@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test collegamento — PC</title>
+<link rel="stylesheet" href="stile.css">
+<style>
+.griglia{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start;margin-top:26px}
+.pannello{padding:24px}
+.pannello h2{font-size:1.3rem;margin-bottom:14px}
+.qrbox{padding:24px;text-align:center}
+#qr{display:block;margin:0 auto;border-radius:14px;background:#fff;max-width:100%;height:auto;box-shadow:var(--well-s);image-rendering:pixelated}
+.qrbox p{font-size:.84rem;color:var(--ink-2);margin-top:14px}
+.qrbox .link{margin-top:10px;font-size:.7rem;word-break:break-all;color:var(--ink-3)}
+.qrbox.coperto #qr{filter:blur(10px) opacity(.4)}
+.azioni{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+@media (max-width:860px){.griglia{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="brand"><span class="mark"></span><div><b>Protocol Cards</b><small>Test di collegamento · PC</small></div></div>
+  <div class="intro">
+    <span class="eyebrow">Sincronizzazione via relay</span>
+    <h1>Il telefono raggiunge questo PC?</h1>
+    <p>Apri questa pagina sul PC del reparto e inquadra il codice con il telefono in rete mobile.
+      Passano solo messaggi di prova, cifrati: <b>nessun dato paziente</b>.</p>
+  </div>
+
+  <div class="griglia">
+    <div class="plate pannello">
+      <h2>Controlli</h2>
+      <ul class="checks">
+        <li id="c-cripto"><i></i><div><b>Cifratura nel browser</b><small>AES-GCM a 256 bit</small></div><span class="val"></span></li>
+        <li id="c-relay"><i></i><div><b>Relay raggiungibile dal PC</b><small>connessione in uscita verso ntfy.sh</small></div><span class="val"></span></li>
+        <li id="c-canale"><i></i><div><b>Canale in ascolto</b><small>il PC attende i messaggi del telefono</small></div><span class="val"></span></li>
+        <li id="c-tel"><i></i><div><b>Telefono collegato</b><small>inquadra il codice qui accanto</small></div><span class="val"></span></li>
+        <li id="c-rtt"><i></i><div><b>Andata e ritorno</b><small>PC → telefono → PC</small></div><span class="val"></span></li>
+        <li id="c-card"><i></i><div><b>Card di prova ricevuta dal telefono</b><small>dopo il collegamento</small></div><span class="val"></span></li>
+      </ul>
+      <div class="azioni">
+        <button class="btn solid" id="bCard" disabled>Invia una card di prova</button>
+        <button class="btn" id="bNuova">Nuova sessione</button>
+      </div>
+      <div class="esito" id="esito"></div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="plate qrbox coperto" id="qrbox">
+      <canvas id="qr" width="340" height="340"></canvas>
+      <p>Inquadra con la fotocamera del telefono.<br>Il codice contiene la chiave: <b>non fotografarlo</b> e non condividerlo.</p>
+      <div class="link" id="link"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../desktop/vendor/qrcode.js"></script>
+<script src="cifra.js"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const PAGES = 'https://radios4ndbox-bot.github.io/Protocols_Cards/sync-test/telefono.html';
+
+/* la pagina del telefono sta accanto a questa quando è servita via http(s);
+   aperta da file:// si usa quella pubblicata su GitHub Pages            */
+const urlTelefono = /^https?:$/.test(location.protocol) ? new URL('telefono.html', location.href).href : PAGES;
+
+function segna(id, stato, val, nota) {
+  const li = $(id); li.className = stato;
+  li.querySelector('i').textContent = stato === 'ok' ? '✓' : stato === 'ko' ? '!' : '';
+  if (val !== undefined) li.querySelector('.val').textContent = val;
+  if (nota) li.querySelector('small').textContent = nota;
+}
+function log(t) {
+  const d = document.createElement('div');
+  d.innerHTML = `<b>${new Date().toLocaleTimeString('it-IT')}</b> ${t}`;
+  $('log').prepend(d);
+}
+function esito(ok, t) { const e = $('esito'); e.className = 'esito on ' + (ok ? 'ok' : 'ko'); e.innerHTML = t; }
+
+function disegnaQR(testo) {
+  const q = qrcode(0, 'M'); q.addData(testo); q.make();
+  const n = q.getModuleCount(), c = $('qr'), lato = c.width;
+  const s = Math.floor(lato / (n + 8)), off = Math.floor((lato - s * (n + 8)) / 2);
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, lato, lato); g.fillStyle = '#232D3C';
+  for (let r = 0; r < n; r++) for (let k = 0; k < n; k++)
+    if (q.isDark(r, k)) g.fillRect(off + (k + 4) * s, off + (r + 4) * s, s, s);
+}
+
+let sess = null, chiudi = null, pingT = null;
+
+async function avvia() {
+  if (chiudi) chiudi();
+  ['c-cripto','c-relay','c-canale','c-tel','c-rtt','c-card'].forEach(id => segna(id, '', ''));
+  $('esito').className = 'esito'; $('bCard').disabled = true; $('qrbox').classList.add('coperto');
+
+  if (!window.crypto || !crypto.subtle) {
+    segna('c-cripto', 'ko', '', 'il browser non offre la cifratura in questa pagina');
+    return esito(false, 'Il browser non mette a disposizione la cifratura. Prova con Chrome o Edge aggiornati.');
+  }
+  segna('c-cripto', 'ok', 'disponibile');
+
+  segna('c-relay', 'wait');
+  try {
+    const ms = await Canale.relayRaggiungibile();
+    segna('c-relay', 'ok', ms + ' ms');
+    log(`relay raggiungibile in ${ms} ms`);
+  } catch (e) {
+    segna('c-relay', 'ko', '', 'bloccato: ' + e.message);
+    log('relay NON raggiungibile: ' + e.message);
+    return esito(false, `<b>Il PC non raggiunge il relay.</b> Probabilmente il proxy o il firewall dell'ospedale
+      blocca <code>ntfy.sh</code>. Serve chiedere all'IT di consentire le connessioni HTTPS in uscita verso il relay,
+      oppure usare un relay su un dominio già autorizzato.`);
+  }
+
+  sess = await Canale.nuovaSessione();
+  const url = `${urlTelefono}#t=${sess.argomento}&k=${sess.k}`;
+  segna('c-canale', 'wait');
+  chiudi = Canale.ascolta(sess, 'pc', {
+    stato: s => {
+      if (s === 'aperto') { segna('c-canale', 'ok', 'aperto'); $('qrbox').classList.remove('coperto'); segna('c-tel', 'wait'); log('canale aperto su ' + sess.argomento.slice(0, 12) + '…'); }
+      if (s === 'riconnessione') { segna('c-canale', 'wait', 'riconnessione…'); log('connessione al relay persa, riprovo'); }
+      if (s === 'scartato') log('scartato un messaggio che non si decifra con la chiave di questa sessione');
+    },
+    messaggio: m => ricevuto(m),
+  });
+  disegnaQR(url);
+  $('link').textContent = urlTelefono.replace(/^https?:\/\//, '') + '#…';
+}
+
+async function ricevuto({ msg, byte }) {
+  log(`ricevuti ${byte} byte cifrati → «${msg.tipo}»`);
+  if (msg.tipo === 'ciao') {
+    segna('c-tel', 'ok', 'collegato', msg.dispositivo || 'telefono');
+    $('bCard').disabled = false;
+    segna('c-rtt', 'wait');
+    pingT = performance.now();
+    const r = await Canale.invia(sess, 'pc', { tipo: 'ping', t: Date.now() });
+    log(`inviato ping (${r.byte} byte cifrati, ${r.ms} ms al relay)`);
+  }
+  if (msg.tipo === 'pong' && pingT) {
+    const ms = Math.round(performance.now() - pingT); pingT = null;
+    segna('c-rtt', 'ok', ms + ' ms');
+    log(`andata e ritorno completata in ${ms} ms`);
+    esito(true, `<b>Collegamento riuscito.</b> PC in rete ospedaliera e telefono si parlano tramite il relay,
+      con i dati cifrati: la sincronizzazione delle cards è fattibile. Prova anche la card di prova.`);
+  }
+  if (msg.tipo === 'ricevuta') {
+    segna('c-card', 'ok', 'confermata');
+    log('il telefono conferma di aver ricevuto e decifrato la card');
+  }
+}
+
+$('bCard').onclick = async () => {
+  segna('c-card', 'wait');
+  const card = { tipo: 'card', id: 'prova-' + Date.now(), ora: new Date().toTimeString().slice(0, 5),
+    nome: 'PAZIENTE DI PROVA', esame: 'TC TORACE CON MDC', quesito: 'Sospetta embolia polmonare',
+    protocollo: 'AngioTC Polmonare', fasi: ['#2f6fed'] };
+  const r = await Canale.invia(sess, 'pc', card);
+  log(`inviata card di prova (${r.byte} byte cifrati)`);
+};
+$('bNuova').onclick = () => { log('— nuova sessione: la chiave precedente non vale più —'); avvia(); };
+
+avvia();
+</script>
+</body>
+</html>
