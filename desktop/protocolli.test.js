@@ -152,6 +152,38 @@ sez('APPRENDIMENTO E PROTOCOLLI PERSONALI');
   ok('esporta → importa conserva l’apprendimento', giro2.protocolli[0].appreso.firma === 'TC TORACE|embolia' && giro2.protocolli[0].base === 'angio-polm');
 }
 
+sez('PROTOCOLLI SIMILI');
+{
+  const U = P.nuovaLibreria().protocolli, pers = [];
+  const esistente = { id: 'p-surreni', l: 'TC Surreni', idr: 1.2, giKg: 0.5, basale: 'req', kw: ['adenoma', 'incidentaloma'], ex: [],
+    reg: ['ADs'], nota: '', fasi: [{ fase: 'basale', zone: ['ADs'], delay: '' }, { fase: 'surrene', zone: ['ADs'], delay: '900' }] };
+  pers.push(esistente);
+  const bozza = P.clona(esistente); bozza.id = '__bozza'; bozza.l = 'Surreni washout';
+  let r = P.simili(bozza, pers);
+  ok('termini in comune: simile', r.length === 1 && r[0].motivi.some(m => m.k === 'termini'), JSON.stringify(r));
+  bozza.reg = ['TO'];
+  ok('regioni incompatibili: non compete', !P.simili(bozza, pers).some(x => x.motivi.some(m => m.k === 'termini')));
+  bozza.reg = ['ADs']; bozza.kw = ['feocromocitoma'];
+  ok('termini diversi e nessuna base: non simile', P.simili(bozza, pers).length === 0);
+  bozza.l = 'tc surreni';
+  ok('stesso nome: simile', P.simili(bozza, pers)[0].motivi[0].k === 'nome');
+  bozza.l = 'Altro'; bozza.base = 'p-surreni';
+  ok('partito da lui: simile', P.simili(bozza, pers)[0].motivi.some(m => m.k === 'origine'));
+  const app = P.impara(pers, U.find(p => p.id === 'torace-mdc'), 'TC TORACE', 'embolia');
+  const b2 = { id: '__bozza', l: 'Embolia reparto', idr: 1.5, giKg: 0.45, basale: 'opt', kw: ['embolia'], ex: [], nota: '',
+    fasi: [{ fase: 'arteriosa', zone: ['TO'], delay: 'B-T' }] };
+  ok('ruberebbe un caso appreso: simile', P.simili(b2, pers).some(x => x.id === app.id), JSON.stringify(P.simili(b2, pers)));
+
+  const prima = pers.indexOf(esistente);
+  const b3 = { ...P.clona(b2), l: 'TC Surreni v2', kw: ['adenoma'] };
+  const q = P.sostituisci(pers, 'p-surreni', b3);
+  ok('sostituisce mantenendo id e posizione', q.id === 'p-surreni' && pers.indexOf(q) === prima && q.l === 'TC Surreni v2');
+  ok('contenuto aggiornato', q.fasi[0].fase === 'arteriosa' && q.kw.join() === 'adenoma');
+  const va = P.sostituisci(pers, app.id, { ...b2, l: 'Nuovo nome' });
+  ok('una voce appresa conserva la firma', va.appreso && va.appreso.firma === 'TC TORACE|embolia' && va.l === 'Nuovo nome');
+  ok('nessun campo della bozza di troppo', !('__bozza' in q) && q.id !== '__bozza');
+}
+
 console.log('\n────────────────────────────────────────');
 console.log(fail ? `✗ ${fail} CONTROLLI FALLITI` : '✓ TUTTI I CONTROLLI PASSATI');
 process.exit(fail ? 1 : 0);

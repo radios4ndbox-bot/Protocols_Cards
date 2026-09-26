@@ -269,6 +269,51 @@
     return { regione: r && r !== 'ALTRO' ? r : null, clinici, parole, distretto };
   }
 
+  /* ═══ PROTOCOLLI SIMILI ══════════════════════════════════════════════
+     Prima di salvare un protocollo personale si cercano quelli che gli
+     somigliano abbastanza da farne un doppione o da contendergli i casi:
+       · stesso nome
+       · è il protocollo da cui la bozza è partita
+       · termini del quesito in comune su regioni compatibili (i due si
+         contenderebbero gli stessi quesiti), anche verso un caso appreso
+       · stesse fasi e stesso protocollo di partenza
+     Restituisce i simili dal più al meno somigliante, con i motivi.    */
+  function simili(p, protocolli) {
+    const kw = new Set((p.kw || []).map(normText));
+    const fasiDi = x => JSON.stringify((x.fasi || []).map(f => [f.fase, (f.zone || []).slice().sort(), f.delay || '', !!f.fix]));
+    const regOk = q => !(p.reg && p.reg.length) || !(q.reg && q.reg.length) || p.reg.some(r => q.reg.includes(r));
+    return (protocolli || []).filter(q => q.id !== p.id).map(q => {
+      const motivi = [];
+      if ((p.l || '').trim() && normText(q.l) === normText(p.l)) motivi.push({ k: 'nome', t: 'stesso nome' });
+      if (p.base && q.id === p.base) motivi.push({ k: 'origine', t: 'è il protocollo da cui sei partito' });
+      const comuni = (q.kw || []).filter(w => kw.has(normText(w)));
+      if (comuni.length && regOk(q)) motivi.push({ k: 'termini', t: 'stessi termini del quesito: ' + comuni.join(', ') });
+      else if (q.appreso && regOk(q)) {
+        const presi = q.appreso.termini.filter(w => kw.has(w));
+        if (presi.length) motivi.push({ k: 'termini', t: 'riconoscerebbe il suo caso appreso (' + presi.join(', ') + ')' });
+      }
+      const stesseFasi = fasiDi(q) === fasiDi(p);
+      const stessaBase = !!p.base && q.base === p.base;
+      if (stesseFasi) motivi.push({ k: 'fasi', t: 'stesse fasi' });
+      if (stessaBase) motivi.push({ k: 'base', t: 'stesso protocollo di partenza' });
+      const forte = motivi.some(m => m.k === 'nome' || m.k === 'origine' || m.k === 'termini');
+      return forte || (stesseFasi && stessaBase) ? { id: q.id, motivi } : null;
+    }).filter(Boolean).sort((a, b) => b.motivi.length - a.motivi.length);
+  }
+
+  /* Sostituisce il contenuto di un protocollo con quello della bozza,
+     mantenendone id e posizione: chi lo usava resta collegato. Una voce
+     appresa conserva la sua firma, così il caso da cui è nata continua a
+     ritrovarla.                                                          */
+  function sostituisci(protocolli, id, bozza) {
+    const q = protocolli.find(x => x.id === id);
+    if (!q) throw new Error('protocollo da sostituire non trovato');
+    const nuovo = canonico({ ...bozza, id: q.id });
+    Object.keys(q).forEach(k => { if (k !== 'appreso') delete q[k]; });
+    Object.assign(q, nuovo);
+    return q;
+  }
+
   /* Registra una scelta nella libreria personale. Restituisce la voce
      appresa: nuova, oppure quella esistente per la stessa firma, con il
      conteggio aggiornato se la configurazione è la stessa o azzerato se
@@ -422,7 +467,7 @@
 
   const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022, LEXICON,
     normText, normEx, termini, regionOf, riconosci, fitZones, valida,
-    firmaCaso, suggerisci, impara, opzioni, analizzaEsempio,
+    firmaCaso, suggerisci, impara, opzioni, analizzaEsempio, simili, sostituisci,
     nuovaLibreria, nuovaLibreriaPersonale, idLibero, idPersonale, canonico, firma, leggiLibreria, clona };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
