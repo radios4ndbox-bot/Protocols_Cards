@@ -457,6 +457,15 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .op-f{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:.74rem}
 .op-f .ptag{margin:0}
 .chip.proto{background:#EEE8FA;color:#5B3FA0}
+.insegna{border:0;cursor:pointer;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;color:#5B3FA0;background:#EEE8FA;
+  box-shadow:var(--well-s);transition:.18s}
+.insegna:hover{background:#E1D7F7}
+.da-paziente{display:flex;gap:14px;align-items:flex-start;padding:18px 22px}
+.da-paziente .tile{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;box-shadow:var(--clay-sm);flex:0 0 auto}
+.da-paziente .tile svg{width:20px;height:20px;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.da-paziente b{display:block;font-size:.96rem}
+.da-paziente span{display:block;font-size:.84rem;color:var(--ink-2);margin-top:2px}
+.da-paziente small{display:block;font-size:.8rem;color:var(--ink-2);margin-top:8px}
 .chip.proto:empty{display:none}
 
 /* ── protocol builder ── */
@@ -904,7 +913,8 @@ function cellaProtocollo(td, p, i) {
       <span class="op-k">${tipo === 'ufficiale' ? 'Ufficiale' : 'Personale'}${tipo === 'personale' && o.appreso ? ` · appreso ×${pers.appreso.volte}` : ''}</span>
       <span class="op-n">${pr ? esc(pr.l) : vuoto}</span>${pr ? tagFasi(pr, true) : ''}</button>`;
   td.innerHTML = `<div class="opz">${opz('ufficiale', uff, 'nessuno riconosciuto')}${opz('personale', pers, 'nessuno — insegnalo ›')}</div>
-    <div class="op-f"><button class="link" data-scegli="${i}">Altro protocollo…</button>${
+    <div class="op-f"><button class="insegna" data-insegna="${i}" title="Apri il builder con questo caso e il protocollo in uso">★ Insegna</button>
+      <button class="link" data-scegli="${i}">Altro protocollo…</button>${
       p.scelta === null ? '<span class="ptag">nessuno · si imposta sul telefono</span>' : ''}</div>`;
 }
 function aggiornaColonnaProtocolli() {
@@ -914,6 +924,8 @@ function aggiornaColonnaProtocolli() {
 $('righe').addEventListener('click', e => {
   const s = e.target.closest('[data-scegli]');
   if (s) { e.stopPropagation(); return apriScelta(+s.dataset.scegli, s); }
+  const ins = e.target.closest('[data-insegna]');
+  if (ins) return insegna(+ins.dataset.insegna);
   const b = e.target.closest('.op'); if (!b) return;
   const p = pazienti[+b.dataset.i];
   if (b.classList.contains('vuota')) {
@@ -1853,10 +1865,20 @@ function adottaEsempio(e) {
 
 /* il caso di un paziente apre il builder già avviato: esempio, termini
    e, come punto di partenza, il protocollo ufficiale riconosciuto      */
+/* Il paziente segnato con «Insegna» apre il builder già avviato: il suo
+   caso come primo esempio, i termini ricavati dal quesito e, come punto
+   di partenza, il protocollo in uso per lui (se non ne ha, l'ufficiale
+   riconosciuto). Restano solo le ultime modifiche e il salvataggio.
+   Una bozza diversa già avviata non si perde senza chiederlo.          */
 function insegna(i) {
-  const p = pazienti[i], uff = trova(opzioniDi(p).ufficiale);
-  nuovaBozza(uff);
-  bozza.l = uff ? uff.l + ' · reparto' : '';
+  const inCorso = bozza && bOrigine !== i && (esempi.some(e => e.quesito.trim()) || bozza.fasi.length);
+  if (inCorso) return chiedi('Sostituire la bozza in corso?',
+    'Nel builder c’è già un protocollo non salvato. Se prosegui, esempi, termini e fasi di quella bozza andranno persi.',
+    'Sostituisci', () => { bozza = null; insegna(i); });
+  if (bozza && bOrigine === i) return mostraArea('builder');
+  const p = pazienti[i], base = protocolloDi(p).pr || trova(opzioniDi(p).ufficiale);
+  nuovaBozza(base);
+  bozza.l = base ? base.l.replace(/ · .*$/, '') + ' · reparto' : '';
   esempi = [{ esame: esameDi(p), quesito: p.quesito }];
   adottaEsempio(esempi[0]);
   bOrigine = i;
@@ -1911,8 +1933,13 @@ function disegnaBuilder() {
   const origine = bOrigine !== null && pazienti[bOrigine];
   bRad.innerHTML = `
   <div class="bpassi" id="bTrack"></div>
-  ${origine ? `<div class="nota" style="margin:0 0 18px">Stai insegnando il protocollo per <b>${esc(origine.nomeCompleto)}</b>.
-     Al salvataggio il paziente userà l'opzione personale e tornerai alla verifica.</div>` : ''}
+  ${origine ? `<div class="plate da-paziente">
+     <span class="tile t-viola">${ICONE.app}</span>
+     <div><b>Insegni il caso di ${esc(origine.nomeCompleto)}</b>
+       <span>${esc(esameDi(origine))} — ${esc(origine.quesito)}</span>
+       <small>${trova(bozza.base) ? `Fasi e contrasto partono da «${esc(trova(bozza.base).l)}», il protocollo in uso: modificali qui sotto.`
+         : 'Nessun protocollo in uso: componi le fasi al passo 3.'} Al salvataggio il paziente userà il nuovo protocollo e tornerai alla verifica.</small></div>
+   </div>` : ''}
 
   <div class="plate card bpasso">
     <div class="card-h"><span class="disc">1</span><h3>Richieste d'esempio</h3></div>
@@ -1975,7 +2002,7 @@ function disegnaBuilder() {
     <div class="azioni">
       <button class="btn solid" data-bact="salva" id="bSalva">Insegna al tool</button>
       <button class="btn" data-bact="ricomincia">Ricomincia</button>
-      ${origine ? '<button class="btn" data-bact="annulla">Torna alla verifica</button>' : ''}
+      ${origine ? '<button class="btn" data-bact="annulla">Annulla e torna alla verifica</button>' : ''}
     </div>
   </div>`;
   aggiornaBuilder();
