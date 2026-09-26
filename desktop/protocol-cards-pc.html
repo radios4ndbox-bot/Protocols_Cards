@@ -3,173 +3,442 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Protocol Cards — importazione lista</title>
+<title>Protocol Cards — PC</title>
 <style>
 /* ═══════════════════════════════════════════════════════════════════
    PROTOCOL CARDS · tool PC
-   File unico e autosufficiente: pdf.js e il parser sono incorporati,
-   così funziona da chiavetta su un PC senza rete.
-   Nessun dato lascia il browser.
+   File unico e autosufficiente: pdf.js, il parser e la libreria
+   protocolli sono incorporati, così funziona da chiavetta su un PC
+   senza rete. Nessun dato lascia il browser.
+
+   Linguaggio visivo: Celadon (TemplateMo 633), argilla morbida con
+   giada, corallo e cielo. I caratteri Outfit e Albert Sans non sono
+   incorporati: senza rete si ripiega sui caratteri di sistema.
    ═══════════════════════════════════════════════════════════════════ */
 :root{
-  --bg:#f2f6fd; --surface:#fff; --surface2:#e9f0fc; --surface3:#dde8fa;
-  --border:#d3e0f5; --border2:#bed2ef;
-  --text:#15233f; --text2:#33456b; --muted:#6d7f9f;
-  --accent:#2f6fed; --accent-d:#1d54c4; --accent-s:#e6eefd;
-  --warn:#e0801f; --warn-t:#95530c; --warn-s:#fdf1e2;
-  --ok:#0c9b78; --ok-t:#056a52; --ok-s:#e2f7f1;
-  --danger:#d64545; --danger-s:#fdeaea;
-  --sh:0 1px 2px rgba(21,35,63,.06), 0 4px 14px rgba(47,111,237,.06);
-  --sh-l:0 10px 34px rgba(21,35,63,.14);
+  --canvas:#E8EDF7; --plate:#F3F6FD; --plate-2:#EAF0FA; --sunk:#DCE4F3;
+  --ink:#232D3C; --ink-2:#67758B; --ink-3:#8C98AB;
+  --jade:#7CCFB0; --jade-ink:#2A7A62; --jade-s:#E1F4EC;
+  --coral:#E8735C; --coral-ink:#B3432E; --coral-s:#FBE6E1;
+  --amber:#F0C980; --amber-ink:#8A5A0B; --amber-s:#FCF1DC;
+  --sky:#B7D4F5; --sky-ink:#2F5D92;
+  --line:rgba(35,45,60,.09);
+  --r:28px; --r-md:22px; --r-sm:16px;
+  --ease:cubic-bezier(.19,.86,.22,1);
+  --clay:0 22px 38px -20px rgba(35,45,60,.36),0 8px 16px -10px rgba(35,45,60,.18),inset 2px 3px 4px 0 rgba(255,255,255,.95),inset -3px -5px 9px 0 rgba(35,45,60,.09);
+  --clay-sm:0 12px 22px -13px rgba(35,45,60,.34),inset 2px 2px 3px 0 rgba(255,255,255,.92),inset -2px -3px 6px 0 rgba(35,45,60,.10);
+  --well:inset 4px 5px 11px -3px rgba(35,45,60,.22),inset -2px -3px 6px 0 rgba(255,255,255,.9);
+  --well-s:inset 2px 3px 6px -2px rgba(35,45,60,.2),inset -1px -2px 4px 0 rgba(255,255,255,.9);
+  --gloss:linear-gradient(180deg,#FEFEFF 0%,#F5F8FD 46%,#E9EFFA 46.01%,#DEE7F6 100%);
+  --gloss-down:linear-gradient(180deg,#E1E9F6 0%,#EAF0FA 54%,#F5F8FD 54.01%,#FCFDFF 100%);
+  --gloss-jade:linear-gradient(180deg,#B2E7D2 0%,#90D9BD 46%,#6BC5A5 46.01%,#52B492 100%);
+  --gloss-jade-down:linear-gradient(180deg,#4FB08F 0%,#63C0A0 54%,#89D6B9 54.01%,#AAE3CD 100%);
+  --lip:inset 0 1px 0 0 #fff,inset 0 -1px 0 0 rgba(35,45,60,.12);
+  --lip-jade:inset 0 1px 0 0 rgba(255,255,255,.8),inset 0 -1px 0 0 rgba(16,72,56,.4);
+  --lift:0 10px 18px -11px rgba(35,45,60,.6),0 2px 4px -2px rgba(35,45,60,.16);
+  --lift-hi:0 20px 30px -15px rgba(35,45,60,.6),0 5px 9px -4px rgba(35,45,60,.2);
+  --lift-jade:0 12px 20px -11px rgba(42,122,98,.9),0 2px 4px -2px rgba(42,122,98,.3);
+  --sink:0 1px 2px -1px rgba(35,45,60,.3),inset 0 2px 5px 0 rgba(35,45,60,.2);
+  --f-disp:'Outfit','Segoe UI Variable Display','Segoe UI',system-ui,sans-serif;
+  --f-text:'Albert Sans','Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;
+  --f-mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{background:var(--bg);color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  display:flex;flex-direction:column;overflow:hidden}
-button,input,textarea,select{font-family:inherit}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scrollbar-gutter:stable}
+body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--f-text);
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(48vw 40vw at 12% 6%,rgba(183,212,245,.55),transparent 62%),
+             radial-gradient(40vw 36vw at 88% 22%,rgba(124,207,176,.30),transparent 64%),
+             radial-gradient(52vw 44vw at 60% 96%,rgba(232,115,92,.12),transparent 66%)}
+button,input,textarea,select{font:inherit;color:inherit}
+h1,h2,h3,h4{font-family:var(--f-disp);font-weight:300;letter-spacing:-.022em;margin:0;line-height:1.12}
+p{margin:0}
+code{font-family:var(--f-mono);font-size:.86em}
+.shell{width:min(1320px,calc(100vw - 40px));margin:0 auto;position:relative;z-index:1}
+.sp{flex:1}
+.muted{color:var(--ink-2)}
 
-header{flex-shrink:0;display:flex;align-items:center;gap:14px;
-  padding:14px 26px;background:var(--surface);border-bottom:1px solid var(--border)}
-.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);color:#fff;
-  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
-header h1{font-size:16px;font-weight:700;letter-spacing:-.2px}
-header .sub{font-size:11.5px;color:var(--muted);margin-top:1px}
-.privacy{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:11.5px;
-  color:var(--ok-t);background:var(--ok-s);border:1px solid var(--ok);
-  border-radius:99px;padding:6px 14px;font-weight:600}
+/* ── primitivi d'argilla ── */
+.plate{background:linear-gradient(160deg,#FAFCFF,var(--plate) 46%,var(--plate-2));
+  border-radius:var(--r);box-shadow:var(--clay)}
+.eyebrow{font-size:.68rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--jade-ink);display:inline-flex;align-items:center;gap:9px}
+.eyebrow::before{content:"";width:22px;height:5px;border-radius:99px;background:var(--jade);
+  box-shadow:inset 0 -2px 3px rgba(35,45,60,.2)}
 
-.passi{flex-shrink:0;display:flex;gap:6px;padding:12px 26px 0;background:var(--surface);
-  border-bottom:1px solid var(--border)}
-.passo{display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:9px 9px 0 0;
-  font-size:12.5px;font-weight:650;color:var(--muted);border:1px solid transparent;
-  border-bottom:none;position:relative;top:1px}
-.passo.on{background:var(--bg);color:var(--accent-d);border-color:var(--border)}
-.passo.fatto{color:var(--ok-t)}
-.passo i{width:20px;height:20px;border-radius:50%;background:var(--surface3);color:var(--text2);
-  display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;
-  font-style:normal}
-.passo.on i{background:var(--accent);color:#fff}
-.passo.fatto i{background:var(--ok);color:#fff}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:44px;padding:0 22px;border:0;border-radius:99px;cursor:pointer;white-space:nowrap;
+  font-family:var(--f-text);font-size:.9rem;font-weight:600;letter-spacing:-.005em;
+  background-image:var(--gloss);color:var(--ink);box-shadow:var(--lift),var(--lip);
+  transition:box-shadow .24s var(--ease),transform .24s var(--ease)}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--lift-hi),var(--lip)}
+.btn:active{transform:translateY(1px);background-image:var(--gloss-down);box-shadow:var(--sink)}
+.btn:focus-visible{outline:3px solid var(--jade-ink);outline-offset:3px}
+.btn.solid{background-image:var(--gloss-jade);color:#0E3A2E;box-shadow:var(--lift-jade),var(--lip-jade)}
+.btn.solid:active{background-image:var(--gloss-jade-down);box-shadow:inset 0 2px 6px 0 rgba(14,58,46,.34)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:var(--lip)}
+.btn.sm{height:36px;padding:0 16px;font-size:.84rem}
+.btn.xs{height:30px;padding:0 12px;font-size:.78rem}
+.btn.wide{width:100%}
+.btn.danger{color:var(--coral-ink)}
+.btn.ico{width:36px;padding:0}
+.btn.ico.xs{width:30px}
 
-main{flex:1;overflow-y:auto;padding:26px}
-.vista{display:none;max-width:1180px;margin:0 auto}
+.field{width:100%;height:44px;padding:0 18px;border:0;border-radius:99px;background:var(--sunk);appearance:none;
+  box-shadow:var(--well);outline:none;font-size:.92rem;transition:box-shadow .2s}
+.field:focus{box-shadow:var(--well),0 0 0 3px rgba(124,207,176,.55)}
+textarea.field{height:auto;min-height:80px;border-radius:var(--r-sm);padding:12px 16px;resize:vertical;line-height:1.5}
+select.field{appearance:none;padding-right:34px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 19px,calc(100% - 13px) 19px;background-size:5px 5px;background-repeat:no-repeat}
+
+/* ── intestazione ── */
+.top{position:sticky;top:14px;z-index:60;margin-top:14px}
+.bar{display:flex;align-items:center;gap:18px;padding:9px 10px 9px 18px;border-radius:99px;
+  background:linear-gradient(180deg,rgba(254,254,255,.94) 0%,rgba(244,247,253,.92) 46%,rgba(232,238,250,.9) 46.01%,rgba(222,231,246,.9) 100%);
+  backdrop-filter:blur(14px);box-shadow:var(--lift),var(--lip)}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{width:32px;height:32px;border-radius:11px;flex:0 0 auto;position:relative;
+  background:linear-gradient(155deg,#9BDCC3,var(--jade) 55%,#5FBB9C);
+  box-shadow:0 8px 14px -8px rgba(42,122,98,.8),inset 1px 2px 3px rgba(255,255,255,.75),inset -2px -3px 5px rgba(20,80,62,.28)}
+.mark::after{content:"";position:absolute;left:50%;top:52%;width:12px;height:12px;transform:translate(-50%,-50%);
+  border-radius:99px 99px 99px 3px;background:rgba(18,63,51,.55);box-shadow:inset 0 1px 2px rgba(255,255,255,.35)}
+.brand b{display:block;font-family:var(--f-disp);font-weight:500;font-size:1.12rem;letter-spacing:-.03em;line-height:1.1}
+.brand small{display:block;font-size:.72rem;color:var(--ink-2);line-height:1.2}
+.nav{display:flex;gap:4px;margin-left:18px;padding:4px;border-radius:99px;background:rgba(220,228,243,.6);box-shadow:var(--well-s)}
+.nav button{border:0;background:transparent;cursor:pointer;padding:8px 18px;border-radius:99px;
+  font-size:.88rem;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:8px;
+  transition:color .2s,background .25s,box-shadow .25s}
+.nav button:hover{color:var(--ink)}
+.nav button.on{color:var(--ink);background-image:var(--gloss);box-shadow:var(--lift),var(--lip)}
+.nav .nb{min-width:20px;height:20px;padding:0 6px;border-radius:99px;font-size:.7rem;display:inline-flex;
+  align-items:center;justify-content:center;background:var(--sunk);color:var(--ink-2);box-shadow:var(--well-s)}
+.nav button.on .nb{background:var(--jade-s);color:var(--jade-ink)}
+.privacy{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:.76rem;font-weight:600;
+  color:var(--jade-ink);padding:8px 16px;border-radius:99px;background:var(--jade-s);box-shadow:var(--well-s)}
+.privacy i{width:8px;height:8px;border-radius:50%;background:var(--jade);box-shadow:0 0 0 3px rgba(124,207,176,.35)}
+
+main{padding:30px 0 60px}
+.area{display:none}
+.area.on{display:block}
+.intro{display:flex;align-items:flex-end;gap:24px;margin:10px 4px 26px;flex-wrap:wrap}
+.intro h2{font-size:clamp(1.8rem,3vw,2.5rem);margin-top:10px}
+.intro .lede{color:var(--ink-2);max-width:60ch;margin-top:8px}
+
+/* ═══ LISTA DEL GIORNO ═══════════════════════════════════════════ */
+.passi{display:flex;gap:6px;padding:6px;border-radius:99px;background:var(--sunk);box-shadow:var(--well)}
+.passo{display:flex;align-items:center;gap:9px;padding:7px 16px 7px 8px;border-radius:99px;
+  font-size:.82rem;font-weight:600;color:var(--ink-2);transition:.25s var(--ease)}
+.passo i{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-style:normal;font-size:.75rem;font-weight:700;background:var(--plate);box-shadow:var(--clay-sm)}
+.passo.on{color:var(--ink);background-image:var(--gloss);box-shadow:var(--lift),var(--lip)}
+.passo.on i{background-image:var(--gloss-jade);color:#0E3A2E;box-shadow:var(--lip-jade)}
+.passo.fatto{color:var(--jade-ink)}
+.passo.fatto i{background:var(--jade-s);color:var(--jade-ink)}
+
+.vista{display:none}
 .vista.on{display:block}
 
-/* ── 1 · importazione ── */
-.drop{border:2px dashed var(--border2);border-radius:16px;padding:60px 30px;text-align:center;
-  background:var(--surface);cursor:pointer;transition:.18s;position:relative}
-.drop:hover,.drop.sopra{border-color:var(--accent);background:var(--accent-s)}
-.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.drop .ico{font-size:40px;margin-bottom:12px}
-.drop h2{font-size:17px;font-weight:700;margin-bottom:6px}
-.drop p{font-size:13px;color:var(--muted)}
-.nota{margin-top:20px;padding:15px 18px;background:var(--surface);border:1px solid var(--border);
-  border-radius:12px;font-size:12.5px;color:var(--text2);line-height:1.6}
-.nota b{color:var(--text)}
-#stato{margin-top:16px;padding:13px 17px;border-radius:11px;font-size:13px;display:none}
-#stato.info{display:block;background:var(--accent-s);border:1px solid var(--accent);color:var(--accent-d)}
-#stato.err{display:block;background:var(--danger-s);border:1px solid var(--danger);color:var(--danger)}
+.drop{position:relative;border-radius:var(--r);padding:64px 30px;text-align:center;cursor:pointer;
+  background:linear-gradient(160deg,#FAFCFF,var(--plate) 46%,var(--plate-2));box-shadow:var(--clay);
+  transition:transform .3s var(--ease),box-shadow .3s}
+.drop::after{content:"";position:absolute;inset:14px;border-radius:calc(var(--r) - 10px);
+  border:2px dashed rgba(42,122,98,.28);pointer-events:none;transition:.25s}
+.drop:hover,.drop.sopra{transform:translateY(-3px)}
+.drop:hover::after,.drop.sopra::after{border-color:var(--jade-ink);background:rgba(124,207,176,.08)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
+.drop .tile{width:68px;height:68px;border-radius:22px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(155deg,#E4F6EF,var(--jade-s));box-shadow:var(--clay-sm)}
+.drop .tile svg{width:30px;height:30px;stroke:var(--jade-ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.drop h2{font-size:1.6rem;margin-bottom:8px}
+.drop p{color:var(--ink-2);font-size:.92rem}
+.nota{margin-top:20px;padding:18px 22px;border-radius:var(--r-md);background:rgba(243,246,253,.7);
+  box-shadow:var(--clay-sm);font-size:.86rem;color:var(--ink-2);line-height:1.65}
+.nota b{color:var(--ink)}
+#stato{margin-top:16px;padding:14px 20px;border-radius:var(--r-sm);font-size:.9rem;display:none}
+#stato.info{display:block;background:#E6F0FC;color:var(--sky-ink);box-shadow:var(--well-s)}
+#stato.err{display:block;background:var(--coral-s);color:var(--coral-ink);box-shadow:var(--well-s)}
 
-/* ── 2 · verifica ── */
-.barra{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
-.barra h2{font-size:17px;font-weight:700}
-.conta{font-size:12.5px;color:var(--muted)}
-.chip{font-size:11.5px;font-weight:700;border-radius:99px;padding:4px 11px}
-.chip.ok{background:var(--ok-s);color:var(--ok-t);border:1px solid var(--ok)}
-.chip.warn{background:var(--warn-s);color:var(--warn-t);border:1px solid var(--warn)}
-.sp{flex:1}
-.btn{height:40px;padding:0 20px;border-radius:10px;border:none;background:var(--accent);
-  color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:var(--sh)}
-.btn:hover{background:var(--accent-d)}
-.btn:disabled{background:var(--surface3);color:var(--muted);cursor:not-allowed;box-shadow:none}
-.btn.sec{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
-.btn.sec:hover{background:var(--surface2)}
+.barra{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.barra h2{font-size:1.5rem}
+.conta{font-size:.85rem;color:var(--ink-2)}
+.chip{font-size:.74rem;font-weight:700;border-radius:99px;padding:5px 12px;box-shadow:var(--well-s)}
+.chip.ok{background:var(--jade-s);color:var(--jade-ink)}
+.chip.warn{background:var(--amber-s);color:var(--amber-ink)}
 
-.tab{width:100%;border-collapse:separate;border-spacing:0;background:var(--surface);
-  border:1px solid var(--border);border-radius:13px;overflow:hidden;box-shadow:var(--sh)}
-.tab th{text-align:left;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;
-  color:var(--muted);padding:11px 12px;background:var(--surface2);
-  border-bottom:1px solid var(--border);white-space:nowrap}
-.tab td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top;font-size:13px}
-.tab tr:last-child td{border-bottom:none}
-.tab tr.warn td{background:var(--warn-s)}
-.tab tr.esclusa td{opacity:.42}
-.cel{width:100%;min-height:30px;border:1px solid transparent;border-radius:7px;padding:5px 7px;
-  background:transparent;font-size:13px;color:var(--text);outline:none;resize:none;
-  line-height:1.45;overflow:hidden}
-.cel:hover{border-color:var(--border2);background:var(--surface)}
-.cel:focus{border-color:var(--accent);background:var(--surface);
-  box-shadow:0 0 0 3px var(--accent-s)}
+.tabwrap{border-radius:var(--r-md);box-shadow:var(--clay);overflow:hidden;
+  background:linear-gradient(160deg,#FAFCFF,var(--plate) 46%,var(--plate-2))}
+.tab{width:100%;border-collapse:collapse}
+.tab th{text-align:left;font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-2);padding:14px 12px;background:rgba(220,228,243,.55);white-space:nowrap}
+.tab td{padding:8px 12px;border-top:1px solid var(--line);vertical-align:top;font-size:.86rem}
+.tab tr.warn td{background:rgba(252,241,220,.7)}
+.tab tr.esclusa td{opacity:.4}
+.cel{width:100%;min-height:32px;border:0;border-radius:10px;padding:6px 9px;background:transparent;
+  font-size:.86rem;outline:none;resize:none;line-height:1.45;overflow:hidden;transition:background .2s,box-shadow .2s}
+.cel:hover{background:rgba(220,228,243,.6)}
+.cel:focus{background:var(--sunk);box-shadow:var(--well-s),0 0 0 3px rgba(124,207,176,.5)}
 .cel.mono{font-variant-numeric:tabular-nums}
 .cel.corto{max-width:110px}
-td.segn .cel{border-color:var(--warn)}
-.esami{font-size:11.5px;color:var(--text2);line-height:1.6}
-.esami div{padding:1px 0}
-.esami code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--muted);
-  margin-right:6px}
+td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
+.esami{font-size:.8rem;color:var(--ink-2);line-height:1.6}
+.esami code{color:var(--ink-3);margin-right:6px}
 .avvisi{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
-.avvisi span{font-size:9.5px;font-weight:700;background:var(--warn);color:#fff;
-  border-radius:4px;padding:2px 6px}
-.togli{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);
-  background:var(--surface);color:var(--muted);cursor:pointer;font-size:14px}
-.togli:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-s)}
+.avvisi span{font-size:.66rem;font-weight:700;background:var(--amber);color:#5A3A05;border-radius:99px;padding:2px 8px}
+.togli{width:30px;height:30px;border-radius:50%;border:0;cursor:pointer;background-image:var(--gloss);
+  box-shadow:var(--lift),var(--lip);color:var(--ink-2);font-size:.8rem}
+.togli:hover{color:var(--coral-ink)}
+.pchip{display:inline-flex;align-items:center;gap:7px;max-width:100%;border:0;cursor:pointer;text-align:left;
+  padding:5px 12px 5px 8px;border-radius:99px;font-size:.76rem;font-weight:600;line-height:1.3;
+  background:var(--jade-s);color:var(--jade-ink);box-shadow:var(--well-s)}
+.pchip:hover{background:#D2EFE3}
+.pchip .dots{display:inline-flex;gap:2px;flex:0 0 auto}
+.pchip .dots i{width:6px;height:6px;border-radius:50%}
+.pchip.nessuno{background:transparent;box-shadow:none;color:var(--ink-3);cursor:default;font-weight:500}
 
-/* ── 3 · trasferimento ── */
-.qr-griglia{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:26px;align-items:start}
-.qr-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;
-  padding:22px;box-shadow:var(--sh);text-align:center}
-#qr{display:block;margin:0 auto;image-rendering:pixelated;border-radius:8px;
-  background:#fff;max-width:100%;height:auto}
-.qr-sotto{margin-top:14px;font-size:12px;color:var(--muted);line-height:1.6}
-.qr-sotto b{color:var(--text)}
-.frame-n{margin-top:10px;font-size:11.5px;font-weight:700;color:var(--accent-d);
-  font-variant-numeric:tabular-nums}
-.riepilogo{background:var(--surface);border:1px solid var(--border);border-radius:16px;
-  padding:22px;box-shadow:var(--sh)}
-.riepilogo h3{font-size:14px;font-weight:700;margin-bottom:12px}
-.riga{display:flex;justify-content:space-between;gap:14px;padding:7px 0;
-  border-bottom:1px solid var(--border);font-size:13px}
-.riga:last-child{border-bottom:none}
-.riga span:first-child{color:var(--muted)}
+.qr-griglia{display:grid;grid-template-columns:minmax(320px,440px) 1fr;gap:26px;align-items:start}
+.qr-box{padding:26px;text-align:center}
+#qr{display:block;margin:0 auto;image-rendering:pixelated;border-radius:14px;background:#fff;max-width:100%;height:auto;
+  box-shadow:var(--well-s)}
+.qr-sotto{margin-top:16px;font-size:.84rem;color:var(--ink-2);line-height:1.6}
+.qr-sotto b{color:var(--ink)}
+.frame-n{margin-top:12px;font-size:.78rem;font-weight:700;color:var(--jade-ink);font-variant-numeric:tabular-nums}
+.riepilogo{padding:24px 26px}
+.riepilogo h3{font-size:1.2rem;margin-bottom:12px}
+.riga{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.88rem}
+.riga:last-of-type{border-bottom:0}
+.riga span:first-child{color:var(--ink-2)}
 .riga b{font-variant-numeric:tabular-nums}
 .azioni{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
-.spiega{margin-top:18px;font-size:12px;color:var(--text2);line-height:1.65}
-.spiega ol{margin:8px 0 0 18px}
-.spiega li{margin-bottom:4px}
+.spiega{margin-top:20px;padding:0 6px;font-size:.84rem;color:var(--ink-2);line-height:1.65}
+.spiega b{color:var(--ink)}
+.spiega ol{margin:8px 0 8px 18px;padding:0}
+
+/* ═══ PROTOCOLLI ══════════════════════════════════════════════════ */
+.pgrid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:26px;align-items:start}
+
+.lib{position:sticky;top:100px;display:flex;flex-direction:column;max-height:calc(100vh - 124px);padding:20px 16px 16px}
+.lib-head{display:flex;align-items:baseline;gap:10px;padding:0 6px 14px}
+.lib-head h3{font-size:1.35rem}
+.lib-head .n{font-size:.78rem;color:var(--ink-2)}
+.lib .field{height:40px;font-size:.86rem}
+.lib-list{flex:1;overflow-y:auto;margin:14px -6px 0;padding:4px 6px 10px;display:flex;flex-direction:column;gap:8px;
+  scrollbar-width:thin}
+.pv{display:block;width:100%;text-align:left;border:0;cursor:pointer;padding:12px 14px;border-radius:var(--r-sm);
+  background:transparent;transition:background .2s,box-shadow .25s var(--ease),transform .25s var(--ease)}
+.pv:hover{background:rgba(255,255,255,.55);box-shadow:var(--clay-sm)}
+.pv.on{background:linear-gradient(160deg,#FCFEFF,#F1F8F5);box-shadow:var(--clay-sm),inset 3px 0 0 var(--jade)}
+.pv-top{display:flex;align-items:flex-start;gap:8px}
+.pv-nome{flex:1;font-size:.88rem;font-weight:600;line-height:1.3}
+.pv-stato{flex:0 0 auto;width:9px;height:9px;border-radius:50%;margin-top:5px}
+.pv-stato.avviso{background:var(--amber)}
+.pv-stato.grave{background:var(--coral)}
+.pv-sotto{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:.72rem;color:var(--ink-2)}
+.fdots{display:inline-flex;gap:3px}
+.fdots i{width:14px;height:6px;border-radius:99px;box-shadow:inset 0 -1px 2px rgba(0,0,0,.18)}
+.pv-oggi{margin-left:auto;font-weight:700;color:var(--jade-ink);background:var(--jade-s);padding:1px 8px;border-radius:99px}
+.lib-act{display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--line)}
+.lib-act .riga-b{display:flex;gap:6px}
+.lib-act .riga-b .btn{flex:1;padding:0 8px}
+.versione{font-size:.72rem;color:var(--ink-2);text-align:center;line-height:1.5}
+.versione code{font-weight:700;color:var(--ink)}
+.vuoto{padding:24px 10px;text-align:center;font-size:.84rem;color:var(--ink-3)}
+
+.ed{min-width:0}
+.ed-head{padding:26px 30px 22px}
+.ed-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ed-top .eyebrow code{letter-spacing:0;text-transform:none;font-weight:600;color:var(--ink-2)}
+.ed-nome{width:100%;margin:12px 0 0;border:0;background:transparent;outline:none;padding:6px 10px;margin-left:-10px;
+  font-family:var(--f-disp);font-weight:300;font-size:clamp(1.7rem,2.6vw,2.3rem);letter-spacing:-.025em;border-radius:14px;
+  transition:background .2s,box-shadow .2s}
+.ed-nome:hover{background:rgba(220,228,243,.5)}
+.ed-nome:focus{background:var(--sunk);box-shadow:var(--well-s),0 0 0 3px rgba(124,207,176,.5)}
+.prio{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;color:var(--ink-2);margin-left:auto}
+.seq{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin-top:18px}
+.seq-p{position:relative;padding:10px 16px 10px 20px;border-radius:var(--r-sm);background:var(--plate);box-shadow:var(--clay-sm);min-width:120px}
+.seq-p::before{content:"";position:absolute;left:8px;top:12px;bottom:12px;width:4px;border-radius:99px;background:var(--c)}
+.seq-p b{display:block;font-size:.82rem}
+.seq-p span{display:block;font-size:.72rem;color:var(--ink-2)}
+.seq-p small{display:block;font-size:.7rem;color:var(--ink-3);font-family:var(--f-mono);margin-top:2px}
+.seq-f{align-self:center;color:var(--ink-3);font-size:.9rem}
+.oggi{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;font-weight:600;color:var(--jade-ink);
+  background:var(--jade-s);padding:5px 12px;border-radius:99px;box-shadow:var(--well-s)}
+
+.segnala{margin:0 0 18px;display:none;flex-direction:column;gap:6px;padding:14px 18px;border-radius:var(--r-sm);
+  font-size:.84rem;box-shadow:var(--well-s)}
+.segnala.on{display:flex}
+.segnala.grave{background:var(--coral-s);color:var(--coral-ink)}
+.segnala.avviso{background:var(--amber-s);color:var(--amber-ink)}
+.segnala div{display:flex;gap:8px}
+.segnala div::before{content:"";flex:0 0 auto;width:7px;height:7px;border-radius:50%;margin-top:7px;background:currentColor}
+
+.cards{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:22px;margin-top:22px}
+.card{padding:24px 26px}
+.card.span{grid-column:1/-1}
+.card-h{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.card-h h3{font-size:1.25rem}
+.card-h .tile{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:var(--clay-sm);flex:0 0 auto}
+.card-h .tile svg{width:18px;height:18px;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.t-jade{background:linear-gradient(155deg,#E4F6EF,var(--jade-s))}.t-jade svg{stroke:var(--jade-ink)}
+.t-sky{background:linear-gradient(155deg,#EEF5FE,#DCEAFB)}.t-sky svg{stroke:var(--sky-ink)}
+.t-coral{background:linear-gradient(155deg,#FDF0EC,var(--coral-s))}.t-coral svg{stroke:var(--coral-ink)}
+.t-amber{background:linear-gradient(155deg,#FEF7EA,var(--amber-s))}.t-amber svg{stroke:var(--amber-ink)}
+.card-d{font-size:.82rem;color:var(--ink-2);margin-bottom:18px}
+.lbl{display:block;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin:18px 0 8px}
+.lbl:first-child{margin-top:0}
+.lbl em{font-style:normal;font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink-3)}
+
+/* fasi */
+.fasi{display:flex;flex-direction:column;gap:12px}
+.fase{position:relative;display:grid;grid-template-columns:34px 170px minmax(0,1fr) auto;gap:10px 14px;align-items:center;
+  padding:14px 14px 14px 12px;border-radius:var(--r-md);background:rgba(255,255,255,.5);box-shadow:var(--clay-sm)}
+.fase::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:0 99px 99px 0;background:var(--c)}
+.fase-n{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;
+  color:#fff;background:var(--c);box-shadow:inset 1px 2px 3px rgba(255,255,255,.35),inset -2px -3px 5px rgba(0,0,0,.18)}
+.fase select.field{height:38px;font-size:.86rem}
+.rit{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.seg{display:inline-flex;padding:3px;border-radius:99px;background:var(--sunk);box-shadow:var(--well-s)}
+.seg button{border:0;background:transparent;cursor:pointer;padding:6px 13px;border-radius:99px;font-size:.78rem;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.seg button.on{color:var(--ink);background-image:var(--gloss);box-shadow:var(--lift),var(--lip)}
+.seg.lg button{padding:9px 18px;font-size:.84rem}
+.sec-in{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--ink-2)}
+.sec-in .field{width:74px;height:34px;padding:0 12px;text-align:center;font-variant-numeric:tabular-nums}
+.nomdc{font-size:.78rem;color:var(--ink-3)}
+.fase-ctl{display:flex;gap:6px}
+.fase .zone{grid-column:2/-1}
+.zone{display:flex;flex-wrap:wrap;gap:6px}
+.z{border:0;cursor:pointer;padding:6px 12px;border-radius:99px;font-size:.76rem;font-weight:600;color:var(--ink-2);
+  background:transparent;box-shadow:inset 0 0 0 1.5px rgba(35,45,60,.12);transition:.18s}
+.z b{font-family:var(--f-mono);font-weight:700;margin-right:5px;color:var(--ink)}
+.z:hover{box-shadow:inset 0 0 0 1.5px rgba(35,45,60,.3)}
+.z.on{color:#0E3A2E;background-image:var(--gloss-jade);box-shadow:var(--lift-jade),var(--lip-jade)}
+.z.on b{color:#0E3A2E}
+.fix{grid-column:2/-1;display:flex;align-items:center;gap:10px;font-size:.78rem;color:var(--ink-2);cursor:pointer;user-select:none}
+.sw{width:40px;height:22px;border-radius:99px;background:var(--sunk);box-shadow:var(--well-s);position:relative;flex:0 0 auto;transition:.25s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background-image:var(--gloss);box-shadow:var(--lift),var(--lip);transition:transform .25s var(--ease)}
+.fix.on .sw{background:var(--jade)}
+.fix.on .sw::after{transform:translateX(18px)}
+.add-f{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.add-f .btn i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+
+/* mdc */
+.stp{display:flex;align-items:center;gap:8px}
+.stp .field{width:96px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+.stp small{font-size:.78rem;color:var(--ink-2);min-width:36px}
+.mdc-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.anteprima{margin-top:20px;padding:16px 18px;border-radius:var(--r-sm);background:var(--sunk);box-shadow:var(--well-s);font-size:.82rem;color:var(--ink-2)}
+.anteprima .num{display:flex;gap:26px;margin:8px 0 4px}
+.anteprima .num b{font-family:var(--f-disp);font-weight:400;font-size:1.7rem;color:var(--ink);letter-spacing:-.02em}
+.anteprima .num span{font-size:.78rem;margin-left:3px}
+.anteprima select{border:0;background:transparent;font-weight:600;color:var(--ink);cursor:pointer;padding:0}
+.card.spento .mdc-row,.card.spento .anteprima{opacity:.4;pointer-events:none}
+
+/* termini */
+.tok{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:46px;padding:7px 8px;border-radius:var(--r-sm);
+  background:var(--sunk);box-shadow:var(--well-s);cursor:text}
+.tok:focus-within{box-shadow:var(--well-s),0 0 0 3px rgba(124,207,176,.5)}
+.tok span{display:inline-flex;align-items:center;gap:4px;padding:4px 6px 4px 11px;border-radius:99px;font-size:.8rem;font-weight:600;
+  background-image:var(--gloss);box-shadow:var(--lift),var(--lip)}
+.tok span button{border:0;background:transparent;cursor:pointer;width:18px;height:18px;border-radius:50%;color:var(--ink-3);font-size:.9rem;line-height:1;padding:0}
+.tok span button:hover{color:var(--coral-ink);background:var(--coral-s)}
+.tok input{flex:1;min-width:120px;border:0;background:transparent;outline:none;font-size:.84rem;padding:4px 6px}
+
+/* prova */
+.prova{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:10px}
+.esito{margin-top:16px;padding:16px 18px;border-radius:var(--r-sm);font-size:.84rem}
+.esito.si{background:var(--jade-s);color:var(--jade-ink)}
+.esito.altro{background:var(--amber-s);color:var(--amber-ink)}
+.esito.no{background:var(--sunk);color:var(--ink-2);box-shadow:var(--well-s)}
+.esito .tit{font-weight:700;font-size:.9rem}
+.esito .reg{margin-top:2px}
+.cand{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.cand div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.6);color:var(--ink)}
+.cand div.scelto{box-shadow:inset 0 0 0 2px var(--jade)}
+.cand small{grid-column:1/-1;color:var(--ink-2);font-size:.74rem}
+.cand .pt{font-variant-numeric:tabular-nums;font-weight:700}
+.cand mark{background:rgba(124,207,176,.35);color:inherit;border-radius:4px;padding:0 3px}
+
+/* ── modale e avvisi ── */
+.mask{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(35,45,60,.28);backdrop-filter:blur(3px)}
+.mask.on{display:flex}
+.modal{width:min(440px,calc(100vw - 32px));padding:28px}
+.modal h3{font-size:1.4rem;margin-bottom:10px}
+.modal p{font-size:.9rem;color:var(--ink-2);line-height:1.6}
+.modal .azioni{justify-content:flex-end;margin-top:24px}
+.toast{position:fixed;left:50%;bottom:26px;z-index:95;transform:translate(-50%,30px);opacity:0;pointer-events:none;
+  display:flex;align-items:center;gap:14px;padding:10px 10px 10px 22px;border-radius:99px;font-size:.88rem;font-weight:600;
+  color:#fff;background:#2B3647;box-shadow:0 18px 30px -14px rgba(35,45,60,.7);transition:.3s var(--ease)}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{border:0;cursor:pointer;padding:7px 14px;border-radius:99px;font-size:.8rem;font-weight:700;color:#0E3A2E;background-image:var(--gloss-jade)}
+.toast button:empty{display:none}
+
+@media (max-width:1100px){
+  .pgrid{grid-template-columns:1fr}
+  .lib{position:static;max-height:none}
+  .lib-list{max-height:320px}
+  .cards{grid-template-columns:1fr}
+  .qr-griglia{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .bar{flex-wrap:wrap;border-radius:26px}
+  .nav{margin-left:0;order:3;width:100%}
+  .nav button{flex:1;justify-content:center}
+  .fase{grid-template-columns:34px minmax(0,1fr)}
+  .fase .rit,.fase-ctl{grid-column:2/-1}
+  .mdc-row,.prova{grid-template-columns:1fr}
+}
+@media print{
+  body::before,.top,.intro,.passi,.barra,.spiega,.azioni{display:none!important}
+  .plate,.qr-box{box-shadow:none}
+}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">PC</div>
-  <div>
-    <h1>Protocol Cards — importazione lista</h1>
-    <div class="sub">ASST Brianza · Desio</div>
+<header class="top">
+  <div class="shell bar">
+    <div class="brand"><span class="mark" aria-hidden="true"></span>
+      <div><b>Protocol Cards</b><small>ASST Brianza · Desio</small></div></div>
+    <nav class="nav" aria-label="Sezioni">
+      <button class="on" data-area="lista">Lista del giorno</button>
+      <button data-area="proto">Protocolli <span class="nb" id="navN"></span></button>
+    </nav>
+    <div class="privacy"><i></i>Nessun dato paziente lascia questo computer</div>
   </div>
-  <div class="privacy">🔒 Nessun dato lascia questo computer</div>
 </header>
 
-<div class="passi">
-  <div class="passo on" data-p="1"><i>1</i> Carica il PDF</div>
-  <div class="passo" data-p="2"><i>2</i> Verifica e correggi</div>
-  <div class="passo" data-p="3"><i>3</i> Trasferisci sul telefono</div>
-</div>
+<main class="shell">
 
-<main>
+<!-- ═══════════════════════ LISTA DEL GIORNO ═══════════════════════ -->
+<section class="area on" id="aLista">
+  <div class="intro">
+    <div>
+      <span class="eyebrow">Lista del giorno</span>
+      <h2>Importa, verifica, trasferisci.</h2>
+    </div>
+    <span class="sp"></span>
+    <div class="passi">
+      <div class="passo on" data-p="1"><i>1</i> Carica il PDF</div>
+      <div class="passo" data-p="2"><i>2</i> Verifica e correggi</div>
+      <div class="passo" data-p="3"><i>3</i> Trasferisci sul telefono</div>
+    </div>
+  </div>
+
   <!-- ═══ 1 ═══ -->
   <section class="vista on" id="v1">
     <div class="drop" id="drop">
       <input type="file" id="file" accept="application/pdf,.pdf">
-      <div class="ico">📄</div>
+      <div class="tile"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 18v-6M9 15l3-3 3 3"/></svg></div>
       <h2>Trascina qui la lista esami</h2>
       <p>oppure fai clic per sceglierla — formato «Lista esami da eseguire», RIS Desio</p>
     </div>
     <div id="stato"></div>
     <div class="nota">
       <b>Il PDF non viene caricato da nessuna parte.</b> Viene letto qui, dentro il browser:
-      il file resta sul computer e nulla viene inviato in rete. Questo strumento non
-      conserva niente — chiudendo la pagina non resta traccia.
+      il file resta sul computer e nulla viene inviato in rete. La lista dei pazienti non
+      viene conservata — chiudendo la pagina non ne resta traccia. Il tool ricorda soltanto
+      la <b>libreria dei protocolli</b>, che non contiene dati personali.
     </div>
   </section>
 
@@ -181,26 +450,30 @@ td.segn .cel{border-color:var(--warn)}
       <span class="chip ok" id="chipOk"></span>
       <span class="chip warn" id="chipWarn" style="display:none"></span>
       <span class="sp"></span>
-      <button class="btn sec" id="indietro1">← Cambia file</button>
-      <button class="btn" id="avanti">Genera il QR →</button>
+      <button class="btn sm" id="indietro1">← Cambia file</button>
+      <button class="btn solid sm" id="avanti">Genera il QR →</button>
     </div>
-    <div class="nota" style="margin:0 0 14px">
+    <div class="nota" style="margin:0 0 18px">
       Le righe evidenziate sono quelle su cui il parser <b>non è sicuro</b>: controllale.
       Ogni campo è modificabile — questo è l'ultimo posto comodo per correggere, sul
-      telefono è più scomodo.
+      telefono è più scomodo. La colonna <b>Protocollo</b> mostra cosa suggerirà il telefono
+      con la libreria attuale: fai clic per aprirlo.
     </div>
+    <div class="tabwrap">
     <table class="tab">
       <thead><tr>
-        <th style="width:74px">Orario</th>
-        <th style="width:112px">Accettazione</th>
+        <th style="width:84px">Orario</th>
+        <th style="width:120px">Accettazione</th>
         <th>Paziente</th>
-        <th style="width:112px">Nascita</th>
+        <th style="width:120px">Nascita</th>
         <th>Quesito diagnostico</th>
-        <th style="width:270px">Esami richiesti</th>
-        <th style="width:44px"></th>
+        <th style="width:250px">Esami richiesti</th>
+        <th style="width:200px">Protocollo</th>
+        <th style="width:48px"></th>
       </tr></thead>
       <tbody id="righe"></tbody>
     </table>
+    </div>
   </section>
 
   <!-- ═══ 3 ═══ -->
@@ -208,16 +481,16 @@ td.segn .cel{border-color:var(--warn)}
     <div class="barra">
       <h2>Trasferimento sul telefono</h2>
       <span class="sp"></span>
-      <button class="btn sec" id="indietro2">← Torna alla verifica</button>
+      <button class="btn sm" id="indietro2">← Torna alla verifica</button>
     </div>
     <div class="qr-griglia">
-      <div class="qr-box">
+      <div class="plate qr-box">
         <canvas id="qr" width="420" height="420"></canvas>
         <div class="frame-n" id="frameN"></div>
         <div class="qr-sotto" id="qrSotto"></div>
       </div>
       <div>
-        <div class="riepilogo">
+        <div class="plate riepilogo">
           <h3>Contenuto del trasferimento</h3>
           <div class="riga"><span>Giornata</span><b id="rGiorno">—</b></div>
           <div class="riga"><span>Pazienti</span><b id="rPaz">—</b></div>
@@ -226,15 +499,15 @@ td.segn .cel{border-color:var(--warn)}
           <div class="riga"><span>Dopo compressione</span><b id="rComp">—</b></div>
           <div class="riga"><span>Codici QR</span><b id="rFrame">—</b></div>
           <div class="azioni">
-            <button class="btn sec" id="scaricaJson">Scarica come file JSON</button>
-            <button class="btn sec" id="stampa">Stampa il QR</button>
+            <button class="btn sm" id="scaricaJson">Scarica come file JSON</button>
+            <button class="btn sm" id="stampa">Stampa il QR</button>
           </div>
         </div>
         <div class="spiega">
           <b>Come si trasferisce</b>
           <ol>
             <li>Apri Protocol Cards sul telefono e scegli la scansione.</li>
-            <li>Inquadra il codice qui sopra.</li>
+            <li>Inquadra il codice qui accanto.</li>
             <li>Se i codici sono più di uno si alternano da soli: tieni inquadrato
                 finché il telefono non li ha raccolti tutti, in qualsiasi ordine.</li>
           </ol>
@@ -244,7 +517,49 @@ td.segn .cel{border-color:var(--warn)}
       </div>
     </div>
   </section>
+</section>
+
+<!-- ═══════════════════════════ PROTOCOLLI ═══════════════════════════ -->
+<section class="area" id="aProto">
+  <div class="intro">
+    <div>
+      <span class="eyebrow">Libreria protocolli</span>
+      <h2>Come si acquisisce, per ogni quesito.</h2>
+      <p class="lede">Qui si decide cosa suggerirà il telefono: fasi, zone, mezzo di contrasto
+        e i termini del quesito che fanno riconoscere il protocollo.</p>
+    </div>
+  </div>
+
+  <div class="pgrid">
+    <aside class="plate lib">
+      <div class="lib-head"><h3>Libreria</h3><span class="n" id="libN"></span></div>
+      <input class="field" id="libCerca" type="search" placeholder="Cerca per nome o termine…" aria-label="Cerca protocollo">
+      <div class="lib-list" id="libList"></div>
+      <div class="lib-act">
+        <button class="btn solid wide sm" id="libNuovo">+ Nuovo protocollo</button>
+        <div class="riga-b">
+          <button class="btn xs" id="libEsporta" title="Salva la libreria in un file JSON">Esporta</button>
+          <button class="btn xs" id="libImporta" title="Sostituisci la libreria con un file JSON">Importa</button>
+          <button class="btn xs danger" id="libReset" title="Torna alla libreria SIRM 2022">Ripristina</button>
+        </div>
+        <input type="file" id="libFile" accept=".json,application/json" hidden>
+        <div class="versione" id="libVer"></div>
+      </div>
+    </aside>
+
+    <div class="ed" id="editor"></div>
+  </div>
+</section>
+
 </main>
+
+<div class="mask" id="mask" role="dialog" aria-modal="true" aria-labelledby="mTitolo">
+  <div class="plate modal">
+    <h3 id="mTitolo"></h3><p id="mTesto"></p>
+    <div class="azioni"><button class="btn sm" id="mNo">Annulla</button><button class="btn solid sm" id="mSi">Conferma</button></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"><span id="toastT"></span><button id="toastA"></button></div>
 
 <script>/**
  * @licstart The following is the entire license notice for the
@@ -2867,6 +3182,310 @@ var qrcode = function() {
   else root.RisParser = api;
 })(typeof self !== 'undefined' ? self : this);
 </script>
+<script>/* ═══════════════════════════════════════════════════════════════════════
+   PROTOCOL CARDS · libreria protocolli
+
+   Modulo condiviso: lo usa il tool PC per modificare la libreria e lo
+   userà il telefono dopo la sincronizzazione. Lo schema è lo stesso del
+   prototipo (prototype/index.html), con una differenza: i protocolli
+   stanno in un elenco ordinato invece che in un oggetto, perché l'ordine
+   decide i pareggi del riconoscimento e va reso esplicito.
+
+   Nessuna dipendenza, nessun accesso al DOM: gira in Node per i test.
+   ═══════════════════════════════════════════════════════════════════════ */
+(function (root) {
+  'use strict';
+
+  /* ═══ FASI E ZONE ══════════════════════════════════════════════════ */
+  const FASI = {
+    basale:    { l: 'Basale',      c: '#6d7f9f', mdc: false, delay: ''    },
+    arteriosa: { l: 'Arteriosa',   c: '#2f6fed', mdc: true,  delay: 'B-T' },
+    venosa:    { l: 'Venosa',      c: '#1d54c4', mdc: true,  delay: '70'  },
+    tardiva:   { l: 'Eq. tardiva', c: '#c2601a', mdc: true,  delay: '300' },
+  };
+
+  const ZONE = {
+    basale:   [['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
+               ['ADs','Addome sup.'],['ADc','Addome compl.'],
+               ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']],
+    arteriosa:[['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
+               ['ADs','Addome sup.'],['ADc','Addome compl.'],
+               ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
+               ['Collo TAs','Collo + tor-add sup.'],['Collo TAc','Collo + tor-add compl.'],
+               ['Angio TC','Angio-TC']],
+    venosa:   [['Collo','Collo'],['TO','Torace'],
+               ['ADs','Addome sup.'],['ADc','Addome compl.'],
+               ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
+               ['Collo TAs','Collo + tor-add sup.'],['Collo TAc','Collo + tor-add compl.']],
+    tardiva:  [['ENC','Encefalo'],['TO','Torace'],
+               ['ADs','Addome sup.'],['ADc','Addome compl.'],
+               ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']],
+  };
+
+  const ZONE_L = {};
+  Object.values(ZONE).forEach(l => l.forEach(([c, lab]) => { ZONE_L[c] = lab; }));
+
+  /* regioni che regionOf() può restituire: sono i distretti con cui un
+     protocollo dichiara di essere compatibile                          */
+  const REGIONI = [['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
+                   ['ADs','Addome sup.'],['ADc','Addome compl.'],
+                   ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']];
+
+  const BASALE = {
+    req:  'Richiesta',
+    opt:  'Opzionale',
+    skip: 'Omettibile',
+  };
+
+  const LIMITI = { giKg: [0.10, 1.20], idr: [0.4, 2.5] };
+
+  /* ═══ LIBRERIA DI PARTENZA (estratto SIRM 2022) ════════════════════
+     basale: req = richiesta · opt = opzionale · skip = omettibile
+     kw = termini del quesito · ex = termini dell'esame (disambiguano)
+     reg = regioni coperte (assente = qualunque) · fix = zona intrinseca  */
+  const SIRM_2022 = [
+    { id:'angio-polm', l:'AngioTC Polmonare', idr:1.5, giKg:0.45, basale:'opt',
+      reg:['TO','TAs','TAc'],
+      kw:['embolia','tromboembolia','tep'], ex:['torace'],
+      nota:'SIRM indica l’acquisizione senza mdc come opzionale in questo protocollo.',
+      fasi:[{fase:'arteriosa',zone:['TAs'],delay:'B-T'}] },
+    { id:'cranio-trauma', l:'TC Cranio – Trauma cranico acuto', idr:0, giKg:0, basale:'req',
+      reg:['ENC'],
+      kw:['trauma cranico','trauma','caduta'], ex:['encefalo','cranio'],
+      nota:'Protocollo interamente basale: la fase senza mdc è l’esame stesso.',
+      fasi:[{fase:'basale',zone:['ENC'],delay:'',fix:1}] },
+    { id:'encefalo-stroke', l:'TC Encefalo + angio-TC – Stroke', idr:1.6, giKg:0.35, basale:'req',
+      reg:['ENC'],
+      kw:['stroke','ictus','deficit neurologico','ischemia cerebrale'], ex:['encefalo'],
+      nota:'Obbligatoria per escludere l’emorragia prima di qualunque fase contrastografica.',
+      fasi:[{fase:'basale',zone:['ENC'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1}] },
+    { id:'fegato-cirr', l:'Fegato cirrotico – Stadiazione', idr:1.4, giKg:0.63, basale:'req',
+      reg:['ADs','ADc','TAs','TAc'],
+      kw:['hcc','epatocarcinoma','cirrosi','epatopatia','sorveglianza'], ex:['addome'],
+      nota:'Studio quadrifasico: la basale serve a riconoscere le lesioni spontaneamente iperdense.',
+      fasi:[{fase:'basale',zone:['ADs'],delay:'',fix:1},{fase:'arteriosa',zone:['ADs'],delay:'B-T',fix:1},
+            {fase:'venosa',zone:['ADc'],delay:'75',fix:1},{fase:'tardiva',zone:['ADs'],delay:'300',fix:1}] },
+    { id:'onco-ristad', l:'Oncologia – Ristadiazione', idr:1.4, giKg:0.55, basale:'skip',
+      kw:['restaging','ristadiazione','stadiazione'], ex:[],
+      nota:'Nel follow-up oncologico la basale è ridondante se esiste un precedente di confronto.',
+      fasi:[{fase:'venosa',zone:['TAc'],delay:'75'}] },
+    { id:'onco-fup', l:'Oncologia – Follow-up basso rischio', idr:1.3, giKg:0.50, basale:'skip',
+      kw:['followup','recidiva'], ex:[],
+      nota:'Nel follow-up la basale è ridondante se esiste un precedente di confronto.',
+      fasi:[{fase:'venosa',zone:['ADc'],delay:'75'}] },
+    { id:'vie-biliari', l:'Vie biliari – Patologia infiammatoria', idr:1.4, giKg:0.60, basale:'req',
+      reg:['ADs','ADc','TAs','TAc'],
+      kw:['colecistite','colangite','litiasi biliare'], ex:['addome'],
+      nota:'La basale è necessaria per identificare i calcoli calcifici, mascherati dopo mdc.',
+      fasi:[{fase:'basale',zone:['ADs'],delay:'',fix:1},{fase:'venosa',zone:['ADs'],delay:'70',fix:1}] },
+    { id:'aorta-endop', l:'AngioTC Aorta – controllo endoprotesi', idr:1.6, giKg:0.55, basale:'req',
+      reg:['ADc','TAc'],
+      kw:['endoleak','endoprotesi','evar'], ex:['aorta'],
+      nota:'Serve a distinguere le calcificazioni parietali dall’endoleak in fase contrastografica.',
+      fasi:[{fase:'basale',zone:['ADc'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1},
+            {fase:'tardiva',zone:['ADc'],delay:'300',fix:1}] },
+    { id:'aorta-diss', l:'TC Aorta – Dissezione', idr:1.8, giKg:0.55, basale:'req',
+      reg:['TAc','ADc'],
+      kw:['dissezione','sindrome aortica'], ex:['aorta'],
+      nota:'La basale individua l’ematoma intramurale, isodenso dopo contrasto.',
+      fasi:[{fase:'basale',zone:['TAc'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1}] },
+    { id:'urotc-split', l:'UROTC Split Bolus', idr:1.2, giKg:0.55, basale:'req',
+      reg:['ADc'],
+      kw:['ematuria','colica renale','idronefrosi','urolitiasi','calcolosi'], ex:['uro'],
+      nota:'La basale è indispensabile per la ricerca di calcoli, indistinguibili dopo mdc.',
+      fasi:[{fase:'basale',zone:['ADc'],delay:'',fix:1},{fase:'venosa',zone:['ADc'],delay:'100',fix:1}] },
+    { id:'addome-acuto', l:'TC Addome acuto', idr:1.4, giKg:0.60, basale:'opt',
+      reg:['ADs','ADc','TAs','TAc'],
+      kw:['appendicite','diverticolite','occlusione','perforazione','addome acuto','peritonite'],
+      ex:['addome'],
+      nota:'SIRM indica l’acquisizione senza mdc come opzionale.',
+      fasi:[{fase:'venosa',zone:['ADc'],delay:'70'}] },
+    { id:'politrauma', l:'TC Total body – Politrauma', idr:1.6, giKg:0.60, basale:'opt',
+      reg:['TAc'],
+      kw:['politrauma','trauma maggiore','incidente stradale'], ex:['total body'],
+      nota:'In urgenza la basale è spesso omessa per ridurre i tempi; resta utile sull’encefalo.',
+      fasi:[{fase:'arteriosa',zone:['TAc'],delay:'B-T',fix:1},{fase:'venosa',zone:['ADc'],delay:'70',fix:1}] },
+    { id:'hrct-nodulo', l:'HRCT – Nodulo polmonare', idr:0, giKg:0, basale:'req',
+      reg:['TO','TAs','TAc'],
+      kw:['nodulo','lungrads','interstiziopatia','fibrosi'], ex:['torace'],
+      nota:'Protocollo senza mdc: l’acquisizione basale è l’intero esame.',
+      fasi:[{fase:'basale',zone:['TAs'],delay:''}] },
+    { id:'torace-mdc', l:'TC Torace con mdc', idr:1.4, giKg:0.50, basale:'opt',
+      reg:['TO','TAs','TAc'],
+      kw:['versamento','ascesso polmonare','mediastino'], ex:['torace'],
+      nota:'SIRM indica l’acquisizione senza mdc come opzionale.',
+      fasi:[{fase:'venosa',zone:['TAs'],delay:'70'}] },
+  ];
+
+  /* ═══ TESTO ════════════════════════════════════════════════════════ */
+  /* normalizzazione condivisa da matcher e termini: la stessa del prototipo,
+     così un termine scritto nel tool PC si comporta uguale sul telefono  */
+  function normText(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/follow[\s-]?up/g, 'followup').replace(/lung[\s-]?rads/g, 'lungrads')
+      .replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  /* ═══ REGIONE ANATOMICA DALL'ESAME ═════════════════════════════════
+     Regole ordinate dalla più specifica alla più generica: il primo
+     riscontro vince, quindi stesso esame → stessa regione, sempre.     */
+  function regionOf(esame) {
+    const t = normText(esame);
+    if (/total body|whole body/.test(t))              return 'TAc';
+    if (/aorta/.test(t))                              return /toracic|ascendente|arco/.test(t) ? 'TAc' : 'ADc';
+    if (/\buro\b|urotc|uro tc|renal|vescic/.test(t))  return 'ADc';
+    if (/encefal|cranio|cerebral|capo/.test(t))       return 'ENC';
+    if (/\bcollo\b|cervical|tiroide|laring|faring|parotid/.test(t)) return 'Collo';
+    if (/rachide|colonna|vertebr|bacino|femore|ginocchio|spalla|omero|arto|polso|caviglia|piede|mano|massiccio|facciale|temporale|orbit|seni paranasal|mandibol/.test(t))
+      return 'ALTRO';                       // distretto riconosciuto ma fuori tassonomia
+    const tor = /torac/.test(t), add = /addom/.test(t), sup = /superior|\bsup\b/.test(t);
+    if (tor && add) return sup ? 'TAs' : 'TAc';
+    if (tor)        return 'TO';
+    if (add)        return sup ? 'ADs' : 'ADc';
+    return null;
+  }
+
+  /* ═══ RICONOSCIMENTO — deterministico ══════════════════════════════
+     punteggio = Σ (parole del termine × 2) sui termini del quesito
+               + 1 per ogni termine dell'esame riconosciuto
+     La regione dell'esame esclude i protocolli che non la coprono; senza
+     un riscontro nel quesito un protocollo non è candidato. A parità vince
+     il primo in elenco. Restituisce anche i candidati scartati, così il
+     tool PC può spiegare perché ha scelto quello che ha scelto.         */
+  function riconosci(protocolli, esame, quesito) {
+    const tq = normText(quesito), te = normText(esame);
+    const regione = regionOf(esame);
+    const candidati = [];
+    let best = null;
+    protocolli.forEach((v, ordine) => {
+      const kw = (v.kw || []).filter(w => w && tq.includes(normText(w)));
+      const ex = (v.ex || []).filter(w => w && te.includes(normText(w)));
+      const sKw = kw.reduce((s, w) => s + normText(w).split(' ').length * 2, 0);
+      const fuori = !!(regione && v.reg && v.reg.length && !v.reg.includes(regione));
+      if (!sKw && !ex.length) return;
+      const c = { id: v.id, punteggio: sKw + ex.length, kw, ex, fuori, ordine };
+      candidati.push(c);
+      if (fuori || !sKw) return;
+      if (!best || c.punteggio > best.punteggio) best = c;
+    });
+    candidati.sort((a, b) => b.punteggio - a.punteggio || a.ordine - b.ordine);
+    return { id: best ? best.id : null, regione, candidati };
+  }
+
+  /* Applica la regione dell'esame alle fasi del protocollo. Le fasi `fix`
+     conservano la propria zona: è intrinseca al protocollo.            */
+  function fitZones(fasi, esame) {
+    const r = regionOf(esame);
+    return fasi.map(f => {
+      const { fix, ...pulita } = f;
+      if (fix || !r || !ZONE[f.fase].some(([c]) => c === r)) return pulita;
+      return { ...pulita, zone: [r] };
+    });
+  }
+
+  /* ═══ VALIDAZIONE ═══════════════════════════════════════════════════
+     grave = il protocollo non può essere sincronizzato così com'è
+     altrimenti è un'incoerenza da segnalare ma che non blocca          */
+  function valida(p, protocolli) {
+    const e = [];
+    const add = (campo, msg, grave) => e.push({ campo, msg, grave: !!grave });
+    if (!p.l || !p.l.trim()) add('l', 'Manca il nome del protocollo', true);
+    if (protocolli && protocolli.some(q => q.id !== p.id && q.l.trim().toLowerCase() === (p.l || '').trim().toLowerCase()))
+      add('l', 'Esiste già un protocollo con questo nome', true);
+    if (!p.fasi || !p.fasi.length) add('fasi', 'Nessuna fase di acquisizione', true);
+    (p.fasi || []).forEach((f, i) => {
+      const n = `Fase ${i + 1} (${FASI[f.fase] ? FASI[f.fase].l : f.fase})`;
+      if (!FASI[f.fase]) add('fasi', `${n}: tipo di fase sconosciuto`, true);
+      if (!f.zone || !f.zone.length) add('fasi', `${n}: nessuna zona selezionata`, true);
+      if (f.fase !== 'basale' && f.delay && !/^(B-T|\d{1,3})$/.test(f.delay))
+        add('fasi', `${n}: ritardo non valido — secondi oppure B-T`, true);
+      if (f.fase !== 'basale' && !f.delay) add('fasi', `${n}: ritardo non indicato`);
+    });
+    const conMdc = (p.fasi || []).some(f => FASI[f.fase] && FASI[f.fase].mdc);
+    if (conMdc) {
+      if (!(p.giKg >= LIMITI.giKg[0] && p.giKg <= LIMITI.giKg[1]))
+        add('mdc', `Dose di iodio fuori intervallo (${LIMITI.giKg[0]}–${LIMITI.giKg[1]} gI/kg)`, true);
+      if (!(p.idr >= LIMITI.idr[0] && p.idr <= LIMITI.idr[1]))
+        add('mdc', `IDR fuori intervallo (${LIMITI.idr[0]}–${LIMITI.idr[1]} gI/s)`, true);
+    }
+    const hasBas = (p.fasi || []).some(f => f.fase === 'basale');
+    if (p.basale === 'req' && !hasBas) add('basale', 'Basale indicata come richiesta ma assente dalle fasi');
+    if (p.basale !== 'req' && hasBas) add('basale', 'Basale presente nelle fasi ma indicata come non richiesta');
+    if (!(p.kw || []).length) add('kw', 'Nessun termine del quesito: il protocollo non verrà mai suggerito');
+    return e;
+  }
+
+  /* ═══ LIBRERIA ══════════════════════════════════════════════════════ */
+  const clona = x => JSON.parse(JSON.stringify(x));
+
+  function nuovaLibreria() {
+    return { v: 1, base: 'SIRM 2022', modificata: 0, protocolli: clona(SIRM_2022) };
+  }
+
+  function slug(s) {
+    return normText(s).replace(/ /g, '-').slice(0, 40) || 'protocollo';
+  }
+  function idLibero(protocolli, nome) {
+    const base = slug(nome);
+    let id = base, n = 2;
+    while (protocolli.some(p => p.id === id)) id = `${base}-${n++}`;
+    return id;
+  }
+
+  /* Forma canonica di un protocollo: sempre gli stessi campi, nello stesso
+     ordine. Serve alla firma (due librerie uguali hanno la stessa firma
+     anche se sono state salvate in momenti diversi) e alla sincronizzazione. */
+  function canonico(p) {
+    const o = { id: p.id, l: (p.l || '').trim(), idr: +p.idr || 0, giKg: +p.giKg || 0,
+      basale: p.basale, kw: (p.kw || []).slice(), ex: (p.ex || []).slice(),
+      nota: (p.nota || '').trim(),
+      fasi: (p.fasi || []).map(f => {
+        const x = { fase: f.fase, zone: (f.zone || []).slice(), delay: f.delay || '' };
+        if (f.fix) x.fix = 1;
+        return x;
+      }) };
+    if (p.reg && p.reg.length) o.reg = p.reg.slice();
+    return o;
+  }
+
+  /* firma della libreria: identifica una versione senza doverla confrontare
+     campo per campo. djb2 su JSON canonico: non crittografica, basta a
+     riconoscere se telefono e PC hanno la stessa libreria.              */
+  function firma(protocolli) {
+    const s = JSON.stringify(protocolli.map(canonico));
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+    return h.toString(36).toUpperCase().padStart(7, '0').slice(0, 7);
+  }
+
+  /* lettura di una libreria da file: accetta solo ciò che riconosce, e
+     segnala il resto invece di importarlo a metà                        */
+  function leggiLibreria(testo) {
+    let j;
+    try { j = JSON.parse(testo); } catch (_) { throw new Error('il file non è JSON valido'); }
+    const arr = Array.isArray(j) ? j : j && Array.isArray(j.protocolli) ? j.protocolli : null;
+    if (!arr) throw new Error('nessun elenco di protocolli nel file');
+    const visti = new Set();
+    const out = arr.map((p, i) => {
+      if (!p || typeof p !== 'object') throw new Error(`voce ${i + 1}: non è un protocollo`);
+      if (!p.id || visti.has(p.id)) throw new Error(`voce ${i + 1}: identificativo mancante o doppio`);
+      visti.add(p.id);
+      if (!BASALE[p.basale]) throw new Error(`«${p.l || p.id}»: regola basale sconosciuta`);
+      if (!Array.isArray(p.fasi)) throw new Error(`«${p.l || p.id}»: fasi mancanti`);
+      p.fasi.forEach(f => { if (!FASI[f.fase]) throw new Error(`«${p.l || p.id}»: fase «${f.fase}» sconosciuta`); });
+      return canonico(p);
+    });
+    return { v: 1, base: (j && j.base) || 'importata', modificata: Date.now(), protocolli: out };
+  }
+
+  const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022,
+    normText, regionOf, riconosci, fitZones, valida,
+    nuovaLibreria, idLibero, canonico, firma, leggiLibreria, clona };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.Protocolli = api;
+})(this);
+</script>
 <script>
 'use strict';
 
@@ -2880,7 +3499,28 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   URL.createObjectURL(new Blob([sorgenteWorker], { type: 'text/javascript' }));
 
 const $ = id => document.getElementById(id);
+const PR = Protocolli;
 let pazienti = [];
+
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const it = (n, d = 1) => Number(n).toFixed(d).replace('.', ',');
+
+/* ═══ sezioni ════════════════════════════════════════════════════════ */
+let area = 'lista';
+function mostraArea(a) {
+  area = a;
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('on', b.dataset.area === a));
+  $('aLista').classList.toggle('on', a === 'lista');
+  $('aProto').classList.toggle('on', a === 'proto');
+  if (a === 'proto') { fermaRotazione(); disegnaLibreria(); disegnaEditor(); }
+  else {
+    if (pazienti.length) aggiornaColonnaProtocolli();
+    if ($('v3').classList.contains('on')) preparaTrasferimento();
+  }
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll('.nav button').forEach(b => b.onclick = () => mostraArea(b.dataset.area));
 
 /* ═══ passo 1 · lettura del PDF ══════════════════════════════════════ */
 const drop = $('drop');
@@ -2954,10 +3594,29 @@ $('indietro2').onclick = () => vai(2);
 $('avanti').onclick    = () => vai(3);
 
 /* ═══ passo 2 · tabella modificabile ═════════════════════════════════ */
-const esc = s => String(s == null ? '' : s)
-  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-
 function cresci(t){ t.style.height='auto'; t.style.height = t.scrollHeight+'px'; }
+
+/* il protocollo che il telefono suggerirà: stesso riconoscimento, stessa
+   libreria. Gli esami di un paziente si leggono insieme, come un'unica
+   dicitura, perché la regione può venire da uno qualunque di essi.     */
+function protocolloDi(p) {
+  const r = PR.riconosci(lib.protocolli, p.esami.map(e => e.descrizione).join(' · '), p.quesito);
+  return r.id ? lib.protocolli.find(x => x.id === r.id) : null;
+}
+function cellaProtocollo(td, p) {
+  const pr = protocolloDi(p);
+  td.innerHTML = pr
+    ? `<button class="pchip" data-apri="${esc(pr.id)}" title="Apri il protocollo"><span class="dots">${
+        pr.fasi.map(f => `<i style="background:${PR.FASI[f.fase].c}"></i>`).join('')}</span>${esc(pr.l)}</button>`
+    : '<span class="pchip nessuno">nessun suggerimento</span>';
+}
+function aggiornaColonnaProtocolli() {
+  document.querySelectorAll('#righe tr').forEach((tr, i) => cellaProtocollo(tr.querySelector('.c-proto'), pazienti[i]));
+}
+$('righe').addEventListener('click', e => {
+  const b = e.target.closest('[data-apri]');
+  if (b) { selId = b.dataset.apri; filtro = ''; $('libCerca').value = ''; mostraArea('proto'); }
+});
 
 function disegnaTabella() {
   const tb = $('righe');
@@ -2975,14 +3634,17 @@ function disegnaTabella() {
       <td class="${seg('quesito')}"><textarea class="cel" rows="1" data-k="quesito">${esc(p.quesito)}</textarea></td>
       <td><div class="esami">${p.esami.length
             ? p.esami.map(e=>`<div><code>${esc(e.codice)}</code>${esc(e.descrizione)}</div>`).join('')
-            : '<span style="color:var(--warn-t)">nessun esame</span>'}</div></td>
+            : '<span style="color:var(--amber-ink)">nessun esame</span>'}</div></td>
+      <td class="c-proto"></td>
       <td><button class="togli" title="Escludi dalla lista">✕</button></td>`;
+    cellaProtocollo(tr.querySelector('.c-proto'), p);
 
     tr.querySelectorAll('.cel').forEach(c => {
       if (c.tagName === 'TEXTAREA') c.addEventListener('input', () => cresci(c));
       c.addEventListener('input', () => {
         pazienti[i][c.dataset.k] = c.value;
         if (['nomeCompleto','nascita','ora','quesito'].includes(c.dataset.k)) ricontrolla(i, tr);
+        if (c.dataset.k === 'quesito') cellaProtocollo(tr.querySelector('.c-proto'), pazienti[i]);
       });
     });
     tr.querySelector('.togli').onclick = () => {
@@ -3123,13 +3785,16 @@ function mostraFrame() {
   $('frameN').textContent = frames.length > 1 ? `codice ${iFrame+1} di ${frames.length}` : '';
 }
 
-$('scaricaJson').onclick = () => {
-  const b = new Blob([JSON.stringify(payload(), null, 1)], { type:'application/json' });
+function scarica(nome, oggetto) {
+  const b = new Blob([JSON.stringify(oggetto, null, 1)], { type:'application/json' });
   const u = URL.createObjectURL(b);
   const a = document.createElement('a');
-  const g = (attivi()[0] || {}).data || 'lista';
-  a.href = u; a.download = `protocol-cards-${g.replace(/\//g,'-')}.json`; a.click();
+  a.href = u; a.download = nome; a.click();
   setTimeout(() => URL.revokeObjectURL(u), 1000);
+}
+$('scaricaJson').onclick = () => {
+  const g = (attivi()[0] || {}).data || 'lista';
+  scarica(`protocol-cards-${g.replace(/\//g,'-')}.json`, payload());
 };
 $('stampa').onclick = () => window.print();
 
@@ -3145,13 +3810,469 @@ function disegnaQR(canvas, testo) {
   const off = Math.floor((lato - dim) / 2);
   const g = canvas.getContext('2d');
   g.fillStyle = '#fff'; g.fillRect(0, 0, lato, lato);
-  g.fillStyle = '#15233f';
+  g.fillStyle = '#232D3C';
   for (let r = 0; r < n; r++)
     for (let c = 0; c < n; c++)
       if (q.isDark(r, c))
         g.fillRect(off + (c+4)*scala, off + (r+4)*scala, scala, scala);
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   LIBRERIA PROTOCOLLI
+   Conservata nel browser del PC: non contiene dati personali, e deve
+   sopravvivere alla chiusura della pagina perché è il lavoro di chi la
+   cura. Ogni modifica si salva subito; la firma identifica la versione
+   che verrà sincronizzata sul telefono.
+   ═══════════════════════════════════════════════════════════════════ */
+const CHIAVE_LIB = 'protocol-cards.pc.libreria';
+
+/* mezzi di contrasto per l'anteprima dei volumi: sul telefono la scelta
+   è dell'operatore, qui serve solo a dare un ordine di grandezza        */
+const AGENTI = [
+  { l:'Iomeron 400', c:0.40 }, { l:'Iomeron 350', c:0.35 }, { l:'Omnipaque 350', c:0.35 },
+  { l:'Xenetix 350', c:0.35 }, { l:'Ultravist 370', c:0.37 }, { l:'Visipaque 320', c:0.32 },
+];
+let agenteProva = 0, pesoProva = 70;
+
+function caricaLibreria() {
+  try {
+    const t = localStorage.getItem(CHIAVE_LIB);
+    if (t) {
+      const l = PR.leggiLibreria(t), j = JSON.parse(t);
+      l.base = j.base || l.base; l.modificata = j.modificata || 0;
+      return l;
+    }
+  } catch (e) { console.warn('libreria salvata illeggibile, uso quella di partenza:', e.message); }
+  return PR.nuovaLibreria();
+}
+let lib = caricaLibreria();
+let selId = lib.protocolli[0] && lib.protocolli[0].id;
+let filtro = '';
+
+function salvaLibreria() {
+  lib.modificata = Date.now();
+  try { localStorage.setItem(CHIAVE_LIB, JSON.stringify(lib)); }
+  catch (e) { toast('Impossibile salvare la libreria in questo browser'); }
+}
+const sel = () => lib.protocolli.find(p => p.id === selId);
+const conMdc = p => p.fasi.some(f => PR.FASI[f.fase].mdc);
+const fdots = p => `<span class="fdots">${p.fasi.map(f =>
+  `<i style="background:${PR.FASI[f.fase].c}" title="${esc(PR.FASI[f.fase].l)}"></i>`).join('')}</span>`;
+
+/* quanti pazienti della lista caricata finiscono su ciascun protocollo */
+function usoOggi() {
+  const u = {};
+  attivi().forEach(p => { const pr = protocolloDi(p); if (pr) u[pr.id] = (u[pr.id] || 0) + 1; });
+  return u;
+}
+
+/* ── elenco ── */
+function disegnaLibreria() {
+  const q = PR.normText(filtro), uso = usoOggi();
+  const vis = lib.protocolli.filter(p => !q || PR.normText([p.l, ...p.kw, ...p.ex].join(' ')).includes(q));
+  $('libList').innerHTML = vis.map(p => {
+    const e = PR.valida(p, lib.protocolli), g = e.some(x => x.grave);
+    return `<button class="pv${p.id === selId ? ' on' : ''}" data-id="${esc(p.id)}">
+      <span class="pv-top"><span class="pv-nome">${esc(p.l || 'Senza nome')}</span>${
+        e.length ? `<i class="pv-stato ${g ? 'grave' : 'avviso'}" title="${e.length} segnalazion${e.length > 1 ? 'i' : 'e'}"></i>` : ''}</span>
+      <span class="pv-sotto">${fdots(p)}<span>${p.fasi.length} fas${p.fasi.length === 1 ? 'e' : 'i'} · ${conMdc(p) ? 'con mdc' : 'senza mdc'}</span>${
+        uso[p.id] ? `<span class="pv-oggi" title="pazienti della lista caricata">${uso[p.id]} oggi</span>` : ''}</span>
+    </button>`;
+  }).join('') || '<div class="vuoto">Nessun protocollo corrisponde alla ricerca</div>';
+  $('libN').textContent = `${lib.protocolli.length} protocolli`;
+  $('navN').textContent = lib.protocolli.length;
+  const d = lib.modificata ? new Date(lib.modificata) : null;
+  $('libVer').innerHTML = `Versione <code>${PR.firma(lib.protocolli)}</code> · base ${esc(lib.base)}<br>${
+    d ? 'modificata il ' + d.toLocaleDateString('it-IT') + ' alle ' + d.toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' })
+      : 'nessuna modifica locale'}`;
+}
+$('libList').addEventListener('click', e => {
+  const b = e.target.closest('.pv'); if (!b) return;
+  selId = b.dataset.id; disegnaLibreria(); disegnaEditor();
+});
+$('libCerca').addEventListener('input', e => { filtro = e.target.value; disegnaLibreria(); });
+
+/* ── editor ── */
+const ICONE = {
+  fasi:  '<svg viewBox="0 0 24 24"><path d="M4 12h4l2-6 4 12 2-6h4"/></svg>',
+  mdc:   '<svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
+  bas:   '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>',
+  ric:   '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>',
+};
+const etichettaRitardo = f => f.fase === 'basale' ? 'senza contrasto'
+  : f.delay === 'B-T' ? 'bolus tracking' : f.delay ? `+${f.delay} s` : 'ritardo da indicare';
+const prova = { esame: '', quesito: '', per: null };
+
+function esempioProva(p) {
+  prova.per = p.id;
+  prova.esame = p.ex[0] ? 'TC ' + p.ex[0].toUpperCase() : 'TC ';
+  prova.quesito = p.kw[0] ? 'Sospetto ' + p.kw[0] : '';
+}
+
+function disegnaEditor() {
+  const p = sel(), ed = $('editor');
+  if (!p) {
+    ed.innerHTML = `<div class="plate card"><div class="vuoto">La libreria è vuota.
+      Crea un protocollo o ripristina la libreria SIRM.</div></div>`;
+    return;
+  }
+  if (prova.per !== p.id) esempioProva(p);
+  const i = lib.protocolli.indexOf(p), n = lib.protocolli.length;
+  const zona = (fi, f) => PR.ZONE[f.fase].map(([c, l]) =>
+    `<button class="z${f.zone.includes(c) ? ' on' : ''}" data-act="zona" data-i="${fi}" data-z="${esc(c)}" title="${esc(l)}"><b>${esc(c)}</b>${
+      c.replace(/[^a-z0-9]/gi,'').toLowerCase() === l.replace(/[^a-z0-9]/gi,'').toLowerCase() ? '' : esc(l)}</button>`).join('');
+
+  ed.innerHTML = `
+  <div class="plate ed-head">
+    <div class="ed-top">
+      <span class="eyebrow">Protocollo · <code>${esc(p.id)}</code></span>
+      <span class="oggi" id="edOggi" style="display:none"></span>
+      <span class="prio" title="A parità di punteggio il telefono suggerisce il protocollo che viene prima">
+        Priorità ${i + 1} di ${n}
+        <button class="btn ico xs" data-act="su" ${i === 0 ? 'disabled' : ''} aria-label="Sposta su">↑</button>
+        <button class="btn ico xs" data-act="giu" ${i === n - 1 ? 'disabled' : ''} aria-label="Sposta giù">↓</button>
+      </span>
+      <button class="btn xs" data-act="duplica">Duplica</button>
+      <button class="btn xs danger" data-act="elimina">Elimina</button>
+    </div>
+    <input class="ed-nome" data-f="l" value="${esc(p.l)}" placeholder="Nome del protocollo" aria-label="Nome del protocollo">
+    <div class="seq" id="edSeq"></div>
+  </div>
+
+  <div class="cards">
+    <div class="plate card span">
+      <div class="segnala" id="edSegnala"></div>
+      <div class="card-h"><span class="tile t-sky">${ICONE.fasi}</span><h3>Acquisizioni</h3></div>
+      <p class="card-d">Le fasi nell'ordine in cui si eseguono. Una zona <b>fissa</b> fa parte del protocollo;
+        altrimenti il telefono la sostituisce con la regione dell'esame richiesto.</p>
+      <div class="fasi">${p.fasi.map((f, fi) => `
+        <div class="fase" style="--c:${PR.FASI[f.fase].c}">
+          <span class="fase-n">${fi + 1}</span>
+          <select class="field" data-ff="fase" data-i="${fi}" aria-label="Tipo di fase">${
+            Object.entries(PR.FASI).map(([k, v]) => `<option value="${k}"${k === f.fase ? ' selected' : ''}>${esc(v.l)}</option>`).join('')}</select>
+          <div class="rit">${f.fase === 'basale' ? '<span class="nomdc">Senza contrasto: nessun ritardo</span>' : `
+            <div class="seg">
+              <button class="${f.delay === 'B-T' ? 'on' : ''}" data-act="bt" data-i="${fi}">Bolus tracking</button>
+              <button class="${f.delay !== 'B-T' ? 'on' : ''}" data-act="sec" data-i="${fi}">Ritardo fisso</button>
+            </div>
+            ${f.delay !== 'B-T' ? `<label class="sec-in"><input class="field" data-ff="delay" data-i="${fi}" inputmode="numeric"
+              value="${esc(f.delay)}" aria-label="Ritardo in secondi"> secondi</label>` : ''}`}
+          </div>
+          <div class="fase-ctl">
+            <button class="btn ico xs" data-act="fsu" data-i="${fi}" ${fi === 0 ? 'disabled' : ''} aria-label="Fase prima">↑</button>
+            <button class="btn ico xs" data-act="fgiu" data-i="${fi}" ${fi === p.fasi.length - 1 ? 'disabled' : ''} aria-label="Fase dopo">↓</button>
+            <button class="btn ico xs danger" data-act="fdel" data-i="${fi}" aria-label="Rimuovi fase">✕</button>
+          </div>
+          <div class="zone">${zona(fi, f)}</div>
+          <div class="fix${f.fix ? ' on' : ''}" data-act="fix" data-i="${fi}" role="switch" aria-checked="${!!f.fix}" tabindex="0">
+            <span class="sw"></span>Zona fissa — non segue la regione dell'esame</div>
+        </div>`).join('') || '<div class="vuoto">Nessuna fase: aggiungine una qui sotto.</div>'}
+      </div>
+      <div class="add-f">${Object.entries(PR.FASI).map(([k, v]) =>
+        `<button class="btn xs" data-act="fadd" data-fase="${k}" style="--c:${v.c}"><i></i>+ ${esc(v.l)}</button>`).join('')}</div>
+    </div>
+
+    <div class="plate card" id="cardMdc">
+      <div class="card-h"><span class="tile t-coral">${ICONE.mdc}</span><h3>Mezzo di contrasto</h3></div>
+      <p class="card-d" id="mdcD"></p>
+      <div class="mdc-row">
+        <div><span class="lbl">Dose di iodio</span>
+          <div class="stp"><button class="btn ico sm" data-act="step" data-k="giKg" data-d="-0.01" aria-label="Diminuisci">−</button>
+            <input class="field" data-f="giKg" value="${p.giKg.toFixed(2)}" inputmode="decimal" aria-label="gI per kg">
+            <button class="btn ico sm" data-act="step" data-k="giKg" data-d="0.01" aria-label="Aumenta">+</button><small>gI/kg</small></div></div>
+        <div><span class="lbl">Velocità di iodio (IDR)</span>
+          <div class="stp"><button class="btn ico sm" data-act="step" data-k="idr" data-d="-0.1" aria-label="Diminuisci">−</button>
+            <input class="field" data-f="idr" value="${p.idr.toFixed(1)}" inputmode="decimal" aria-label="gI al secondo">
+            <button class="btn ico sm" data-act="step" data-k="idr" data-d="0.1" aria-label="Aumenta">+</button><small>gI/s</small></div></div>
+      </div>
+      <div class="anteprima" id="mdcPrev"></div>
+    </div>
+
+    <div class="plate card">
+      <div class="card-h"><span class="tile t-amber">${ICONE.bas}</span><h3>Fase basale</h3></div>
+      <p class="card-d">Cosa dire in reparto quando esiste un esame precedente di confronto.</p>
+      <div class="seg lg">${Object.entries(PR.BASALE).map(([k, v]) =>
+        `<button class="${p.basale === k ? 'on' : ''}" data-act="basale" data-v="${k}">${v}</button>`).join('')}</div>
+      <span class="lbl">Motivazione <em>— mostrata sul telefono</em></span>
+      <textarea class="field" data-f="nota" rows="3" placeholder="Perché la basale è richiesta, opzionale o omettibile">${esc(p.nota)}</textarea>
+    </div>
+
+    <div class="plate card span">
+      <div class="card-h"><span class="tile t-jade">${ICONE.ric}</span><h3>Riconoscimento</h3></div>
+      <p class="card-d">Il telefono suggerisce questo protocollo quando il <b>quesito</b> contiene uno dei suoi termini
+        e l'esame riguarda una delle regioni compatibili. I termini dell'esame aggiungono un punto e servono a
+        decidere tra protocolli simili.</p>
+      <div class="cards" style="margin-top:0">
+        <div>
+          <span class="lbl">Termini del quesito <em>— due punti per parola</em></span>
+          <div class="tok" data-k="kw">${p.kw.map(w => `<span>${esc(w)}<button data-act="tdel" data-k="kw" data-w="${esc(w)}" aria-label="Rimuovi ${esc(w)}">×</button></span>`).join('')}
+            <input data-tok="kw" placeholder="${p.kw.length ? 'aggiungi…' : 'es. embolia, poi Invio'}" aria-label="Nuovo termine del quesito"></div>
+          <span class="lbl">Termini dell'esame <em>— un punto ciascuno</em></span>
+          <div class="tok" data-k="ex">${p.ex.map(w => `<span>${esc(w)}<button data-act="tdel" data-k="ex" data-w="${esc(w)}" aria-label="Rimuovi ${esc(w)}">×</button></span>`).join('')}
+            <input data-tok="ex" placeholder="${p.ex.length ? 'aggiungi…' : 'es. torace, poi Invio'}" aria-label="Nuovo termine dell'esame"></div>
+          <span class="lbl">Regioni compatibili <em>— nessuna selezionata = qualunque</em></span>
+          <div class="zone">${PR.REGIONI.map(([c, l]) =>
+            `<button class="z${(p.reg || []).includes(c) ? ' on' : ''}" data-act="reg" data-z="${c}" title="${esc(l)}"><b>${c}</b>${esc(l)}</button>`).join('')}</div>
+        </div>
+        <div>
+          <span class="lbl">Prova il riconoscimento</span>
+          <div class="prova">
+            <input class="field" data-prova="esame" value="${esc(prova.esame)}" placeholder="Esame richiesto" aria-label="Esame di prova">
+            <input class="field" data-prova="quesito" value="${esc(prova.quesito)}" placeholder="Quesito diagnostico" aria-label="Quesito di prova">
+          </div>
+          <div id="edEsito"></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  aggiornaEditor();
+}
+
+/* parti dell'editor che dipendono dai valori ma non contengono campi in
+   modifica: si ridisegnano a ogni tasto senza togliere il fuoco        */
+function aggiornaEditor() {
+  const p = sel(); if (!p) return;
+  $('edSeq').innerHTML = p.fasi.map(f => `<div class="seq-p" style="--c:${PR.FASI[f.fase].c}">
+      <b>${esc(PR.FASI[f.fase].l)}</b><span>${etichettaRitardo(f)}</span><small>${esc(f.zone.join(' + ') || '—')}${f.fix ? ' · fissa' : ''}</small></div>`)
+    .join('<span class="seq-f">→</span>');
+
+  const e = PR.valida(p, lib.protocolli), g = e.some(x => x.grave), s = $('edSegnala');
+  s.className = 'segnala' + (e.length ? ' on ' + (g ? 'grave' : 'avviso') : '');
+  s.innerHTML = e.map(x => `<div>${esc(x.msg)}${x.grave ? '' : ' <span style="opacity:.7">(avviso)</span>'}</div>`).join('');
+
+  const uso = usoOggi()[p.id] || 0, o = $('edOggi');
+  o.style.display = uso ? '' : 'none';
+  o.textContent = `${uso} pazient${uso === 1 ? 'e' : 'i'} nella lista caricata`;
+
+  const m = conMdc(p);
+  $('cardMdc').classList.toggle('spento', !m);
+  $('mdcD').textContent = m ? 'Dose e velocità di iodio per chilogrammo: il telefono le converte in volume e flusso col mezzo in uso.'
+                            : 'Nessuna fase con contrasto: dose e velocità non si applicano.';
+  const ag = AGENTI[agenteProva], gi = p.giKg * pesoProva;
+  $('mdcPrev').innerHTML = `Per un paziente di <b>${pesoProva} kg</b> con
+    <select id="mdcAg" aria-label="Mezzo di contrasto">${AGENTI.map((a, k) => `<option value="${k}"${k === agenteProva ? ' selected' : ''}>${esc(a.l)}</option>`).join('')}</select>
+    <div class="num"><div><b>${Math.round(gi / ag.c)}</b><span>ml</span></div><div><b>${it(p.idr / ag.c)}</b><span>ml/s</span></div><div><b>${it(gi)}</b><span>gI</span></div></div>
+    ${gi / ag.c > 150 ? '<span style="color:var(--coral-ink)">Volume elevato per un adulto medio.</span>' : ''}
+    ${p.idr / ag.c > 5 ? '<span style="color:var(--coral-ink)">Flusso che richiede un accesso venoso ≥18G.</span>' : ''}`;
+  $('mdcAg').onchange = ev => { agenteProva = +ev.target.value; aggiornaEditor(); };
+
+  aggiornaProva();
+}
+
+function aggiornaProva() {
+  const p = sel(); if (!p) return;
+  const r = PR.riconosci(lib.protocolli, prova.esame, prova.quesito);
+  const nome = id => { const x = lib.protocolli.find(q => q.id === id); return x ? x.l : id; };
+  const reg = r.regione === 'ALTRO' ? 'distretto fuori tassonomia'
+            : r.regione ? `${PR.ZONE_L[r.regione]} (${r.regione})` : 'non riconosciuta';
+  let cls, tit;
+  if (!prova.quesito.trim()) { cls = 'no'; tit = 'Scrivi un quesito per vedere cosa suggerirebbe il telefono'; }
+  else if (r.id === p.id)    { cls = 'si'; tit = '✓ Il telefono suggerisce questo protocollo'; }
+  else if (r.id)             { cls = 'altro'; tit = `Il telefono suggerisce un altro protocollo: «${esc(nome(r.id))}»`; }
+  else                       { cls = 'no'; tit = 'Nessun protocollo suggerito: si imposterà a mano'; }
+  const motivo = c => c.id === r.id ? 'scelto'
+    : c.fuori ? 'escluso: regione dell\'esame non compatibile'
+    : !c.kw.length ? 'escluso: solo termini dell\'esame, nessuno nel quesito'
+    : 'punteggio inferiore o a parità ma dopo in elenco';
+  $('edEsito').innerHTML = `<div class="esito ${cls}"><div class="tit">${tit}</div>
+    <div class="reg">Regione dall'esame: ${esc(reg)}</div>
+    ${r.candidati.length ? `<div class="cand">${r.candidati.slice(0, 5).map(c => `
+      <div class="${c.id === r.id ? 'scelto' : ''}"><span>${esc(nome(c.id))}</span><span class="pt">${c.punteggio} pt</span>
+        <small>${[...c.kw, ...c.ex].map(w => `<mark>${esc(w)}</mark>`).join(' ')} — ${motivo(c)}</small></div>`).join('')}</div>` : ''}
+  </div>`;
+}
+
+/* ── modifiche ── */
+function modificato(ridisegna) {
+  salvaLibreria();
+  if (ridisegna) disegnaEditor(); else aggiornaEditor();
+  disegnaLibreria();
+}
+
+const ed = $('editor');
+ed.addEventListener('input', e => {
+  const t = e.target, p = sel(); if (!p) return;
+  if (t.dataset.f === 'l' || t.dataset.f === 'nota') { p[t.dataset.f] = t.value; modificato(); }
+  else if (t.dataset.f === 'giKg' || t.dataset.f === 'idr') {
+    const v = parseFloat(t.value.replace(',', '.'));
+    if (!isNaN(v)) { p[t.dataset.f] = v; modificato(); }
+  }
+  else if (t.dataset.ff === 'delay') {
+    p.fasi[+t.dataset.i].delay = t.value.replace(/\D/g, '').slice(0, 3);
+    if (t.value !== p.fasi[+t.dataset.i].delay) t.value = p.fasi[+t.dataset.i].delay;
+    modificato();
+  }
+  else if (t.dataset.prova) { prova[t.dataset.prova] = t.value; aggiornaProva(); }
+});
+ed.addEventListener('change', e => {
+  const t = e.target, p = sel(); if (!p) return;
+  if (t.dataset.f === 'giKg' || t.dataset.f === 'idr') {
+    const k = t.dataset.f, [min, max] = PR.LIMITI[k];
+    let v = parseFloat(t.value.replace(',', '.'));
+    if (isNaN(v)) v = p[k];
+    p[k] = Math.round(Math.max(min, Math.min(max, v)) * 100) / 100;
+    t.value = p[k].toFixed(k === 'giKg' ? 2 : 1);
+    modificato();
+  }
+  if (t.dataset.ff === 'fase') {
+    /* cambiando tipo di fase si tengono solo le zone ammesse dal nuovo
+       tipo, e il ritardo torna a quello tipico della fase              */
+    const f = p.fasi[+t.dataset.i], nuovo = t.value;
+    const ammesse = PR.ZONE[nuovo].map(([c]) => c);
+    f.fase = nuovo;
+    f.zone = f.zone.filter(z => ammesse.includes(z));
+    f.delay = PR.FASI[nuovo].delay;
+    modificato(true);
+  }
+});
+ed.addEventListener('keydown', e => {
+  const t = e.target;
+  if (t.dataset.tok) {
+    const p = sel(), k = t.dataset.tok;
+    if ((e.key === 'Enter' || e.key === ',') && t.value.trim()) {
+      e.preventDefault();
+      const w = PR.normText(t.value);
+      if (w && !p[k].includes(w)) p[k].push(w);
+      modificato(true);
+      ed.querySelector(`[data-tok="${k}"]`).focus();
+    } else if (e.key === 'Backspace' && !t.value && p[k].length) {
+      p[k].pop(); modificato(true);
+      ed.querySelector(`[data-tok="${k}"]`).focus();
+    }
+  }
+  if ((e.key === 'Enter' || e.key === ' ') && t.dataset.act === 'fix') { e.preventDefault(); t.click(); }
+});
+ed.addEventListener('click', e => {
+  const tok = e.target.closest('.tok');
+  if (tok && e.target === tok) tok.querySelector('input').focus();
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const p = sel(), i = +b.dataset.i, L = lib.protocolli, pos = L.indexOf(p);
+  const scambia = (a, x, y) => { [a[x], a[y]] = [a[y], a[x]]; };
+  switch (b.dataset.act) {
+    case 'zona': {
+      const f = p.fasi[i], z = b.dataset.z;
+      f.zone = f.zone.includes(z) ? f.zone.filter(x => x !== z) : [...f.zone, z];
+      return modificato(true);
+    }
+    case 'fix':  p.fasi[i].fix = p.fasi[i].fix ? 0 : 1; if (!p.fasi[i].fix) delete p.fasi[i].fix; return modificato(true);
+    case 'bt':   p.fasi[i].delay = 'B-T'; return modificato(true);
+    case 'sec':  if (p.fasi[i].delay === 'B-T') { p.fasi[i].delay = PR.FASI[p.fasi[i].fase].delay.replace('B-T', '30'); modificato(true); }
+                 ed.querySelector(`[data-ff="delay"][data-i="${i}"]`).focus(); return;
+    case 'fsu':  scambia(p.fasi, i, i - 1); return modificato(true);
+    case 'fgiu': scambia(p.fasi, i, i + 1); return modificato(true);
+    case 'fdel': p.fasi.splice(i, 1); return modificato(true);
+    case 'fadd': {
+      /* la nuova fase eredita la zona dell'ultima, se il tipo la ammette */
+      const fase = b.dataset.fase, ammesse = PR.ZONE[fase].map(([c]) => c);
+      const prec = p.fasi.length ? p.fasi[p.fasi.length - 1].zone.filter(z => ammesse.includes(z)) : [];
+      const nuova = { fase, zone: prec.length ? prec : [ammesse.includes('TAc') ? 'TAc' : ammesse[0]], delay: PR.FASI[fase].delay };
+      if (fase === 'basale') p.fasi.unshift(nuova); else p.fasi.push(nuova);
+      return modificato(true);
+    }
+    case 'basale': p.basale = b.dataset.v; return modificato(true);
+    case 'reg': {
+      const z = b.dataset.z, r = p.reg || [];
+      p.reg = r.includes(z) ? r.filter(x => x !== z) : [...r, z];
+      if (!p.reg.length) delete p.reg;
+      return modificato(true);
+    }
+    case 'tdel': p[b.dataset.k] = p[b.dataset.k].filter(w => w !== b.dataset.w); return modificato(true);
+    case 'step': {
+      const k = b.dataset.k, [min, max] = PR.LIMITI[k];
+      p[k] = Math.round(Math.max(min, Math.min(max, p[k] + parseFloat(b.dataset.d))) * 100) / 100;
+      ed.querySelector(`[data-f="${k}"]`).value = p[k].toFixed(k === 'giKg' ? 2 : 1);
+      return modificato();
+    }
+    case 'su':  scambia(L, pos, pos - 1); return modificato(true);
+    case 'giu': scambia(L, pos, pos + 1); return modificato(true);
+    case 'duplica': {
+      const c = PR.clona(p);
+      c.l = p.l + ' (copia)'; c.id = PR.idLibero(L, c.l);
+      L.splice(pos + 1, 0, c); selId = c.id;
+      modificato(true); toast('Protocollo duplicato');
+      const n = ed.querySelector('.ed-nome'); n.focus(); n.select();
+      return;
+    }
+    case 'elimina':
+      return chiedi('Eliminare il protocollo?',
+        `«${p.l}» non verrà più suggerito dal telefono dopo la prossima sincronizzazione.`, 'Elimina', () => {
+          L.splice(pos, 1);
+          selId = (L[pos] || L[pos - 1] || {}).id;
+          modificato(true);
+          toast('Protocollo eliminato', 'Annulla', () => { L.splice(pos, 0, p); selId = p.id; modificato(true); });
+        });
+  }
+});
+
+$('libNuovo').onclick = () => {
+  const L = lib.protocolli;
+  let k = 1; while (L.some(p => p.l === `Nuovo protocollo ${k}`)) k++;
+  const p = { id: PR.idLibero(L, `nuovo protocollo ${k}`), l: `Nuovo protocollo ${k}`, idr: 1.4, giKg: 0.5,
+              basale: 'opt', kw: [], ex: [], nota: '', fasi: [{ fase: 'venosa', zone: ['TAc'], delay: '70' }] };
+  L.push(p); selId = p.id; filtro = ''; $('libCerca').value = '';
+  modificato(true);
+  const n = ed.querySelector('.ed-nome'); n.focus(); n.select();
+  $('libList').querySelector('.pv.on').scrollIntoView({ block: 'nearest' });
+};
+
+$('libEsporta').onclick = () => {
+  const f = PR.firma(lib.protocolli);
+  scarica(`protocolli-${f}.json`, { v: 1, base: lib.base, modificata: lib.modificata, firma: f,
+                                    protocolli: lib.protocolli.map(PR.canonico) });
+};
+$('libImporta').onclick = () => $('libFile').click();
+$('libFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  let nuova;
+  try { nuova = PR.leggiLibreria(await f.text()); }
+  catch (err) { return chiedi('File non valido', `«${f.name}»: ${err.message}. La libreria attuale non è stata toccata.`, null); }
+  chiedi('Sostituire la libreria?',
+    `La libreria attuale (${lib.protocolli.length} protocolli, versione ${PR.firma(lib.protocolli)}) verrà sostituita da quella del file
+     (${nuova.protocolli.length} protocolli, versione ${PR.firma(nuova.protocolli)}).`, 'Sostituisci', () => {
+      const vecchia = lib;
+      lib = nuova; selId = (lib.protocolli[0] || {}).id; prova.per = null;
+      modificato(true);
+      toast('Libreria importata', 'Annulla', () => { lib = vecchia; selId = (lib.protocolli[0] || {}).id; prova.per = null; modificato(true); });
+    });
+};
+$('libReset').onclick = () => chiedi('Ripristinare la libreria SIRM 2022?',
+  'Tutte le modifiche locali ai protocolli andranno perse. Se vuoi conservarle, esportale prima.', 'Ripristina', () => {
+    const vecchia = lib;
+    lib = PR.nuovaLibreria(); selId = lib.protocolli[0].id; prova.per = null;
+    salvaLibreria(); lib.modificata = 0;
+    try { localStorage.removeItem(CHIAVE_LIB); } catch (_) {}
+    disegnaEditor(); disegnaLibreria();
+    toast('Libreria ripristinata', 'Annulla', () => { lib = vecchia; selId = (lib.protocolli[0] || {}).id; prova.per = null; modificato(true); });
+  });
+
+/* ── modale e avvisi ── */
+function chiedi(titolo, testo, si, fatto) {
+  $('mTitolo').textContent = titolo; $('mTesto').textContent = testo;
+  $('mSi').style.display = si ? '' : 'none';
+  $('mSi').textContent = si || '';
+  $('mNo').textContent = si ? 'Annulla' : 'Chiudi';
+  $('mask').classList.add('on');
+  (si ? $('mSi') : $('mNo')).focus();
+  const chiudi = () => { $('mask').classList.remove('on'); document.removeEventListener('keydown', esc_); };
+  const esc_ = ev => { if (ev.key === 'Escape') chiudi(); };
+  document.addEventListener('keydown', esc_);
+  $('mNo').onclick = chiudi;
+  $('mSi').onclick = () => { chiudi(); fatto && fatto(); };
+}
+$('mask').addEventListener('click', e => { if (e.target === $('mask')) $('mNo').click(); });
+
+let tToast;
+function toast(msg, azione, cb) {
+  $('toastT').textContent = msg;
+  $('toastA').textContent = azione || '';
+  $('toastA').onclick = () => { $('toast').classList.remove('on'); cb && cb(); };
+  $('toast').classList.add('on');
+  clearTimeout(tToast);
+  tToast = setTimeout(() => $('toast').classList.remove('on'), azione ? 6000 : 2400);
+}
+
+$('navN').textContent = lib.protocolli.length;
 aggiornaConteggi();
 </script>
 </body>

@@ -35,6 +35,7 @@ const pezzi = {
   PDFJSWORKER: [path.join(VENDOR, 'pdf.worker.min.js'), 'pdf.worker.min.js'],
   QRCODE:      [path.join(VENDOR, 'qrcode.js'),         'qrcode.js'],
   RISPARSER:   [path.join(QUI, 'ris-parser.js'),        'ris-parser.js'],
+  PROTOCOLLI:  [path.join(QUI, 'protocolli.js'),        'protocolli.js'],
 };
 
 let html = leggi(SORGENTE);
