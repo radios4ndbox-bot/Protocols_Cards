@@ -170,7 +170,7 @@ main{padding:30px 0 60px}
 
 .tabwrap{border-radius:var(--r-md);box-shadow:var(--clay);overflow-x:auto;scrollbar-width:thin;
   background:linear-gradient(160deg,#FAFCFF,var(--plate) 46%,var(--plate-2))}
-.tab{width:100%;min-width:1120px;border-collapse:collapse}
+.tab{width:100%;min-width:1200px;border-collapse:collapse}
 .tab th{text-align:left;font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
   color:var(--ink-2);padding:14px 12px;background:rgba(220,228,243,.55);white-space:nowrap}
 .tab td{padding:8px 12px;border-top:1px solid var(--line);vertical-align:top;font-size:.86rem}
@@ -236,8 +236,8 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .pv-stato.avviso{background:var(--amber)}
 .pv-stato.grave{background:var(--coral)}
 .pv-sotto{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:.72rem;color:var(--ink-2)}
-.fdots{display:inline-flex;gap:3px}
-.fdots i{width:14px;height:6px;border-radius:99px;box-shadow:inset 0 -1px 2px rgba(0,0,0,.18)}
+.pv-sotto{flex-wrap:wrap;row-gap:5px}
+.pv-sotto .ftags{flex-basis:100%}
 .pv-oggi{margin-left:auto;font-weight:700;color:var(--jade-ink);background:var(--jade-s);padding:1px 8px;border-radius:99px}
 .lib-act{display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--line)}
 .lib-act .riga-b{display:flex;gap:6px}
@@ -421,8 +421,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .pop-g{font-size:.64rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:10px 8px 4px}
 .po{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;cursor:pointer;text-align:left;padding:9px 10px;border-radius:12px;font-size:.84rem}
 .po:hover,.po:focus-visible{background:rgba(255,255,255,.8);box-shadow:var(--clay-sm);outline:none}
-.po .fdots{flex:0 0 auto}
-.po .fdots i{width:10px}
+.po .ftags{flex:0 0 auto}
 .po span.n{flex:1;min-width:0}
 .po small{color:var(--ink-3);font-size:.72rem;white-space:nowrap}
 .po.att{font-weight:700}
@@ -430,7 +429,89 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .pop-f{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .pop-f .btn{flex:1}
 
+/* ── tag delle fasi ── */
+.ftags{display:inline-flex;flex-wrap:wrap;gap:4px}
+.ftag{display:inline-flex;align-items:center;gap:5px;padding:2px 9px 2px 7px;border-radius:99px;font-size:.7rem;font-weight:700;
+  letter-spacing:.02em;line-height:1.5;white-space:nowrap;background:var(--bg);color:var(--tx);box-shadow:inset 0 0 0 1px rgba(35,45,60,.06)}
+.ftag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:inset 0 -1px 1px rgba(0,0,0,.2)}
+.seq-p .ftag{margin-bottom:4px}
+.add-f .aggiungi{padding:0 12px 0 10px;gap:6px}
+
+/* ── due opzioni per paziente ── */
+.opz{display:flex;flex-direction:column;gap:5px}
+.op{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;border:0;cursor:pointer;text-align:left;
+  padding:6px 10px;border-radius:12px;background:transparent;box-shadow:inset 0 0 0 1.5px rgba(35,45,60,.1);transition:.18s}
+.op:hover{box-shadow:inset 0 0 0 1.5px rgba(35,45,60,.25)}
+.op-k{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.op-n{font-size:.8rem;font-weight:600;line-height:1.3;color:var(--ink-2)}
+.op .ftags{margin-top:3px}
+.op .ftag{padding:1px 6px 1px 5px;font-size:.62rem}
+.op.on.u{background:var(--jade-s);box-shadow:inset 0 0 0 2px var(--jade)}
+.op.on.p{background:#EEE8FA;box-shadow:inset 0 0 0 2px #9B83D6}
+.op.on .op-n{color:var(--ink)}
+.op.on.u .op-k{color:var(--jade-ink)}
+.op.on.p .op-k{color:#5B3FA0}
+.op.vuota{box-shadow:inset 0 0 0 1.5px rgba(35,45,60,.08);background:rgba(255,255,255,.35)}
+.op.vuota .op-n{color:var(--ink-3);font-weight:500}
+.op.vuota.p:hover .op-n{color:#5B3FA0}
+.op-f{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:.74rem}
+.op-f .ptag{margin:0}
+.chip.proto{background:#EEE8FA;color:#5B3FA0}
+.chip.proto:empty{display:none}
+
+/* ── protocol builder ── */
+.bgrid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:26px;align-items:start}
+#bPassi{display:flex;flex-direction:column;gap:22px}
+.bpassi{display:flex;gap:6px;flex-wrap:wrap;padding:6px;border-radius:99px;background:var(--sunk);box-shadow:var(--well);align-self:flex-start}
+.bp{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:99px;font-size:.8rem;font-weight:600;color:var(--ink-2)}
+.bp i{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:.72rem;font-weight:700;
+  background:var(--plate);box-shadow:var(--clay-sm)}
+.bp.ok{color:var(--jade-ink)}
+.bp.ok i{background-image:var(--gloss-jade);color:#0E3A2E;box-shadow:var(--lip-jade)}
+.disc{width:34px;height:34px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-family:var(--f-disp);
+  font-weight:500;background-image:var(--gloss-jade);color:#0E3A2E;box-shadow:var(--lift-jade),var(--lip-jade)}
+.bpasso .card-h{margin-bottom:10px}
+.esempi{display:flex;flex-direction:column;gap:12px}
+.esempio{padding:14px;border-radius:var(--r-md);background:rgba(255,255,255,.5);box-shadow:var(--clay-sm)}
+.es-campi{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto;gap:8px;align-items:center}
+.es-campi .field{height:40px;font-size:.86rem}
+.analisi{margin-top:12px;display:flex;flex-direction:column;gap:7px;font-size:.8rem}
+.an-riga{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.an-l{width:110px;flex:0 0 auto;font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.an-riga em{font-style:normal;color:var(--ink-3)}
+.ch{border:0;cursor:pointer;padding:4px 11px;border-radius:99px;font-size:.78rem;font-weight:600;color:var(--ink-2);background:transparent;
+  box-shadow:inset 0 0 0 1.5px rgba(35,45,60,.14);transition:.15s}
+.ch:hover{box-shadow:inset 0 0 0 1.5px rgba(35,45,60,.3)}
+.ch.on{color:#0E3A2E;background-image:var(--gloss-jade);box-shadow:var(--lift-jade),var(--lip-jade)}
+.ch.reg{font-family:var(--f-mono)}
+.an-esito{margin-top:4px;padding:8px 12px;border-radius:12px;font-weight:600}
+.an-esito.si{background:var(--jade-s);color:var(--jade-ink)}
+.an-esito.no{background:var(--amber-s);color:var(--amber-ink)}
+.parti{display:flex;align-items:center;gap:12px;margin:4px 0 16px}
+.parti .field{max-width:460px;height:40px;font-size:.86rem}
+.nome-b{height:52px;font-family:var(--f-disp);font-size:1.3rem;font-weight:300;border-radius:18px}
+.bprev{position:sticky;top:100px;padding:22px}
+.carta-prev{margin-top:14px;padding:18px;border-radius:22px;background:rgba(255,255,255,.75);box-shadow:var(--clay-sm);border-left:4px solid #9B83D6}
+.cp-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cp-k{font-size:.64rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#5B3FA0;background:#EEE8FA;padding:2px 9px;border-radius:99px}
+.cp-kw{font-size:.74rem;color:var(--ink-3)}
+.carta-prev h3{font-size:1.3rem;margin:10px 0 12px;word-break:break-word}
+.cp-fasi{display:flex;flex-direction:column;gap:7px}
+.cp-fasi div{display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:center}
+.cp-fasi span:not(.ftag){font-size:.78rem;color:var(--ink-2)}
+.cp-fasi small{grid-column:2;font-family:var(--f-mono);font-size:.7rem;color:var(--ink-3)}
+.cp-mdc{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:.84rem}
+.cp-mdc b{font-family:var(--f-disp);font-weight:400;font-size:1.25rem}
+.cp-mdc span{display:block;font-size:.74rem;color:var(--ink-3)}
+.cp-bas{margin-top:8px;font-size:.8rem;color:var(--ink-2)}
+.impatto{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.impatto div{padding:12px 14px;border-radius:var(--r-sm);background:var(--sunk);box-shadow:var(--well-s)}
+.impatto b{display:block;font-family:var(--f-disp);font-weight:400;font-size:1.5rem}
+.impatto span{font-size:.72rem;color:var(--ink-2);line-height:1.3;display:block}
+
 @media (max-width:1100px){
+  .bgrid{grid-template-columns:1fr}
+  .bprev{position:static}
   .pgrid{grid-template-columns:300px minmax(0,1fr);gap:20px}
   .cards{grid-template-columns:1fr}
   .qr-griglia{grid-template-columns:1fr}
@@ -470,6 +551,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
     <nav class="nav" aria-label="Sezioni">
       <button class="on" data-area="lista">Lista del giorno</button>
       <button data-area="proto">Protocolli <span class="nb" id="navN"></span></button>
+      <button data-area="builder">Protocol builder</button>
     </nav>
     <div class="privacy"><i></i>Nessun dato paziente lascia questo computer</div>
   </div>
@@ -516,6 +598,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
       <span class="conta" id="conta"></span>
       <span class="chip ok" id="chipOk"></span>
       <span class="chip warn" id="chipWarn" style="display:none"></span>
+      <span class="chip proto" id="chipProto"></span>
       <span class="sp"></span>
       <button class="btn sm" id="indietro1">← Cambia file</button>
       <button class="btn solid sm" id="avanti">Genera il QR →</button>
@@ -523,8 +606,9 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
     <div class="nota" style="margin:0 0 18px">
       Le righe evidenziate sono quelle su cui il parser <b>non è sicuro</b>: controllale.
       Ogni campo è modificabile — questo è l'ultimo posto comodo per correggere, sul
-      telefono è più scomodo. La colonna <b>Protocollo</b> mostra cosa suggerirà il telefono
-      con la libreria attuale: fai clic per aprirlo.
+      telefono è più scomodo. Per ogni paziente la colonna <b>Protocollo</b> propone un'opzione
+      <b>ufficiale</b> e una <b>personale</b> riconosciute dal quesito: fai clic per scegliere quella da usare. Il telefono
+      le riceve entrambe, così si può cambiare idea anche in reparto.
     </div>
     <div class="tabwrap">
     <table class="tab">
@@ -535,7 +619,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
         <th style="width:120px">Nascita</th>
         <th>Quesito diagnostico</th>
         <th style="width:250px">Esami richiesti</th>
-        <th style="width:200px">Protocollo</th>
+        <th style="width:280px">Protocollo</th>
         <th style="width:48px"></th>
       </tr></thead>
       <tbody id="righe"></tbody>
@@ -622,6 +706,23 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
     </aside>
 
     <div class="ed" id="editor"></div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ PROTOCOL BUILDER ═════════════════════════ -->
+<section class="area" id="aBuilder">
+  <div class="intro">
+    <div>
+      <span class="eyebrow">Protocol builder</span>
+      <h2>Insegna al tool un tuo protocollo.</h2>
+      <p class="lede">Parti da richieste reali: il builder ne ricava i termini che faranno riconoscere il protocollo,
+        poi componi fasi e contrasto. Il risultato entra nei <b>protocolli personali</b> e diventa l'opzione
+        personale per i pazienti con quelle richieste.</p>
+    </div>
+  </div>
+  <div class="bgrid">
+    <div id="bPassi"></div>
+    <aside class="plate bprev" id="bPrev"></aside>
   </div>
 </section>
 
@@ -3283,11 +3384,17 @@ var qrcode = function() {
   'use strict';
 
   /* ═══ FASI E ZONE ══════════════════════════════════════════════════ */
+  /* colore di ogni fase, uguale su PC e telefono:
+       basale grigio · arteriosa rosso · venosa blu · tardiva verde acqua
+       urografica giallo · tardiva per surrene bordeaux
+     c = colore pieno · bg/tx = fondo e testo del tag · s = sigla        */
   const FASI = {
-    basale:    { l: 'Basale',      c: '#6d7f9f', mdc: false, delay: ''    },
-    arteriosa: { l: 'Arteriosa',   c: '#2f6fed', mdc: true,  delay: 'B-T' },
-    venosa:    { l: 'Venosa',      c: '#1d54c4', mdc: true,  delay: '70'  },
-    tardiva:   { l: 'Eq. tardiva', c: '#c2601a', mdc: true,  delay: '300' },
+    basale:     { l: 'Basale',          s: 'BAS', c: '#8A94A6', bg: '#ECEFF3', tx: '#4A5263', mdc: false, delay: ''    },
+    arteriosa:  { l: 'Arteriosa',       s: 'ART', c: '#E0473E', bg: '#FCE6E4', tx: '#A3221B', mdc: true,  delay: 'B-T' },
+    venosa:     { l: 'Venosa',          s: 'VEN', c: '#2F6FED', bg: '#E3ECFD', tx: '#1C4FB8', mdc: true,  delay: '70'  },
+    tardiva:    { l: 'Tardiva',         s: 'TAR', c: '#1FB5A8', bg: '#DCF4F1', tx: '#0B7168', mdc: true,  delay: '300' },
+    urografica: { l: 'Urografica',      s: 'URO', c: '#F2C230', bg: '#FDF3D3', tx: '#7E5F00', mdc: true,  delay: '600' },
+    surrene:    { l: 'Tardiva surrene', s: 'SUR', c: '#8E1B3A', bg: '#F5E0E6', tx: '#8E1B3A', mdc: true,  delay: '900' },
   };
 
   const ZONE = {
@@ -3306,6 +3413,10 @@ var qrcode = function() {
     tardiva:  [['ENC','Encefalo'],['TO','Torace'],
                ['ADs','Addome sup.'],['ADc','Addome compl.'],
                ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']],
+    /* l'urografica copre le vie escretrici fino alla vescica; il washout
+       surrenalico si limita al distretto dei surreni                   */
+    urografica:[['ADc','Addome compl.'],['TAc','Torace-addome compl.']],
+    surrene:  [['ADs','Addome sup.'],['ADc','Addome compl.']],
   };
 
   const ZONE_L = {};
@@ -3497,6 +3608,38 @@ var qrcode = function() {
     return { id, fonte, firma, regione: ru.regione, personali: rp, ufficiali: ru };
   }
 
+  /* Le due opzioni proposte per ogni paziente: la migliore ufficiale e la
+     migliore personale (voce appresa per quel caso, altrimenti personale
+     riconosciuta dai termini). Si propone la personale quando c'è, perché
+     è la scelta del reparto; il telefono le riceve entrambe e l'operatore
+     può cambiare idea anche lì.                                         */
+  function opzioni(ufficiali, personali, esame, quesito) {
+    const s = suggerisci(ufficiali, personali, esame, quesito);
+    const personale = s.fonte === 'appreso' ? s.id : s.personali.id;
+    return { ufficiale: s.ufficiali.id, personale, appreso: s.fonte === 'appreso', firma: s.firma,
+             predefinita: personale ? 'personale' : s.ufficiali.id ? 'ufficiale' : null };
+  }
+
+  /* ═══ BUILDER: cosa si impara da una richiesta d'esempio ════════════
+     Dal quesito: i termini clinici noti (lessico) e le altre parole
+     significative, che l'operatore può promuovere a termini propri.
+     Dall'esame: la regione e le parole che identificano il distretto.  */
+  const VUOTE = new Set(('sospetta sospetto sospetti sospette controllo paziente pazienti pregressa pregresso '
+    + 'noto nota note esame esami valutazione studio richiesta richiesto dopo prima durante circa anni '
+    + 'della delle dello degli del dei con per tra fra nel nella nelle negli sul sulla una uno che non '
+    + 'come anche ancora già gia recente recenti acuto acuta cronico cronica dx sin destro sinistro '
+    + 'destra sinistra bilaterale eventuale eventuali quadro').split(' '));
+  const ESAME_VUOTE = new Set('tc angio angiotc con senza mdc contrasto e ed urgente urg completo completa di del della'.split(' '));
+
+  function analizzaEsempio(esame, quesito) {
+    const clinici = termini(quesito);
+    const parole = [...new Set(normText(quesito).split(' ')
+      .filter(w => w.length >= 4 && !VUOTE.has(w) && !/^d+$/.test(w) && !clinici.some(c => c.includes(w) || w.includes(c))))];
+    const distretto = [...new Set(normText(esame).split(' ').filter(w => w.length >= 3 && !ESAME_VUOTE.has(w)))];
+    const r = regionOf(esame);
+    return { regione: r && r !== 'ALTRO' ? r : null, clinici, parole, distretto };
+  }
+
   /* Registra una scelta nella libreria personale. Restituisce la voce
      appresa: nuova, oppure quella esistente per la stessa firma, con il
      conteggio aggiornato se la configurazione è la stessa o azzerato se
@@ -3650,7 +3793,7 @@ var qrcode = function() {
 
   const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022, LEXICON,
     normText, normEx, termini, regionOf, riconosci, fitZones, valida,
-    firmaCaso, suggerisci, impara,
+    firmaCaso, suggerisci, impara, opzioni, analizzaEsempio,
     nuovaLibreria, nuovaLibreriaPersonale, idLibero, idPersonale, canonico, firma, leggiLibreria, clona };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -3684,7 +3827,10 @@ function mostraArea(a) {
   document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('on', b.dataset.area === a));
   $('aLista').classList.toggle('on', a === 'lista');
   $('aProto').classList.toggle('on', a === 'proto');
-  if (a === 'proto') { fermaRotazione(); disegnaLibreria(); disegnaEditor(); }
+  $('aBuilder').classList.toggle('on', a === 'builder');
+  if (a !== 'lista') fermaRotazione();
+  if (a === 'proto') { disegnaLibreria(); disegnaEditor(); }
+  else if (a === 'builder') disegnaBuilder();
   else {
     if (pazienti.length) aggiornaColonnaProtocolli();
     if ($('v3').classList.contains('on')) preparaTrasferimento();
@@ -3758,6 +3904,9 @@ function vai(n) {
     p.classList.toggle('on', k===n);
     p.classList.toggle('fatto', k<n);
   });
+  /* le textarea si misurano solo quando la vista è visibile: da nascoste
+     scrollHeight vale 0 e resterebbero alte una riga                     */
+  if (n === 2) document.querySelectorAll('#righe textarea.cel').forEach(cresci);
   if (n === 3) preparaTrasferimento(); else fermaRotazione();
 }
 $('indietro1').onclick = () => { $('file').value=''; vai(1); };
@@ -3768,42 +3917,61 @@ $('avanti').onclick    = () => vai(3);
 function cresci(t){ t.style.height='auto'; t.style.height = t.scrollHeight+'px'; }
 
 /* ═══ protocollo di ciascun paziente ═════════════════════════════════
-   Di base è il suggerimento che farà il telefono: stesso riconoscimento,
-   stesse librerie. Gli esami di un paziente si leggono insieme, come
-   un'unica dicitura, perché la regione può venire da uno qualunque.
-   Se qui si sceglie un protocollo diverso, la scelta viene appresa nella
-   libreria personale e vale per tutti i casi con la stessa firma.     */
+   All'import ogni paziente riceve due opzioni, riconosciute dal quesito:
+   la migliore UFFICIALE e la migliore PERSONALE (voce appresa per quel
+   caso, altrimenti personale riconosciuta dai termini). Si propone la
+   personale quando c'è. L'operatore passa dall'una all'altra con un clic,
+   e il telefono le riceverà entrambe per poter cambiare idea in reparto.
+   Gli esami di un paziente si leggono insieme, come un'unica dicitura. */
 const esameDi = p => p.esami.map(e => e.descrizione).join(' · ');
 const suggerimentoDi = p => PR.suggerisci(libs.ufficiale.protocolli, libs.personale.protocolli, esameDi(p), p.quesito);
+const opzioniDi = p => PR.opzioni(libs.ufficiale.protocolli, libs.personale.protocolli, esameDi(p), p.quesito);
 const trova = id => (id && (libs.personale.protocolli.find(x => x.id === id)
                           || libs.ufficiale.protocolli.find(x => x.id === id))) || null;
 const libDi = id => /^p-/.test(id || '') ? 'personale' : 'ufficiale';
 
-/* p.scelta: assente = segue il suggerimento · null = nessun protocollo,
-   si imposterà sul telefono. Una scelta verso un protocollo poi eliminato
-   torna al suggerimento.                                                */
+/* p.usa: 'ufficiale' | 'personale' | assente = l'opzione proposta.
+   p.scelta === null: nessun protocollo, si imposterà sul telefono.
+   Se l'opzione scelta sparisce (protocollo eliminato) si torna alla
+   proposta invece di restare senza protocollo.                        */
 function protocolloDi(p) {
-  if (p.scelta === null) return { pr: null, fonte: 'nessuno' };
-  const s = suggerimentoDi(p);
-  return { pr: trova(s.id), fonte: s.fonte };
+  const o = opzioniDi(p);
+  if (p.scelta === null) return { pr: null, fonte: 'nessuno', usa: null, o };
+  const usa = p.usa === 'ufficiale' && o.ufficiale ? 'ufficiale'
+            : p.usa === 'personale' && o.personale ? 'personale' : o.predefinita;
+  if (usa === 'personale') return { pr: trova(o.personale), fonte: o.appreso ? 'appreso' : 'personale', usa, o };
+  if (usa === 'ufficiale') return { pr: trova(o.ufficiale), fonte: 'ufficiale', usa, o };
+  return { pr: null, fonte: 'nessuno', usa: null, o };
 }
 function cellaProtocollo(td, p, i) {
-  const { pr, fonte } = protocolloDi(p);
-  const pers = pr && libDi(pr.id) === 'personale';
-  const tag = fonte === 'appreso' ? `appreso · ${pr.appreso.volte} ${pr.appreso.volte === 1 ? 'volta' : 'volte'}`
-            : fonte === 'personale' ? 'personale'
-            : fonte === 'nessuno' ? 'si imposta sul telefono' : '';
-  td.innerHTML = `<button class="pchip${pr ? '' : ' nessuno'}${pers ? ' pers' : ''}" data-scegli="${i}" title="Scegli il protocollo">${
-      pr ? `<span class="dots">${pr.fasi.map(f => `<i style="background:${PR.FASI[f.fase].c}"></i>`).join('')}</span>` : ''}
-      <span class="pn">${pr ? esc(pr.l) : fonte === 'nessuno' ? 'nessun protocollo' : 'nessun suggerimento'}</span><span class="caret">▾</span></button>${
-      tag ? `<span class="ptag">${tag}</span>` : ''}`;
+  const { usa, o } = protocolloDi(p);
+  const uff = trova(o.ufficiale), pers = trova(o.personale);
+  const opz = (tipo, pr, vuoto) => `<button class="op ${tipo === 'ufficiale' ? 'u' : 'p'}${usa === tipo ? ' on' : ''}${pr ? '' : ' vuota'}"
+      data-usa="${tipo}" data-i="${i}" aria-pressed="${usa === tipo}">
+      <span class="op-k">${tipo === 'ufficiale' ? 'Ufficiale' : 'Personale'}${tipo === 'personale' && o.appreso ? ` · appreso ×${pers.appreso.volte}` : ''}</span>
+      <span class="op-n">${pr ? esc(pr.l) : vuoto}</span>${pr ? tagFasi(pr, true) : ''}</button>`;
+  td.innerHTML = `<div class="opz">${opz('ufficiale', uff, 'nessuno riconosciuto')}${opz('personale', pers, 'nessuno — insegnalo ›')}</div>
+    <div class="op-f"><button class="link" data-scegli="${i}">Altro protocollo…</button>${
+      p.scelta === null ? '<span class="ptag">nessuno · si imposta sul telefono</span>' : ''}</div>`;
 }
 function aggiornaColonnaProtocolli() {
   document.querySelectorAll('#righe tr').forEach((tr, i) => cellaProtocollo(tr.querySelector('.c-proto'), pazienti[i], i));
+  aggiornaConteggi();
 }
 $('righe').addEventListener('click', e => {
-  const b = e.target.closest('[data-scegli]');
-  if (b) { e.stopPropagation(); apriScelta(+b.dataset.scegli, b); }
+  const s = e.target.closest('[data-scegli]');
+  if (s) { e.stopPropagation(); return apriScelta(+s.dataset.scegli, s); }
+  const b = e.target.closest('.op'); if (!b) return;
+  const p = pazienti[+b.dataset.i];
+  if (b.classList.contains('vuota')) {
+    /* manca un'opzione personale: si apre il builder con questo caso
+       come primo esempio, così si insegna il protocollo dal vivo       */
+    if (b.dataset.usa === 'personale') return insegna(+b.dataset.i);
+    return toast('Nessun protocollo ufficiale riconosciuto per questo quesito');
+  }
+  delete p.scelta;
+  p.usa = b.dataset.usa;
+  aggiornaColonnaProtocolli();
 });
 
 /* ── finestra di scelta ── */
@@ -3827,16 +3995,17 @@ function apriScelta(i, ancora) {
 }
 function chiudiScelta() { $('pop').classList.remove('on'); popI = null; }
 function disegnaScelta() {
-  const p = pazienti[popI], s = suggerimentoDi(p), att = protocolloDi(p).pr;
+  const p = pazienti[popI], { pr: att, o } = protocolloDi(p);
   const q = PR.normText($('popCerca').value);
   const passa = x => !q || PR.normText([x.l, ...x.kw].join(' ')).includes(q);
-  const voce = (x, nota) => `<button class="po${att && att.id === x.id ? ' att' : ''}" data-id="${esc(x.id)}">${fdots(x)}
+  const voce = (x, nota) => `<button class="po${att && att.id === x.id ? ' att' : ''}" data-id="${esc(x.id)}">${tagFasi(x, true)}
       <span class="n">${esc(x.l)}</span>${nota ? `<small>${nota}</small>` : ''}</button>`;
-  const sug = trova(s.id);
-  const pers = libs.personale.protocolli.filter(x => passa(x) && x !== sug);
-  const uff  = libs.ufficiale.protocolli.filter(x => passa(x) && x !== sug);
+  const proposti = [trova(o.personale), trova(o.ufficiale)].filter(x => x && passa(x));
+  const pers = libs.personale.protocolli.filter(x => passa(x) && !proposti.includes(x));
+  const uff  = libs.ufficiale.protocolli.filter(x => passa(x) && !proposti.includes(x));
   $('popList').innerHTML =
-      (sug && passa(sug) ? `<div class="pop-g">Suggerito</div>${voce(sug, s.fonte === 'appreso' ? `appreso ×${sug.appreso.volte}` : s.fonte)}` : '')
+      (proposti.length ? `<div class="pop-g">Proposti per questo quesito</div>${proposti.map(x =>
+        voce(x, libDi(x.id) === 'ufficiale' ? 'ufficiale' : o.appreso ? `appreso ×${x.appreso.volte}` : 'personale')).join('')}` : '')
     + (pers.length ? `<div class="pop-g">Personali</div>${pers.map(x => voce(x, x.appreso ? 'appreso' : '')).join('')}` : '')
     + (uff.length ? `<div class="pop-g">Ufficiali</div>${uff.map(x => voce(x)).join('')}` : '')
     + (!q ? `<div class="pop-g">Altro</div><button class="po${p.scelta === null ? ' att' : ''}" data-id=""><span class="n">Nessun protocollo — si imposta sul telefono</span></button>` : '')
@@ -3859,18 +4028,22 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && popI !== n
 addEventListener('resize', () => { if (popI !== null) chiudiScelta(); });
 
 function scegli(id) {
-  const i = popI, p = pazienti[i], s = suggerimentoDi(p);
+  const i = popI, p = pazienti[i], o = opzioniDi(p);
   chiudiScelta();
   if (!id) { p.scelta = null; aggiornaColonnaProtocolli(); return toast('Nessun protocollo: si imposterà sul telefono'); }
   delete p.scelta;
-  /* il suggerimento dei termini accettato così com'è non insegna nulla;
-     confermare una voce appresa invece ne aumenta il conteggio          */
-  if (s.id === id && s.fonte !== 'appreso') { aggiornaColonnaProtocolli(); return; }
+  /* scegliere una delle due opzioni proposte non insegna nulla, cambia
+     solo quella in uso. Un protocollo diverso viene appreso come opzione
+     personale per i casi con la stessa firma; riconfermare una voce
+     appresa ne aumenta il conteggio.                                     */
+  if (id === o.ufficiale) { p.usa = 'ufficiale'; return aggiornaColonnaProtocolli(); }
+  if (id === o.personale && !o.appreso) { p.usa = 'personale'; return aggiornaColonnaProtocolli(); }
   const prima = PR.clona(libs.personale);
   const voce = PR.impara(libs.personale.protocolli, trova(id), esameDi(p), p.quesito);
+  p.usa = 'personale';
   salvaLibreria('personale');
   aggiornaColonnaProtocolli(); aggiornaNav();
-  const uguali = pazienti.filter(x => x !== p && x.scelta === undefined && suggerimentoDi(x).id === voce.id).length;
+  const uguali = pazienti.filter(x => x !== p && x.scelta === undefined && !x.usa && opzioniDi(x).personale === voce.id).length;
   toast(voce.appreso.volte > 1 ? `Confermato · ${voce.appreso.volte} volte per questo caso`
         : `Appreso nei protocolli personali${uguali ? ` · vale anche per ${uguali === 1 ? 'un altro paziente' : `altri ${uguali} pazienti`} in lista` : ''}`,
     'Annulla', () => { ripristinaPersonale(prima); aggiornaColonnaProtocolli(); });
@@ -3888,7 +4061,7 @@ $('popPers').onclick = () => {
   const base = att || { l: 'Protocollo', idr: 1.4, giKg: 0.5, basale: 'opt', nota: '', fasi: [{ fase: 'venosa', zone: ['TAc'], delay: '70' }] };
   const prima = PR.clona(libs.personale);
   const voce = PR.impara(libs.personale.protocolli, base, esameDi(p), p.quesito);
-  delete p.scelta;
+  delete p.scelta; p.usa = 'personale';
   salvaLibreria('personale');
   apriProtocollo(voce.id);
   toast('Protocollo personale per questo caso', 'Annulla', () => { ripristinaPersonale(prima); disegnaLibreria(); disegnaEditor(); });
@@ -3968,6 +4141,9 @@ function aggiornaConteggi() {
   $('chipWarn').style.display = conSeg ? 'inline-block' : 'none';
   $('chipWarn').textContent = `${conSeg} da controllare`;
   $('avanti').disabled = a.length === 0;
+  const n = { ufficiale: 0, personale: 0, nessuno: 0 };
+  a.forEach(p => { n[protocolloDi(p).usa || 'nessuno']++; });
+  $('chipProto').innerHTML = a.length ? `<b>${n.personale}</b> personali · <b>${n.ufficiale}</b> ufficiali${n.nessuno ? ` · <b>${n.nessuno}</b> da impostare` : ''}` : '';
 }
 
 /* ═══ passo 3 · payload e QR ═════════════════════════════════════════ */
@@ -4162,8 +4338,6 @@ function aggiornaNav() {
 }
 const sel = () => lib.protocolli.find(p => p.id === selId);
 const conMdc = p => p.fasi.some(f => PR.FASI[f.fase].mdc);
-const fdots = p => `<span class="fdots">${p.fasi.map(f =>
-  `<i style="background:${PR.FASI[f.fase].c}" title="${esc(PR.FASI[f.fase].l)}"></i>`).join('')}</span>`;
 const data = ms => new Date(ms).toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'numeric' });
 
 /* quanti pazienti della lista caricata finiscono su ciascun protocollo */
@@ -4185,7 +4359,7 @@ function disegnaLibreria() {
     return `<button class="pv${p.id === selId ? ' on' : ''}" data-id="${esc(p.id)}">
       <span class="pv-top"><span class="pv-nome">${esc(p.l || 'Senza nome')}</span>${
         e.length ? `<i class="pv-stato ${g ? 'grave' : 'avviso'}" title="${e.length} segnalazion${e.length > 1 ? 'i' : 'e'}"></i>` : ''}</span>
-      <span class="pv-sotto">${fdots(p)}<span>${p.fasi.length} fas${p.fasi.length === 1 ? 'e' : 'i'} · ${conMdc(p) ? 'con mdc' : 'senza mdc'}</span>${
+      <span class="pv-sotto">${tagFasi(p, true)}<span>${p.fasi.length} fas${p.fasi.length === 1 ? 'e' : 'i'} · ${conMdc(p) ? 'con mdc' : 'senza mdc'}</span>${
         p.appreso ? `<span class="pv-app" title="appreso dalle scelte in verifica">appreso ×${p.appreso.volte}</span>` : ''}${
         uso[p.id] ? `<span class="pv-oggi" title="pazienti della lista caricata">${uso[p.id]} oggi</span>` : ''}</span>
     </button>`;
@@ -4195,7 +4369,7 @@ function disegnaLibreria() {
         Nascono da soli: quando in <b>Verifica</b> scegli per un paziente un protocollo diverso da
         quello suggerito, il tool lo impara per i casi uguali. Puoi anche crearne uno qui sotto,
         o copiarne uno ufficiale con «Copia nei personali».</div>`);
-  $('libNuovo').textContent = tab === 'ufficiale' ? '+ Nuovo protocollo' : '+ Nuovo protocollo personale';
+  $('libNuovo').textContent = tab === 'ufficiale' ? '+ Nuovo protocollo' : '+ Insegna un protocollo';
   $('libReset').textContent = tab === 'ufficiale' ? 'Ripristina' : 'Svuota';
   $('libReset').title = tab === 'ufficiale' ? 'Torna alla libreria SIRM 2022' : 'Elimina tutti i protocolli personali';
   aggiornaNav();
@@ -4253,9 +4427,6 @@ function disegnaEditor() {
   }
   if (prova.per !== p.id) esempioProva(p);
   const i = lib.protocolli.indexOf(p), n = lib.protocolli.length;
-  const zona = (fi, f) => PR.ZONE[f.fase].map(([c, l]) =>
-    `<button class="z${f.zone.includes(c) ? ' on' : ''}" data-act="zona" data-i="${fi}" data-z="${esc(c)}" title="${esc(l)}"><b>${esc(c)}</b>${
-      c.replace(/[^a-z0-9]/gi,'').toLowerCase() === l.replace(/[^a-z0-9]/gi,'').toLowerCase() ? '' : esc(l)}</button>`).join('');
 
   ed.innerHTML = `
   <div class="plate ed-head">
@@ -4296,56 +4467,20 @@ function disegnaEditor() {
       <div class="card-h"><span class="tile t-sky">${ICONE.fasi}</span><h3>Acquisizioni</h3></div>
       <p class="card-d">Le fasi nell'ordine in cui si eseguono. Una zona <b>fissa</b> fa parte del protocollo;
         altrimenti il telefono la sostituisce con la regione dell'esame richiesto.</p>
-      <div class="fasi">${p.fasi.map((f, fi) => `
-        <div class="fase" style="--c:${PR.FASI[f.fase].c}">
-          <span class="fase-n">${fi + 1}</span>
-          <select class="field" data-ff="fase" data-i="${fi}" aria-label="Tipo di fase">${
-            Object.entries(PR.FASI).map(([k, v]) => `<option value="${k}"${k === f.fase ? ' selected' : ''}>${esc(v.l)}</option>`).join('')}</select>
-          <div class="rit">${f.fase === 'basale' ? '<span class="nomdc">Senza contrasto: nessun ritardo</span>' : `
-            <div class="seg">
-              <button class="${f.delay === 'B-T' ? 'on' : ''}" data-act="bt" data-i="${fi}">Bolus tracking</button>
-              <button class="${f.delay !== 'B-T' ? 'on' : ''}" data-act="sec" data-i="${fi}">Ritardo fisso</button>
-            </div>
-            ${f.delay !== 'B-T' ? `<label class="sec-in"><input class="field" data-ff="delay" data-i="${fi}" inputmode="numeric"
-              value="${esc(f.delay)}" aria-label="Ritardo in secondi"> secondi</label>` : ''}`}
-          </div>
-          <div class="fase-ctl">
-            <button class="btn ico xs" data-act="fsu" data-i="${fi}" ${fi === 0 ? 'disabled' : ''} aria-label="Fase prima">↑</button>
-            <button class="btn ico xs" data-act="fgiu" data-i="${fi}" ${fi === p.fasi.length - 1 ? 'disabled' : ''} aria-label="Fase dopo">↓</button>
-            <button class="btn ico xs danger" data-act="fdel" data-i="${fi}" aria-label="Rimuovi fase">✕</button>
-          </div>
-          <div class="zone">${zona(fi, f)}</div>
-          <div class="fix${f.fix ? ' on' : ''}" data-act="fix" data-i="${fi}" role="switch" aria-checked="${!!f.fix}" tabindex="0">
-            <span class="sw"></span>Zona fissa — non segue la regione dell'esame</div>
-        </div>`).join('') || '<div class="vuoto">Nessuna fase: aggiungine una qui sotto.</div>'}
-      </div>
-      <div class="add-f">${Object.entries(PR.FASI).map(([k, v]) =>
-        `<button class="btn xs" data-act="fadd" data-fase="${k}" style="--c:${v.c}"><i></i>+ ${esc(v.l)}</button>`).join('')}</div>
+      ${htmlFasi(p)}
     </div>
 
     <div class="plate card" id="cardMdc">
       <div class="card-h"><span class="tile t-coral">${ICONE.mdc}</span><h3>Mezzo di contrasto</h3></div>
       <p class="card-d" id="mdcD"></p>
-      <div class="mdc-row">
-        <div><span class="lbl">Dose di iodio</span>
-          <div class="stp"><button class="btn ico sm" data-act="step" data-k="giKg" data-d="-0.01" aria-label="Diminuisci">−</button>
-            <input class="field" data-f="giKg" value="${p.giKg.toFixed(2)}" inputmode="decimal" aria-label="gI per kg">
-            <button class="btn ico sm" data-act="step" data-k="giKg" data-d="0.01" aria-label="Aumenta">+</button><small>gI/kg</small></div></div>
-        <div><span class="lbl">Velocità di iodio (IDR)</span>
-          <div class="stp"><button class="btn ico sm" data-act="step" data-k="idr" data-d="-0.1" aria-label="Diminuisci">−</button>
-            <input class="field" data-f="idr" value="${p.idr.toFixed(1)}" inputmode="decimal" aria-label="gI al secondo">
-            <button class="btn ico sm" data-act="step" data-k="idr" data-d="0.1" aria-label="Aumenta">+</button><small>gI/s</small></div></div>
-      </div>
+      ${htmlMdc(p)}
       <div class="anteprima" id="mdcPrev"></div>
     </div>
 
     <div class="plate card">
       <div class="card-h"><span class="tile t-amber">${ICONE.bas}</span><h3>Fase basale</h3></div>
       <p class="card-d">Cosa dire in reparto quando esiste un esame precedente di confronto.</p>
-      <div class="seg lg">${Object.entries(PR.BASALE).map(([k, v]) =>
-        `<button class="${p.basale === k ? 'on' : ''}" data-act="basale" data-v="${k}">${v}</button>`).join('')}</div>
-      <span class="lbl">Motivazione <em>— mostrata sul telefono</em></span>
-      <textarea class="field" data-f="nota" rows="3" placeholder="Perché la basale è richiesta, opzionale o omettibile">${esc(p.nota)}</textarea>
+      ${htmlBasale(p)}
     </div>
 
     <div class="plate card span">
@@ -4355,15 +4490,7 @@ function disegnaEditor() {
         decidere tra protocolli simili.</p>
       <div class="cards" style="margin-top:0">
         <div>
-          <span class="lbl">Termini del quesito <em>— due punti per parola</em></span>
-          <div class="tok" data-k="kw">${p.kw.map(w => `<span>${esc(w)}<button data-act="tdel" data-k="kw" data-w="${esc(w)}" aria-label="Rimuovi ${esc(w)}">×</button></span>`).join('')}
-            <input data-tok="kw" placeholder="${p.kw.length ? 'aggiungi…' : 'es. embolia, poi Invio'}" aria-label="Nuovo termine del quesito"></div>
-          <span class="lbl">Termini dell'esame <em>— un punto ciascuno</em></span>
-          <div class="tok" data-k="ex">${p.ex.map(w => `<span>${esc(w)}<button data-act="tdel" data-k="ex" data-w="${esc(w)}" aria-label="Rimuovi ${esc(w)}">×</button></span>`).join('')}
-            <input data-tok="ex" placeholder="${p.ex.length ? 'aggiungi…' : 'es. torace, poi Invio'}" aria-label="Nuovo termine dell'esame"></div>
-          <span class="lbl">Regioni compatibili <em>— nessuna selezionata = qualunque</em></span>
-          <div class="zone">${PR.REGIONI.map(([c, l]) =>
-            `<button class="z${(p.reg || []).includes(c) ? ' on' : ''}" data-act="reg" data-z="${c}" title="${esc(l)}"><b>${c}</b>${esc(l)}</button>`).join('')}</div>
+          ${htmlTermini(p)}
         </div>
         <div>
           <span class="lbl">Prova il riconoscimento</span>
@@ -4384,7 +4511,7 @@ function disegnaEditor() {
 function aggiornaEditor() {
   const p = sel(); if (!p) return;
   $('edSeq').innerHTML = p.fasi.map(f => `<div class="seq-p" style="--c:${PR.FASI[f.fase].c}">
-      <b>${esc(PR.FASI[f.fase].l)}</b><span>${etichettaRitardo(f)}</span><small>${esc(f.zone.join(' + ') || '—')}${f.fix ? ' · fissa' : ''}</small></div>`)
+      ${tagFase(f.fase)}<span>${etichettaRitardo(f)}</span><small>${esc(f.zone.join(' + ') || '—')}${f.fix ? ' · fissa' : ''}</small></div>`)
     .join('<span class="seq-f">→</span>');
 
   const e = PR.valida(p, lib.protocolli), g = e.some(x => x.grave), s = $('edSegnala');
@@ -4451,100 +4578,185 @@ function modificato(ridisegna) {
   disegnaLibreria();
 }
 
-const ed = $('editor');
-ed.addEventListener('input', e => {
-  const t = e.target, p = sel(); if (!p) return;
-  if (t.dataset.f === 'l' || t.dataset.f === 'nota') { p[t.dataset.f] = t.value; modificato(); }
-  else if (t.dataset.f === 'giKg' || t.dataset.f === 'idr') {
-    const v = parseFloat(t.value.replace(',', '.'));
-    if (!isNaN(v)) { p[t.dataset.f] = v; modificato(); }
-  }
-  else if (t.dataset.ff === 'delay') {
-    p.fasi[+t.dataset.i].delay = t.value.replace(/\D/g, '').slice(0, 3);
-    if (t.value !== p.fasi[+t.dataset.i].delay) t.value = p.fasi[+t.dataset.i].delay;
-    modificato();
-  }
-  else if (t.dataset.prova) { prova[t.dataset.prova] = t.value; aggiornaProva(); }
-});
-ed.addEventListener('change', e => {
-  const t = e.target, p = sel(); if (!p) return;
-  if (t.dataset.f === 'giKg' || t.dataset.f === 'idr') {
-    const k = t.dataset.f, [min, max] = PR.LIMITI[k];
-    let v = parseFloat(t.value.replace(',', '.'));
-    if (isNaN(v)) v = p[k];
-    p[k] = Math.round(Math.max(min, Math.min(max, v)) * 100) / 100;
-    t.value = p[k].toFixed(k === 'giKg' ? 2 : 1);
-    modificato();
-  }
-  if (t.dataset.ff === 'fase') {
-    /* cambiando tipo di fase si tengono solo le zone ammesse dal nuovo
-       tipo, e il ritardo torna a quello tipico della fase              */
-    const f = p.fasi[+t.dataset.i], nuovo = t.value;
-    const ammesse = PR.ZONE[nuovo].map(([c]) => c);
-    f.fase = nuovo;
-    f.zone = f.zone.filter(z => ammesse.includes(z));
-    f.delay = PR.FASI[nuovo].delay;
-    modificato(true);
-  }
-});
-ed.addEventListener('keydown', e => {
-  const t = e.target;
-  if (t.dataset.tok) {
-    const p = sel(), k = t.dataset.tok;
-    if ((e.key === 'Enter' || e.key === ',') && t.value.trim()) {
-      e.preventDefault();
-      const w = PR.normText(t.value);
-      if (w && !p[k].includes(w)) p[k].push(w);
-      modificato(true);
-      ed.querySelector(`[data-tok="${k}"]`).focus();
-    } else if (e.key === 'Backspace' && !t.value && p[k].length) {
-      p[k].pop(); modificato(true);
-      ed.querySelector(`[data-tok="${k}"]`).focus();
+/* ═══ MODULO DI UN PROTOCOLLO ═══════════════════════════════════════
+   Fasi, contrasto, basale e termini si modificano allo stesso modo
+   nell'editor e nel builder: stesso markup, stessa gestione degli eventi.
+   collegaModulo(radice, prendi, dopo) lega gli eventi a una radice;
+   dopo(ridisegna) viene chiamata a ogni modifica.                      */
+const tagFase = (fase, corta) => { const F = PR.FASI[fase];
+  return `<span class="ftag" style="--c:${F.c};--bg:${F.bg};--tx:${F.tx}" title="${esc(F.l)}">${esc(corta ? F.s : F.l)}</span>`; };
+const tagFasi = (p, corta) => `<span class="ftags">${p.fasi.map(f => tagFase(f.fase, corta)).join('')}</span>`;
+
+function htmlFasi(p) {
+  const zona = (fi, f) => PR.ZONE[f.fase].map(([c, l]) =>
+    `<button class="z${f.zone.includes(c) ? ' on' : ''}" data-act="zona" data-i="${fi}" data-z="${esc(c)}" title="${esc(l)}"><b>${esc(c)}</b>${
+      c.replace(/[^a-z0-9]/gi,'').toLowerCase() === l.replace(/[^a-z0-9]/gi,'').toLowerCase() ? '' : esc(l)}</button>`).join('');
+  return `<div class="fasi">${p.fasi.map((f, fi) => `
+    <div class="fase" style="--c:${PR.FASI[f.fase].c}">
+      <span class="fase-n">${fi + 1}</span>
+      <select class="field" data-ff="fase" data-i="${fi}" aria-label="Tipo di fase">${
+        Object.entries(PR.FASI).map(([k, v]) => `<option value="${k}"${k === f.fase ? ' selected' : ''}>${esc(v.l)}</option>`).join('')}</select>
+      <div class="rit">${f.fase === 'basale' ? '<span class="nomdc">Senza contrasto: nessun ritardo</span>' : `
+        <div class="seg">
+          <button class="${f.delay === 'B-T' ? 'on' : ''}" data-act="bt" data-i="${fi}">Bolus tracking</button>
+          <button class="${f.delay !== 'B-T' ? 'on' : ''}" data-act="sec" data-i="${fi}">Ritardo fisso</button>
+        </div>
+        ${f.delay !== 'B-T' ? `<label class="sec-in"><input class="field" data-ff="delay" data-i="${fi}" inputmode="numeric"
+          value="${esc(f.delay)}" aria-label="Ritardo in secondi"> secondi</label>` : ''}`}
+      </div>
+      <div class="fase-ctl">
+        <button class="btn ico xs" data-act="fsu" data-i="${fi}" ${fi === 0 ? 'disabled' : ''} aria-label="Fase prima">↑</button>
+        <button class="btn ico xs" data-act="fgiu" data-i="${fi}" ${fi === p.fasi.length - 1 ? 'disabled' : ''} aria-label="Fase dopo">↓</button>
+        <button class="btn ico xs danger" data-act="fdel" data-i="${fi}" aria-label="Rimuovi fase">✕</button>
+      </div>
+      <div class="zone">${zona(fi, f)}</div>
+      <div class="fix${f.fix ? ' on' : ''}" data-act="fix" data-i="${fi}" role="switch" aria-checked="${!!f.fix}" tabindex="0">
+        <span class="sw"></span>Zona fissa — non segue la regione dell'esame</div>
+    </div>`).join('') || '<div class="vuoto">Nessuna fase: aggiungine una qui sotto.</div>'}
+  </div>
+  <div class="add-f">${Object.keys(PR.FASI).map(k =>
+    `<button class="btn xs aggiungi" data-act="fadd" data-fase="${k}">+ ${tagFase(k)}</button>`).join('')}</div>`;
+}
+function htmlMdc(p) {
+  return `<div class="mdc-row">
+    <div><span class="lbl">Dose di iodio</span>
+      <div class="stp"><button class="btn ico sm" data-act="step" data-k="giKg" data-d="-0.01" aria-label="Diminuisci">−</button>
+        <input class="field" data-f="giKg" value="${p.giKg.toFixed(2)}" inputmode="decimal" aria-label="gI per kg">
+        <button class="btn ico sm" data-act="step" data-k="giKg" data-d="0.01" aria-label="Aumenta">+</button><small>gI/kg</small></div></div>
+    <div><span class="lbl">Velocità di iodio (IDR)</span>
+      <div class="stp"><button class="btn ico sm" data-act="step" data-k="idr" data-d="-0.1" aria-label="Diminuisci">−</button>
+        <input class="field" data-f="idr" value="${p.idr.toFixed(1)}" inputmode="decimal" aria-label="gI al secondo">
+        <button class="btn ico sm" data-act="step" data-k="idr" data-d="0.1" aria-label="Aumenta">+</button><small>gI/s</small></div></div>
+  </div>`;
+}
+function htmlBasale(p) {
+  return `<div class="seg lg">${Object.entries(PR.BASALE).map(([k, v]) =>
+      `<button class="${p.basale === k ? 'on' : ''}" data-act="basale" data-v="${k}">${v}</button>`).join('')}</div>
+    <span class="lbl">Motivazione <em>— mostrata sul telefono</em></span>
+    <textarea class="field" data-f="nota" rows="3" placeholder="Perché la basale è richiesta, opzionale o omettibile">${esc(p.nota)}</textarea>`;
+}
+function htmlTermini(p) {
+  const tok = (k, ph) => `<div class="tok" data-k="${k}">${p[k].map(w =>
+      `<span>${esc(w)}<button data-act="tdel" data-k="${k}" data-w="${esc(w)}" aria-label="Rimuovi ${esc(w)}">×</button></span>`).join('')}
+    <input data-tok="${k}" placeholder="${p[k].length ? 'aggiungi…' : ph}" aria-label="Nuovo termine"></div>`;
+  return `<span class="lbl">Termini del quesito <em>— due punti per parola</em></span>${tok('kw', 'es. embolia, poi Invio')}
+    <span class="lbl">Termini dell'esame <em>— un punto ciascuno</em></span>${tok('ex', 'es. torace, poi Invio')}
+    <span class="lbl">Regioni compatibili <em>— nessuna selezionata = qualunque</em></span>
+    <div class="zone">${PR.REGIONI.map(([c, l]) =>
+      `<button class="z${(p.reg || []).includes(c) ? ' on' : ''}" data-act="reg" data-z="${c}" title="${esc(l)}"><b>${c}</b>${esc(l)}</button>`).join('')}</div>`;
+}
+
+function collegaModulo(radice, prendi, dopo) {
+  radice.addEventListener('input', e => {
+    const t = e.target, p = prendi(); if (!p) return;
+    if (t.dataset.f === 'l' || t.dataset.f === 'nota') { p[t.dataset.f] = t.value; dopo(); }
+    else if (t.dataset.f === 'giKg' || t.dataset.f === 'idr') {
+      const v = parseFloat(t.value.replace(',', '.'));
+      if (!isNaN(v)) { p[t.dataset.f] = v; dopo(); }
     }
-  }
-  if ((e.key === 'Enter' || e.key === ' ') && t.dataset.act === 'fix') { e.preventDefault(); t.click(); }
+    else if (t.dataset.ff === 'delay') {
+      const f = p.fasi[+t.dataset.i];
+      f.delay = t.value.replace(/\D/g, '').slice(0, 3);
+      if (t.value !== f.delay) t.value = f.delay;
+      dopo();
+    }
+  });
+  radice.addEventListener('change', e => {
+    const t = e.target, p = prendi(); if (!p) return;
+    if (t.dataset.f === 'giKg' || t.dataset.f === 'idr') {
+      const k = t.dataset.f, [min, max] = PR.LIMITI[k];
+      let v = parseFloat(t.value.replace(',', '.'));
+      if (isNaN(v)) v = p[k];
+      p[k] = Math.round(Math.max(min, Math.min(max, v)) * 100) / 100;
+      t.value = p[k].toFixed(k === 'giKg' ? 2 : 1);
+      dopo();
+    }
+    if (t.dataset.ff === 'fase') {
+      /* cambiando tipo di fase si tengono solo le zone ammesse dal nuovo
+         tipo, e il ritardo torna a quello tipico della fase              */
+      const f = p.fasi[+t.dataset.i], nuovo = t.value;
+      const ammesse = PR.ZONE[nuovo].map(([c]) => c);
+      f.fase = nuovo;
+      f.zone = f.zone.filter(z => ammesse.includes(z));
+      f.delay = PR.FASI[nuovo].delay;
+      dopo(true);
+    }
+  });
+  radice.addEventListener('keydown', e => {
+    const t = e.target;
+    if (t.dataset.tok) {
+      const p = prendi(), k = t.dataset.tok;
+      if ((e.key === 'Enter' || e.key === ',') && t.value.trim()) {
+        e.preventDefault();
+        const w = PR.normText(t.value);
+        if (w && !p[k].includes(w)) p[k].push(w);
+        dopo(true);
+        radice.querySelector(`[data-tok="${k}"]`).focus();
+      } else if (e.key === 'Backspace' && !t.value && p[k].length) {
+        p[k].pop(); dopo(true);
+        radice.querySelector(`[data-tok="${k}"]`).focus();
+      }
+    }
+    if ((e.key === 'Enter' || e.key === ' ') && t.dataset.act === 'fix') { e.preventDefault(); t.click(); }
+  });
+  radice.addEventListener('click', e => {
+    const tok = e.target.closest('.tok');
+    if (tok && e.target === tok) tok.querySelector('input').focus();
+    const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+    const p = prendi(); if (!p) return;
+    const i = +b.dataset.i, scambia = (a, x, y) => { [a[x], a[y]] = [a[y], a[x]]; };
+    switch (b.dataset.act) {
+      case 'zona': {
+        const f = p.fasi[i], z = b.dataset.z;
+        f.zone = f.zone.includes(z) ? f.zone.filter(x => x !== z) : [...f.zone, z];
+        return dopo(true);
+      }
+      case 'fix':  p.fasi[i].fix = p.fasi[i].fix ? 0 : 1; if (!p.fasi[i].fix) delete p.fasi[i].fix; return dopo(true);
+      case 'bt':   p.fasi[i].delay = 'B-T'; return dopo(true);
+      case 'sec':  if (p.fasi[i].delay === 'B-T') { p.fasi[i].delay = PR.FASI[p.fasi[i].fase].delay.replace('B-T', '30'); dopo(true); }
+                   radice.querySelector(`[data-ff="delay"][data-i="${i}"]`).focus(); return;
+      case 'fsu':  scambia(p.fasi, i, i - 1); return dopo(true);
+      case 'fgiu': scambia(p.fasi, i, i + 1); return dopo(true);
+      case 'fdel': p.fasi.splice(i, 1); return dopo(true);
+      case 'fadd': {
+        /* la nuova fase eredita la zona dell'ultima, se il tipo la ammette;
+           la prima prende la regione compatibile scelta, altrimenti TAc   */
+        const fase = b.dataset.fase, ammesse = PR.ZONE[fase].map(([c]) => c);
+        const prec = p.fasi.length ? p.fasi[p.fasi.length - 1].zone.filter(z => ammesse.includes(z)) : [];
+        const reg = (p.reg || []).find(z => ammesse.includes(z));
+        const nuova = { fase, zone: prec.length ? prec : [reg || (ammesse.includes('TAc') ? 'TAc' : ammesse[0])], delay: PR.FASI[fase].delay };
+        if (fase === 'basale') p.fasi.unshift(nuova); else p.fasi.push(nuova);
+        return dopo(true);
+      }
+      case 'basale': p.basale = b.dataset.v; return dopo(true);
+      case 'reg': {
+        const z = b.dataset.z, r = p.reg || [];
+        p.reg = r.includes(z) ? r.filter(x => x !== z) : [...r, z];
+        if (!p.reg.length) delete p.reg;
+        return dopo(true);
+      }
+      case 'tdel': p[b.dataset.k] = p[b.dataset.k].filter(w => w !== b.dataset.w); return dopo(true);
+      case 'step': {
+        const k = b.dataset.k, [min, max] = PR.LIMITI[k];
+        p[k] = Math.round(Math.max(min, Math.min(max, p[k] + parseFloat(b.dataset.d))) * 100) / 100;
+        radice.querySelector(`[data-f="${k}"]`).value = p[k].toFixed(k === 'giKg' ? 2 : 1);
+        return dopo();
+      }
+    }
+  });
+}
+
+/* ── editor: modulo condiviso più le azioni sulla libreria ── */
+const ed = $('editor');
+collegaModulo(ed, sel, modificato);
+ed.addEventListener('input', e => {
+  if (e.target.dataset.prova) { prova[e.target.dataset.prova] = e.target.value; aggiornaProva(); }
 });
 ed.addEventListener('click', e => {
-  const tok = e.target.closest('.tok');
-  if (tok && e.target === tok) tok.querySelector('input').focus();
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
-  const p = sel(), i = +b.dataset.i, L = lib.protocolli, pos = L.indexOf(p);
+  const p = sel(), L = lib.protocolli, pos = L.indexOf(p);
   const scambia = (a, x, y) => { [a[x], a[y]] = [a[y], a[x]]; };
   switch (b.dataset.act) {
-    case 'zona': {
-      const f = p.fasi[i], z = b.dataset.z;
-      f.zone = f.zone.includes(z) ? f.zone.filter(x => x !== z) : [...f.zone, z];
-      return modificato(true);
-    }
-    case 'fix':  p.fasi[i].fix = p.fasi[i].fix ? 0 : 1; if (!p.fasi[i].fix) delete p.fasi[i].fix; return modificato(true);
-    case 'bt':   p.fasi[i].delay = 'B-T'; return modificato(true);
-    case 'sec':  if (p.fasi[i].delay === 'B-T') { p.fasi[i].delay = PR.FASI[p.fasi[i].fase].delay.replace('B-T', '30'); modificato(true); }
-                 ed.querySelector(`[data-ff="delay"][data-i="${i}"]`).focus(); return;
-    case 'fsu':  scambia(p.fasi, i, i - 1); return modificato(true);
-    case 'fgiu': scambia(p.fasi, i, i + 1); return modificato(true);
-    case 'fdel': p.fasi.splice(i, 1); return modificato(true);
-    case 'fadd': {
-      /* la nuova fase eredita la zona dell'ultima, se il tipo la ammette */
-      const fase = b.dataset.fase, ammesse = PR.ZONE[fase].map(([c]) => c);
-      const prec = p.fasi.length ? p.fasi[p.fasi.length - 1].zone.filter(z => ammesse.includes(z)) : [];
-      const nuova = { fase, zone: prec.length ? prec : [ammesse.includes('TAc') ? 'TAc' : ammesse[0]], delay: PR.FASI[fase].delay };
-      if (fase === 'basale') p.fasi.unshift(nuova); else p.fasi.push(nuova);
-      return modificato(true);
-    }
-    case 'basale': p.basale = b.dataset.v; return modificato(true);
-    case 'reg': {
-      const z = b.dataset.z, r = p.reg || [];
-      p.reg = r.includes(z) ? r.filter(x => x !== z) : [...r, z];
-      if (!p.reg.length) delete p.reg;
-      return modificato(true);
-    }
-    case 'tdel': p[b.dataset.k] = p[b.dataset.k].filter(w => w !== b.dataset.w); return modificato(true);
-    case 'step': {
-      const k = b.dataset.k, [min, max] = PR.LIMITI[k];
-      p[k] = Math.round(Math.max(min, Math.min(max, p[k] + parseFloat(b.dataset.d))) * 100) / 100;
-      ed.querySelector(`[data-f="${k}"]`).value = p[k].toFixed(k === 'giKg' ? 2 : 1);
-      return modificato();
-    }
     case 'su':  scambia(L, pos, pos - 1); return modificato(true);
     case 'giu': scambia(L, pos, pos + 1); return modificato(true);
     case 'duplica': {
@@ -4605,6 +4817,7 @@ function sostituisciLibreria(nuova, nome) {
 }
 
 $('libNuovo').onclick = () => {
+  if (tab === 'personale') { nuovaBozza(); return mostraArea('builder'); }
   const L = lib.protocolli, base = tab === 'ufficiale' ? 'Nuovo protocollo' : 'Nuovo protocollo personale';
   let k = 1; while (L.some(p => p.l === `${base} ${k}`)) k++;
   const p = { id: nuovoId(L, `nuovo ${k}`), l: `${base} ${k}`, idr: 1.4, giKg: 0.5,
@@ -4654,6 +4867,259 @@ $('libReset').onclick = () => {
       });
     });
 };
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROTOCOL BUILDER
+   Insegna al tool un protocollo personale partendo da richieste reali:
+   dagli esempi si ricavano i termini che lo faranno riconoscere, poi si
+   compongono fasi, contrasto e basale. Gli esempi restano in memoria
+   solo finché la pagina è aperta: del caso si salvano soltanto i termini
+   scelti, mai il testo del quesito.
+   ═══════════════════════════════════════════════════════════════════ */
+let bozza = null, esempi = [], bOrigine = null;
+const bRad = $('bPassi');
+
+function nuovaBozza(base) {
+  const b = base ? PR.clona(base) : { idr: 1.4, giKg: 0.5, basale: 'opt', nota: '', fasi: [] };
+  bozza = { id: '__bozza', l: '', idr: b.idr, giKg: b.giKg, basale: b.basale, nota: b.nota || '',
+            kw: [], ex: [], fasi: b.fasi || [], base: base ? base.id : undefined };
+  esempi = []; bOrigine = null;
+}
+
+/* i termini clinici e la regione di un esempio entrano da soli nella
+   bozza: sono quasi sempre quelli giusti, e si possono togliere. Quelli
+   generici restano da scegliere a mano: «neoplasia» o «follow-up» da
+   soli farebbero proporre il protocollo per troppi quesiti diversi.    */
+const GENERICI = new Set(['neoplasia', 'metastasi', 'followup', 'recidiva', 'infezione', 'flogosi',
+  'stadiazione', 'ristadiazione', 'restaging', 'trauma']);
+function adottaEsempio(e) {
+  const a = PR.analizzaEsempio(e.esame, e.quesito);
+  a.clinici.filter(w => !GENERICI.has(w)).forEach(w => { if (!bozza.kw.includes(w)) bozza.kw.push(w); });
+  if (a.regione && !(bozza.reg || []).includes(a.regione)) bozza.reg = [...(bozza.reg || []), a.regione];
+}
+
+/* il caso di un paziente apre il builder già avviato: esempio, termini
+   e, come punto di partenza, il protocollo ufficiale riconosciuto      */
+function insegna(i) {
+  const p = pazienti[i], uff = trova(opzioniDi(p).ufficiale);
+  nuovaBozza(uff);
+  bozza.l = uff ? uff.l + ' · reparto' : '';
+  esempi = [{ esame: esameDi(p), quesito: p.quesito }];
+  adottaEsempio(esempi[0]);
+  bOrigine = i;
+  mostraArea('builder');
+}
+
+/* come verrebbe riconosciuto ogni esempio se la bozza fosse già nella
+   libreria personale: è la prova che i termini scelti funzionano       */
+function conBozza(fn) {
+  const P = libs.personale.protocolli;
+  P.unshift(bozza);
+  try { return fn(); } finally { P.splice(P.indexOf(bozza), 1); }
+}
+function esitoEsempio(e) {
+  return conBozza(() => {
+    const s = PR.suggerisci(libs.ufficiale.protocolli, libs.personale.protocolli, e.esame, e.quesito);
+    return { ok: s.id === bozza.id, vince: s.id && s.id !== bozza.id ? trova(s.id) : null, fonte: s.fonte };
+  });
+}
+
+function statoPassi() {
+  const esiti = esempi.filter(e => e.quesito.trim()).map(esitoEsempio);
+  const e = PR.valida(bozza, libs.personale.protocolli);
+  return [
+    esempi.some(x => x.quesito.trim()),
+    bozza.kw.length > 0 && esiti.length > 0 && esiti.every(x => x.ok),
+    bozza.fasi.length > 0 && !e.some(x => x.campo === 'fasi' && x.grave),
+    bozza.fasi.length > 0 && !e.some(x => x.campo === 'mdc'),
+    !!bozza.l.trim() && !e.some(x => x.grave),
+  ];
+}
+
+function htmlAnalisi(e, j) {
+  if (!e.quesito.trim() && !e.esame.trim()) return '<span class="muted">Scrivi esame e quesito: qui compaiono i termini ricavati.</span>';
+  const a = PR.analizzaEsempio(e.esame, e.quesito);
+  const ch = (tipo, w, on, extra = '') => `<button class="ch ${tipo}${on ? ' on' : ''}" data-bact="${tipo}" data-w="${esc(w)}"${extra}>${esc(w)}</button>`;
+  const reg = a.regione ? ch('reg', a.regione, (bozza.reg || []).includes(a.regione), ` title="${esc(PR.ZONE_L[a.regione])}"`) : '';
+  const r = esitoEsempio(e);
+  return `<div class="an-riga"><span class="an-l">Termini clinici</span>${a.clinici.map(w => ch('kw', w, bozza.kw.includes(w))).join('') || '<em>nessuno noto</em>'}</div>
+    <div class="an-riga"><span class="an-l">Altre parole</span>${a.parole.map(w => ch('kw', w, bozza.kw.includes(w))).join('') || '<em>—</em>'}</div>
+    <div class="an-riga"><span class="an-l">Esame</span>${a.distretto.map(w => ch('ex', w, bozza.ex.includes(w))).join('')}${reg || '<em>regione non riconosciuta</em>'}</div>
+    <div class="an-esito ${r.ok ? 'si' : 'no'}">${r.ok ? '✓ Riconosciuto da questo protocollo'
+      : r.vince ? `Vincerebbe «${esc(r.vince.l)}» (${r.fonte === 'appreso' ? 'appreso' : r.fonte}). ${r.fonte === 'appreso'
+          ? 'Un caso appreso ha sempre la precedenza.' : 'Aggiungi un termine più specifico di questo caso.'}`
+      : 'Non riconosciuto: seleziona almeno una parola del quesito.'}</div>`;
+}
+
+const PASSI = ['Esempi', 'Riconoscimento', 'Acquisizioni', 'Contrasto e basale', 'Nome'];
+
+function disegnaBuilder() {
+  if (!bozza) nuovaBozza();
+  const origine = bOrigine !== null && pazienti[bOrigine];
+  bRad.innerHTML = `
+  <div class="bpassi" id="bTrack"></div>
+  ${origine ? `<div class="nota" style="margin:0 0 18px">Stai insegnando il protocollo per <b>${esc(origine.nomeCompleto)}</b>.
+     Al salvataggio il paziente userà l'opzione personale e tornerai alla verifica.</div>` : ''}
+
+  <div class="plate card bpasso">
+    <div class="card-h"><span class="disc">1</span><h3>Richieste d'esempio</h3></div>
+    <p class="card-d">Scrivi o prendi dalla lista una o più richieste per cui vuoi questo protocollo. Il builder ne ricava i
+      termini: <b>clic su un termine</b> per usarlo o toglierlo. Gli esempi non vengono salvati.</p>
+    <div class="esempi">${esempi.map((e, j) => `
+      <div class="esempio">
+        <div class="es-campi">
+          <input class="field" data-es="esame" data-j="${j}" value="${esc(e.esame)}" placeholder="Esame richiesto, es. TC ADDOME SUPERIORE" aria-label="Esame">
+          <input class="field" data-es="quesito" data-j="${j}" value="${esc(e.quesito)}" placeholder="Quesito, es. incidentaloma surrenalico" aria-label="Quesito">
+          <button class="btn ico xs danger" data-bact="es-del" data-j="${j}" aria-label="Rimuovi esempio">✕</button>
+        </div>
+        <div class="analisi" id="bAn${j}">${htmlAnalisi(e, j)}</div>
+      </div>`).join('') || '<div class="vuoto">Nessun esempio ancora.</div>'}
+    </div>
+    <div class="azioni" style="margin-top:14px">
+      <button class="btn sm" data-bact="es-add">+ Aggiungi esempio</button>
+      ${pazienti.length ? `<select class="field" data-bact-sel="dalla-lista" style="max-width:360px;height:36px;font-size:.84rem" aria-label="Prendi dalla lista">
+        <option value="">Prendi un caso dalla lista caricata…</option>
+        ${pazienti.map((p, k) => `<option value="${k}">${esc(p.ora)} · ${esc(esameDi(p).slice(0, 40))} — ${esc(p.quesito.slice(0, 48))}</option>`).join('')}
+      </select>` : ''}
+    </div>
+  </div>
+
+  <div class="plate card bpasso">
+    <div class="card-h"><span class="disc">2</span><h3>Come si riconosce</h3></div>
+    <p class="card-d">Questi termini decidono quando il telefono proporrà il protocollo come opzione personale.
+      Puoi aggiungerne altri a mano.</p>
+    ${htmlTermini(bozza)}
+  </div>
+
+  <div class="plate card bpasso">
+    <div class="card-h"><span class="disc">3</span><h3>Acquisizioni</h3></div>
+    <div class="parti">
+      <span class="lbl" style="margin:0">Parti da</span>
+      <select class="field" data-bact-sel="parti" aria-label="Protocollo di partenza">
+        <option value="">— scegli un protocollo da cui copiare fasi e contrasto —</option>
+        <optgroup label="Ufficiali">${libs.ufficiale.protocolli.map(x => `<option value="${esc(x.id)}"${bozza.base === x.id ? ' selected' : ''}>${esc(x.l)}</option>`).join('')}</optgroup>
+        ${libs.personale.protocolli.length ? `<optgroup label="Personali">${libs.personale.protocolli.map(x => `<option value="${esc(x.id)}"${bozza.base === x.id ? ' selected' : ''}>${esc(x.l)}</option>`).join('')}</optgroup>` : ''}
+      </select>
+    </div>
+    ${htmlFasi(bozza)}
+  </div>
+
+  <div class="cards" style="margin-top:0">
+    <div class="plate card bpasso" id="bMdc">
+      <div class="card-h"><span class="disc">4</span><h3>Mezzo di contrasto</h3></div>
+      ${htmlMdc(bozza)}
+    </div>
+    <div class="plate card bpasso">
+      <div class="card-h"><span class="disc">4</span><h3>Fase basale</h3></div>
+      ${htmlBasale(bozza)}
+    </div>
+  </div>
+
+  <div class="plate card bpasso">
+    <div class="card-h"><span class="disc">5</span><h3>Nome e salvataggio</h3></div>
+    <input class="field nome-b" data-f="l" value="${esc(bozza.l)}" placeholder="Nome del protocollo, es. TC Surreni – Washout" aria-label="Nome del protocollo">
+    <div class="segnala" id="bSegnala" style="margin:14px 0 0"></div>
+    <div class="azioni">
+      <button class="btn solid" data-bact="salva" id="bSalva">Insegna al tool</button>
+      <button class="btn" data-bact="ricomincia">Ricomincia</button>
+      ${origine ? '<button class="btn" data-bact="annulla">Torna alla verifica</button>' : ''}
+    </div>
+  </div>`;
+  aggiornaBuilder();
+}
+
+/* parti che dipendono dai valori ma non contengono campi in modifica */
+function aggiornaBuilder() {
+  const st = statoPassi();
+  $('bTrack').innerHTML = PASSI.map((n, k) => `<span class="bp${st[k] ? ' ok' : ''}"><i>${st[k] ? '✓' : k + 1}</i>${n}</span>`).join('');
+  esempi.forEach((e, j) => { const el = $('bAn' + j); if (el) el.innerHTML = htmlAnalisi(e, j); });
+  $('bMdc').classList.toggle('spento', !conMdc(bozza));
+
+  const err = PR.valida(bozza, libs.personale.protocolli);
+  const gravi = err.filter(x => x.grave), s = $('bSegnala');
+  s.className = 'segnala' + (err.length ? ' on ' + (gravi.length ? 'grave' : 'avviso') : '');
+  s.innerHTML = err.map(x => `<div>${esc(x.msg)}${x.grave ? '' : ' <span style="opacity:.7">(avviso)</span>'}</div>`).join('');
+  $('bSalva').disabled = gravi.length > 0;
+
+  /* anteprima: la card come la vedrà il telefono, e l'effetto sulla lista */
+  const esiti = esempi.filter(e => e.quesito.trim()).map(esitoEsempio);
+  const passano = pazienti.length ? conBozza(() => attivi().filter(p => opzioniDi(p).personale === bozza.id).length) : 0;
+  const ag = AGENTI[agenteProva], gi = bozza.giKg * pesoProva, m = conMdc(bozza);
+  $('bPrev').innerHTML = `
+    <span class="eyebrow">Anteprima sul telefono</span>
+    <div class="carta-prev">
+      <div class="cp-top"><span class="cp-k">Personale</span>${bozza.kw.length ? `<span class="cp-kw">${bozza.kw.slice(0, 3).map(esc).join(' · ')}</span>` : ''}</div>
+      <h3>${esc(bozza.l.trim() || 'Senza nome')}</h3>
+      <div class="cp-fasi">${bozza.fasi.map(f => `<div>${tagFase(f.fase)}<span>${etichettaRitardo(f)}</span><small>${esc(f.zone.join(' + ') || '—')}</small></div>`).join('')
+        || '<span class="muted">Nessuna fase</span>'}</div>
+      <div class="cp-mdc">${m ? `<b>${Math.round(gi / ag.c)}</b> ml · <b>${it(bozza.idr / ag.c)}</b> ml/s <span>per ${pesoProva} kg, ${esc(ag.l)}</span>` : 'Senza mezzo di contrasto'}</div>
+      <div class="cp-bas">Basale: <b>${PR.BASALE[bozza.basale].toLowerCase()}</b></div>
+    </div>
+    <div class="impatto">
+      <div><b>${esiti.filter(x => x.ok).length}/${esiti.length}</b><span>esempi riconosciuti</span></div>
+      <div><b>${pazienti.length ? passano : '—'}</b><span>${pazienti.length ? 'pazienti in lista con questa opzione' : 'nessuna lista caricata'}</span></div>
+    </div>
+    <p class="muted" style="font-size:.78rem;margin-top:14px">I protocolli personali hanno la precedenza sugli ufficiali:
+      il telefono lo proporrà per primo, con l'ufficiale come alternativa.</p>`;
+}
+
+collegaModulo(bRad, () => bozza, r => r ? disegnaBuilder() : aggiornaBuilder());
+bRad.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.es) { esempi[+t.dataset.j][t.dataset.es] = t.value; aggiornaBuilder(); }
+});
+bRad.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.es === 'quesito' || t.dataset.es === 'esame') { adottaEsempio(esempi[+t.dataset.j]); disegnaBuilder(); }
+  if (t.dataset.bactSel === 'dalla-lista' && t.value !== '') {
+    const p = pazienti[+t.value], e = { esame: esameDi(p), quesito: p.quesito };
+    const vuoto = esempi.findIndex(x => !x.esame.trim() && !x.quesito.trim());
+    if (vuoto >= 0) esempi[vuoto] = e; else esempi.push(e);
+    adottaEsempio(e); disegnaBuilder();
+  }
+  if (t.dataset.bactSel === 'parti' && t.value) {
+    const x = trova(t.value);
+    Object.assign(bozza, { fasi: PR.clona(x.fasi), idr: x.idr, giKg: x.giKg, basale: x.basale, nota: x.nota, base: x.id });
+    if (!bozza.l.trim()) bozza.l = x.l + ' · reparto';
+    disegnaBuilder(); toast(`Fasi e contrasto copiati da «${x.l}»`);
+  }
+});
+bRad.addEventListener('click', e => {
+  const b = e.target.closest('[data-bact]'); if (!b || b.disabled) return;
+  const w = b.dataset.w;
+  switch (b.dataset.bact) {
+    case 'kw': case 'ex':
+      bozza[b.dataset.bact] = bozza[b.dataset.bact].includes(w) ? bozza[b.dataset.bact].filter(x => x !== w) : [...bozza[b.dataset.bact], w];
+      return disegnaBuilder();
+    case 'reg': {
+      const r = bozza.reg || [];
+      bozza.reg = r.includes(w) ? r.filter(x => x !== w) : [...r, w];
+      if (!bozza.reg.length) delete bozza.reg;
+      return disegnaBuilder();
+    }
+    case 'es-add': esempi.push({ esame: '', quesito: '' }); disegnaBuilder();
+      return bRad.querySelector(`[data-es="esame"][data-j="${esempi.length - 1}"]`).focus();
+    case 'es-del': esempi.splice(+b.dataset.j, 1); return disegnaBuilder();
+    case 'ricomincia':
+      return chiedi('Ricominciare?', 'Esempi, termini e fasi di questa bozza andranno persi.', 'Ricomincia', () => { nuovaBozza(); disegnaBuilder(); });
+    case 'annulla': nuovaBozza(); return mostraArea('lista');
+    case 'salva': return salvaBozza();
+  }
+});
+
+function salvaBozza() {
+  if (PR.valida(bozza, libs.personale.protocolli).some(x => x.grave)) return;
+  const P = libs.personale.protocolli, p = PR.canonico({ ...bozza, id: PR.idPersonale(P, bozza.l) });
+  P.unshift(p);
+  salvaLibreria('personale'); aggiornaNav();
+  const origine = bOrigine;
+  nuovaBozza();
+  if (origine !== null && pazienti[origine]) {
+    pazienti[origine].usa = 'personale'; delete pazienti[origine].scelta;
+    mostraArea('lista');
+  } else disegnaBuilder();
+  toast(`Insegnato: «${p.l}»`, 'Apri', () => apriProtocollo(p.id));
+}
 
 /* ── modale e avvisi ── */
 function chiedi(titolo, testo, si, fatto) {

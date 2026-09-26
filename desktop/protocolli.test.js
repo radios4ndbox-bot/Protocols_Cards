@@ -107,6 +107,15 @@ ok('rifiuta id doppi', rifiuta(JSON.stringify([L[0], L[0]]), /doppio/));
 ok('rifiuta fasi sconosciute', rifiuta(JSON.stringify([{ ...L[0], fasi: [{ fase: 'portale', zone: ['TO'] }] }]), /portale/));
 ok('id libero da un nome', P.idLibero(L, 'Torace mdc') === 'torace-mdc-2');
 
+sez('FASI');
+ok('sei tipi di fase', Object.keys(P.FASI).join() === 'basale,arteriosa,venosa,tardiva,urografica,surrene');
+ok('ogni fase ha zone, colori e sigla', Object.entries(P.FASI).every(([k, f]) => P.ZONE[k] && P.ZONE[k].length && f.c && f.bg && f.tx && f.s));
+ok('protocollo con urografica e surrene valido', (() => {
+  const x = { id:'x', l:'Surrene', idr:1.2, giKg:0.5, basale:'req', kw:['surrene'], ex:[],
+    fasi:[{fase:'basale',zone:['ADs'],delay:''},{fase:'venosa',zone:['ADs'],delay:'70'},{fase:'surrene',zone:['ADs'],delay:'900'},{fase:'urografica',zone:['ADc'],delay:'600'}] };
+  return !P.valida(x, []).some(e => e.grave);
+})());
+
 sez('APPRENDIMENTO E PROTOCOLLI PERSONALI');
 {
   const U = P.nuovaLibreria().protocolli;

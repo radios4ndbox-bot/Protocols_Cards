@@ -13,11 +13,17 @@
   'use strict';
 
   /* ═══ FASI E ZONE ══════════════════════════════════════════════════ */
+  /* colore di ogni fase, uguale su PC e telefono:
+       basale grigio · arteriosa rosso · venosa blu · tardiva verde acqua
+       urografica giallo · tardiva per surrene bordeaux
+     c = colore pieno · bg/tx = fondo e testo del tag · s = sigla        */
   const FASI = {
-    basale:    { l: 'Basale',      c: '#6d7f9f', mdc: false, delay: ''    },
-    arteriosa: { l: 'Arteriosa',   c: '#2f6fed', mdc: true,  delay: 'B-T' },
-    venosa:    { l: 'Venosa',      c: '#1d54c4', mdc: true,  delay: '70'  },
-    tardiva:   { l: 'Eq. tardiva', c: '#c2601a', mdc: true,  delay: '300' },
+    basale:     { l: 'Basale',          s: 'BAS', c: '#8A94A6', bg: '#ECEFF3', tx: '#4A5263', mdc: false, delay: ''    },
+    arteriosa:  { l: 'Arteriosa',       s: 'ART', c: '#E0473E', bg: '#FCE6E4', tx: '#A3221B', mdc: true,  delay: 'B-T' },
+    venosa:     { l: 'Venosa',          s: 'VEN', c: '#2F6FED', bg: '#E3ECFD', tx: '#1C4FB8', mdc: true,  delay: '70'  },
+    tardiva:    { l: 'Tardiva',         s: 'TAR', c: '#1FB5A8', bg: '#DCF4F1', tx: '#0B7168', mdc: true,  delay: '300' },
+    urografica: { l: 'Urografica',      s: 'URO', c: '#F2C230', bg: '#FDF3D3', tx: '#7E5F00', mdc: true,  delay: '600' },
+    surrene:    { l: 'Tardiva surrene', s: 'SUR', c: '#8E1B3A', bg: '#F5E0E6', tx: '#8E1B3A', mdc: true,  delay: '900' },
   };
 
   const ZONE = {
@@ -36,6 +42,10 @@
     tardiva:  [['ENC','Encefalo'],['TO','Torace'],
                ['ADs','Addome sup.'],['ADc','Addome compl.'],
                ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']],
+    /* l'urografica copre le vie escretrici fino alla vescica; il washout
+       surrenalico si limita al distretto dei surreni                   */
+    urografica:[['ADc','Addome compl.'],['TAc','Torace-addome compl.']],
+    surrene:  [['ADs','Addome sup.'],['ADc','Addome compl.']],
   };
 
   const ZONE_L = {};
@@ -227,6 +237,38 @@
     return { id, fonte, firma, regione: ru.regione, personali: rp, ufficiali: ru };
   }
 
+  /* Le due opzioni proposte per ogni paziente: la migliore ufficiale e la
+     migliore personale (voce appresa per quel caso, altrimenti personale
+     riconosciuta dai termini). Si propone la personale quando c'è, perché
+     è la scelta del reparto; il telefono le riceve entrambe e l'operatore
+     può cambiare idea anche lì.                                         */
+  function opzioni(ufficiali, personali, esame, quesito) {
+    const s = suggerisci(ufficiali, personali, esame, quesito);
+    const personale = s.fonte === 'appreso' ? s.id : s.personali.id;
+    return { ufficiale: s.ufficiali.id, personale, appreso: s.fonte === 'appreso', firma: s.firma,
+             predefinita: personale ? 'personale' : s.ufficiali.id ? 'ufficiale' : null };
+  }
+
+  /* ═══ BUILDER: cosa si impara da una richiesta d'esempio ════════════
+     Dal quesito: i termini clinici noti (lessico) e le altre parole
+     significative, che l'operatore può promuovere a termini propri.
+     Dall'esame: la regione e le parole che identificano il distretto.  */
+  const VUOTE = new Set(('sospetta sospetto sospetti sospette controllo paziente pazienti pregressa pregresso '
+    + 'noto nota note esame esami valutazione studio richiesta richiesto dopo prima durante circa anni '
+    + 'della delle dello degli del dei con per tra fra nel nella nelle negli sul sulla una uno che non '
+    + 'come anche ancora già gia recente recenti acuto acuta cronico cronica dx sin destro sinistro '
+    + 'destra sinistra bilaterale eventuale eventuali quadro').split(' '));
+  const ESAME_VUOTE = new Set('tc angio angiotc con senza mdc contrasto e ed urgente urg completo completa di del della'.split(' '));
+
+  function analizzaEsempio(esame, quesito) {
+    const clinici = termini(quesito);
+    const parole = [...new Set(normText(quesito).split(' ')
+      .filter(w => w.length >= 4 && !VUOTE.has(w) && !/^d+$/.test(w) && !clinici.some(c => c.includes(w) || w.includes(c))))];
+    const distretto = [...new Set(normText(esame).split(' ').filter(w => w.length >= 3 && !ESAME_VUOTE.has(w)))];
+    const r = regionOf(esame);
+    return { regione: r && r !== 'ALTRO' ? r : null, clinici, parole, distretto };
+  }
+
   /* Registra una scelta nella libreria personale. Restituisce la voce
      appresa: nuova, oppure quella esistente per la stessa firma, con il
      conteggio aggiornato se la configurazione è la stessa o azzerato se
@@ -380,7 +422,7 @@
 
   const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022, LEXICON,
     normText, normEx, termini, regionOf, riconosci, fitZones, valida,
-    firmaCaso, suggerisci, impara,
+    firmaCaso, suggerisci, impara, opzioni, analizzaEsempio,
     nuovaLibreria, nuovaLibreriaPersonale, idLibero, idPersonale, canonico, firma, leggiLibreria, clona };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

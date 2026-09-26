@@ -44,6 +44,32 @@ La libreria modificata resta nel browser del PC (localStorage): non contiene
 dati personali. La **firma** di 7 caratteri identifica la versione e cambia a
 ogni modifica; si può esportare e reimportare come JSON.
 
+## Due opzioni per paziente
+
+All'import ogni paziente riceve, dal riconoscimento del quesito, un'opzione
+**ufficiale** e una **personale** (voce appresa per quel caso o protocollo
+personale riconosciuto dai termini). Si propone la personale quando c'è;
+in verifica si passa dall'una all'altra con un clic, e il telefono le riceverà
+entrambe per poter cambiare idea anche in reparto.
+
+## Protocol builder
+
+Insegna al tool un protocollo personale partendo da richieste d'esempio: ne
+ricava i termini del quesito e la regione dell'esame, mostra se gli esempi
+verrebbero riconosciuti e quanti pazienti della lista caricata passerebbero
+al nuovo protocollo. Gli esempi non vengono salvati.
+
+## Colori delle fasi
+
+| fase | colore |
+|---|---|
+| basale | grigio |
+| arteriosa | rosso |
+| venosa | blu |
+| tardiva | verde acqua |
+| urografica | giallo |
+| tardiva per surrene | bordeaux |
+
 ## Dati dei pazienti
 
 Le liste RIS reali **non vanno nel repository**: `.gitignore` blocca i PDF.
