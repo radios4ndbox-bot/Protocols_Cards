@@ -102,6 +102,8 @@ function paziente(i, data = '28/09/2026') {
   await tel.evaluate(() => avviaPc());       // riparte sul relay finto
   ok('la chiave sparisce dall\'indirizzo', !(await tel.evaluate(() => location.href)).includes('#'));
   ok('telefono abbinato', await tel.evaluate(() => pcLink && pcLink.t) === abb.t);
+  ok('schede di esempio tolte all\'abbinamento', await tel.evaluate(() => state.length === 0 && !state.some(p => ESEMPIO.has(p.id))),
+     await tel.evaluate(() => state.length) + ' schede');
   ok('PC riceve la conferma', await attendi(async () => (await pc.locator('#reteStato').textContent()).includes('Abbinato a')),
      (await pc.locator('#reteStato').textContent()).trim());
   const salvato = await pc.evaluate(() => JSON.parse(localStorage.getItem('protocol-cards.pc.abbinamento')));
@@ -167,8 +169,12 @@ function paziente(i, data = '28/09/2026') {
   console.log('\n── SCOLLEGAMENTO ───────────────────────');
   await tel.locator('#btnSet').click(); await tel.waitForTimeout(300);
   ok('impostazioni: PC in ascolto', (await tel.locator('#pcBox').textContent()).includes('in ascolto'));
+  ok('abbinato: «Svuota tutte le schede» al posto dell\'esempio',
+     (await tel.locator('#btnReset').textContent()) === 'Svuota tutte le schede', await tel.locator('#btnReset').textContent());
+  const tornaEsempio = async () => (await tel.locator('#btnReset').textContent()) === 'Ripristina i dati di esempio';
   await tel.locator('#pcOff').click(); await tel.locator('#mYes').click(); await tel.waitForTimeout(200);
   ok('telefono scollegato', await tel.evaluate(() => pcLink === null && localStorage.getItem('pc.v4.pc') === 'null'));
+  ok('scollegato: torna «Ripristina i dati di esempio»', await tornaEsempio());
   ok('impostazioni: nessun PC', (await tel.locator('#pcBox').textContent()).includes('Nessun PC abbinato'));
   pc.once('dialog', d => d.accept());
   await pc.locator('#reteScollega').click(); await pc.waitForTimeout(200);
