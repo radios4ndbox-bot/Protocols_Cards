@@ -1446,6 +1446,11 @@ function caricaLibreria(nome) {
   return NUOVA[nome]();
 }
 const libs = { ufficiale: caricaLibreria('ufficiale'), personale: caricaLibreria('personale') };
+/* nuova revisione della libreria di partenza: si applica da sola solo a
+   una libreria salvata ma mai modificata; il lavoro del reparto non si
+   tocca, e chi vuole la revisione la adotta con «Ripristina»           */
+const revisione = PR.aggiornaUfficiale(libs.ufficiale);
+libs.ufficiale = revisione.libreria;
 let tab = 'ufficiale', lib = libs.ufficiale;
 const primoId = nome => (libs[nome].protocolli[0] || {}).id;
 const selezione = { ufficiale: primoId('ufficiale'), personale: primoId('personale') };
@@ -1784,7 +1789,7 @@ function htmlTermini(p) {
   const tok = (k, ph) => `<div class="tok" data-k="${k}">${p[k].map(w =>
       `<span>${esc(w)}<button data-act="tdel" data-k="${k}" data-w="${esc(w)}" aria-label="Rimuovi ${esc(w)}">×</button></span>`).join('')}
     <input data-tok="${k}" placeholder="${p[k].length ? 'aggiungi…' : ph}" aria-label="Nuovo termine"></div>`;
-  return `<span class="lbl">Termini del quesito <em>— due punti per parola</em></span>${tok('kw', 'es. embolia, poi Invio')}
+  return `<span class="lbl">Termini del quesito <em>— due punti per parola · sigle ammesse · «followup + neoplasia» vuole entrambe</em></span>${tok('kw', 'es. embolia, poi Invio')}
     <span class="lbl">Termini dell'esame <em>— un punto ciascuno</em></span>${tok('ex', 'es. torace, poi Invio')}
     <span class="lbl">Regioni compatibili <em>— nessuna selezionata = qualunque</em></span>
     <div class="zone">${PR.REGIONI.map(([c, l]) =>
@@ -1833,7 +1838,8 @@ function collegaModulo(radice, prendi, dopo) {
       const p = prendi(), k = t.dataset.tok;
       if ((e.key === 'Enter' || e.key === ',') && t.value.trim()) {
         e.preventDefault();
-        const w = PR.normText(t.value);
+        /* i termini del quesito accettano sigle e «+»; quelli dell'esame no */
+        const w = k === 'kw' ? PR.normTermine(t.value) : PR.normText(t.value);
         if (w && !p[k].includes(w)) p[k].push(w);
         dopo(true);
         radice.querySelector(`[data-tok="${k}"]`).focus();
@@ -2390,6 +2396,12 @@ function toast(msg, azione, cb) {
 
 aggiornaNav();
 aggiornaConteggi();
+if (revisione.stato === 'aggiornata') {
+  salvaLibreria('ufficiale');
+  toast('Libreria ufficiale aggiornata: riconosce più quesiti reali');
+} else if (revisione.stato === 'modificata') {
+  toast('Libreria ufficiale modificata da te: la nuova revisione si adotta con «Ripristina» in Protocolli');
+}
 </script>
 </body>
 </html>
