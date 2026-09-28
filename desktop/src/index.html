@@ -153,6 +153,12 @@ main{padding:30px 0 60px}
   background:linear-gradient(155deg,#E4F6EF,var(--jade-s));box-shadow:var(--clay-sm)}
 .drop .tile svg{width:30px;height:30px;stroke:var(--jade-ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .drop h2{font-size:1.6rem;margin-bottom:8px}
+.drops{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.drop.ps .tile{background:linear-gradient(155deg,#FDEDE9,var(--coral-s))}
+.drop.ps .tile svg{stroke:var(--coral-ink)}
+.drop.ps:hover::after,.drop.ps.sopra::after{border-color:var(--coral-ink);background:rgba(232,115,92,.07)}
+.formato{margin:14px 4px 0;font-size:.84rem;color:var(--ink-2)}
+@media (max-width:760px){.drops{grid-template-columns:1fr}}
 .drop p{color:var(--ink-2);font-size:.92rem}
 .nota{margin-top:20px;padding:18px 22px;border-radius:var(--r-md);background:rgba(243,246,253,.7);
   box-shadow:var(--clay-sm);font-size:.86rem;color:var(--ink-2);line-height:1.65}
@@ -167,6 +173,11 @@ main{padding:30px 0 60px}
 .chip{font-size:.74rem;font-weight:700;border-radius:99px;padding:5px 12px;box-shadow:var(--well-s)}
 .chip.ok{background:var(--jade-s);color:var(--jade-ink)}
 .chip.warn{background:var(--amber-s);color:var(--amber-ink)}
+.riassunto{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:-6px 0 18px}
+.chip.seduta{background:var(--jade-s);color:var(--jade-ink)}
+.chip.seduta.ps{background:var(--coral-s);color:var(--coral-ink)}
+.chip.giorno{background:var(--plate-2);color:var(--ink)}
+.chip.giorno.passata{background:var(--amber-s);color:var(--amber-ink)}
 
 .tabwrap{border-radius:var(--r-md);box-shadow:var(--clay);overflow-x:auto;scrollbar-width:thin;
   background:linear-gradient(160deg,#FAFCFF,var(--plate) 46%,var(--plate-2))}
@@ -588,23 +599,15 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   --curva-traino:cubic-bezier(.65,0,.2,1);   /* volo, banda e pagina: un movimento solo */
 }
 
+/* lo stesso fondo del tool (body e body::before): all'uscita la scena
+   diventa trasparente e sotto c'è già la pagina, identica            */
 #introScena{position:fixed;inset:0;z-index:2000;overflow:hidden;cursor:pointer;
-  background:radial-gradient(1200px 700px at 50% 35%,#FFFFFF 0%,#F4F7FB 70%);
+  background:radial-gradient(48vw 40vw at 12% 6%,rgba(183,212,245,.55),transparent 62%),
+    radial-gradient(40vw 36vw at 88% 22%,rgba(124,207,176,.30),transparent 64%),
+    radial-gradient(52vw 44vw at 60% 96%,rgba(232,115,92,.12),transparent 66%),var(--canvas);
   display:flex;align-items:center;justify-content:center;
   transition:opacity .6s var(--intro-ease),visibility 0s linear 0s}
 #introScena.chiusa{opacity:0;visibility:hidden;transition:opacity .6s var(--intro-ease),visibility 0s linear .6s}
-/* bagliori nei gradienti, non in un filtro: la deriva è una transform */
-.intro-macchie{position:fixed;inset:-14em;opacity:.35;will-change:transform;
-  background-color:#F4F7FB;
-  background-image:
-    radial-gradient(ellipse 260px 200px at 50% 50%,rgba(124,207,176,.12) 0%,rgba(124,207,176,.08) 24%,rgba(124,207,176,.035) 50%,transparent 100%),
-    radial-gradient(ellipse 290px 220px at 50% 50%,rgba(183,212,245,.11) 0%,rgba(183,212,245,.075) 24%,rgba(183,212,245,.03) 50%,transparent 100%),
-    radial-gradient(ellipse 280px 360px at 50% 50%,rgba(124,207,176,.10) 0%,rgba(124,207,176,.07) 24%,rgba(124,207,176,.03) 50%,transparent 100%),
-    radial-gradient(ellipse 260px 330px at 50% 50%,rgba(47,111,237,.10) 0%,rgba(47,111,237,.06) 24%,rgba(47,111,237,.025) 50%,transparent 100%);
-  background-size:760px 600px,1240px 460px,880px 1160px,700px 880px;
-  background-position:271px 478px,62px 291px,67px 861px,553px 413px;
-  animation:introDeriva 36s linear infinite}
-@keyframes introDeriva{50%{transform:translate3d(-118px,-74px,0)}}
 
 .intro-palco{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
   width:100%;padding:0 24px}
@@ -657,15 +660,15 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   font:400 calc(var(--cw) * .15)/1.05 var(--f-disp);color:#EEF3F1}
 .pc-carta footer small{font:600 calc(var(--cw) * .085)/1 var(--f-text);letter-spacing:.08em;
   text-transform:uppercase;color:rgba(238,243,241,.55)}
-/* le carte arrivano dall'alto a destra e ruotano fino al loro posto nel
-   ventaglio: la stessa animazione del CSS di partenza, sfalsata       */
+/* le carte compaiono al centro, raccolte, in dissolvenza; poi si aprono
+   a ventaglio mentre la riga scivola a sinistra: stessa durata e stessa
+   curva della slitta, un movimento solo. Il fill «backwards» le tiene
+   raccolte finché non tocca a loro.                                    */
 .intro-palco.in-scena .pc-carta{
-  animation:introCarta var(--t-carta-dur,900ms) ease-in-out var(--d,0ms) backwards}
-@keyframes introCarta{
-  0%{opacity:0;rotate:45deg;transform:translate(50vw,-50vh) rotate(5deg)}
-  40%{opacity:1}
-  75%{transform:translate(0,0) rotate(0)}
-  100%{transform:none}}
+  animation:introCartaEntra var(--t-carta-dur,500ms) ease-out var(--d,0ms) backwards,
+            introCartaApre var(--t-slitta-dur,700ms) var(--intro-ease) var(--t-slitta,800ms) backwards}
+@keyframes introCartaEntra{from{opacity:0;transform:scale(.94)}}
+@keyframes introCartaApre{from{rotate:0deg}}
 #introScena .pc-carta:nth-child(1):hover{transform:translate(calc(-1.2rem * sin(40deg)),calc(-1.2rem * cos(40deg))) rotate(-10deg)}
 #introScena .pc-carta:nth-child(2):hover{transform:translate(calc(-1.2rem * sin(35deg)),calc(-1.2rem * cos(35deg))) rotate(-5deg)}
 #introScena .pc-carta:nth-child(3):hover{transform:translate(calc(-1.2rem * sin(20deg)),calc(-1.2rem * cos(20deg))) rotate(-5deg)}
@@ -703,7 +706,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
    d'ingresso, che vince su una transizione: serve un'animazione d'uscita
    che parta dal suo stato finale.                                      */
 #introScena.in-uscita{background:transparent;pointer-events:none;transition:background .45s ease}
-#introScena.in-uscita .intro-macchie,#introScena.in-uscita .intro-titolo{opacity:0;transition:opacity .3s ease}
+#introScena.in-uscita .intro-titolo{opacity:0;transition:opacity .3s ease}
 #introScena.in-uscita .intro-sotto{animation:introSottoVia .35s ease forwards}
 @keyframes introSottoVia{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-8px) scale(.96)}}
 
@@ -712,7 +715,9 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   opacity:0;visibility:hidden}
 #introVelo.armato{opacity:1;visibility:visible}
 #introVelo .velo-sfondo{position:absolute;inset:0;
-  background:radial-gradient(1200px 700px at 50% 35%,#FFFFFF 0%,#F4F7FB 70%)}
+  background:radial-gradient(48vw 40vw at 12% 6%,rgba(183,212,245,.55),transparent 62%),
+    radial-gradient(40vw 36vw at 88% 22%,rgba(124,207,176,.30),transparent 64%),
+    radial-gradient(52vw 44vw at 60% 96%,rgba(232,115,92,.12),transparent 66%),var(--canvas)}
 #introVelo .velo-fronte{position:absolute;left:0;right:0;bottom:0;height:2px;opacity:0;
   background:linear-gradient(90deg,#7CCFB0,#B7D4F5);
   box-shadow:0 0 26px 6px rgba(124,207,176,.45),0 0 70px 18px rgba(183,212,245,.22)}
@@ -756,7 +761,6 @@ main.sale{animation:paginaSale var(--t-volo,800ms) var(--curva-traino) both;will
 <!-- ═══ INTRO: la banda che risale e la scena ═══ -->
 <div id="introVelo" aria-hidden="true"><div class="velo-sfondo"></div><div class="velo-fronte"></div></div>
 <div id="introScena" aria-hidden="true">
-  <div class="intro-macchie"></div>
   <div class="intro-palco" id="introPalco">
     <div class="intro-riga">
       <div class="intro-logo" id="introLogo">
@@ -913,7 +917,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         </svg>
       </div>
     </div>
-    <div class="intro-sotto">Protocolli TC di reparto</div>
+    <div class="intro-sotto">Protocols made easy</div>
   </div>
 </div>
 
@@ -949,12 +953,22 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
 
   <!-- ═══ 1 ═══ -->
   <section class="vista on" id="v1">
-    <div class="drop" id="drop">
-      <input type="file" id="file" accept="application/pdf,.pdf">
-      <div class="tile"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 18v-6M9 15l3-3 3 3"/></svg></div>
-      <h2>Trascina qui la lista esami</h2>
-      <p>oppure fai clic per sceglierla — formato «Lista esami da eseguire», RIS Desio</p>
+    <!-- la seduta si decide qui, prima di importare: arriva al telefono con la lista -->
+    <div class="drops">
+      <div class="drop" data-seduta="elettiva">
+        <input type="file" id="file" accept="application/pdf,.pdf" aria-label="Importa la lista della TC elettiva">
+        <div class="tile"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18M9 15l2 2 4-4"/></svg></div>
+        <h2>Importa TC elettiva</h2>
+        <p>Trascina qui la lista esami, oppure fai clic per sceglierla</p>
+      </div>
+      <div class="drop ps" data-seduta="emergenza">
+        <input type="file" id="filePS" accept="application/pdf,.pdf" aria-label="Importa la lista del pronto soccorso">
+        <div class="tile"><svg viewBox="0 0 24 24"><path d="M12 3l9 16.5a1.3 1.3 0 0 1-1.1 2H4.1a1.3 1.3 0 0 1-1.1-2z"/><path d="M12 10v4.5M12 17.5v.5"/></svg></div>
+        <h2>Importa pronto soccorso</h2>
+        <p>Trascina qui la lista esami, oppure fai clic per sceglierla</p>
+      </div>
     </div>
+    <p class="formato">Formato «Lista esami da eseguire», RIS Desio. La seduta scelta qui arriva al telefono con la lista.</p>
     <div id="stato"></div>
     <div class="nota">
       <b>Il PDF non viene caricato da nessuna parte.</b> Viene letto qui, dentro il browser:
@@ -968,13 +982,18 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
   <section class="vista" id="v2">
     <div class="barra">
       <h2>Verifica dei dati estratti</h2>
+      <span class="sp"></span>
+      <button class="btn sm" id="indietro1">← Cambia file</button>
+      <button class="btn solid sm" id="avanti">Trasferisci →</button>
+    </div>
+    <!-- di che seduta e di che giorno è la lista, poi i conteggi -->
+    <div class="riassunto">
+      <span class="chip seduta" id="chipSeduta"></span>
+      <span class="chip giorno" id="chipGiorno"></span>
       <span class="conta" id="conta"></span>
       <span class="chip ok" id="chipOk"></span>
       <span class="chip warn" id="chipWarn" style="display:none"></span>
       <span class="chip proto" id="chipProto"></span>
-      <span class="sp"></span>
-      <button class="btn sm" id="indietro1">← Cambia file</button>
-      <button class="btn solid sm" id="avanti">Trasferisci →</button>
     </div>
     <div class="nota" style="margin:0 0 18px">
       Le righe evidenziate sono quelle su cui il parser <b>non è sicuro</b>: controllale.
@@ -1024,6 +1043,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         <div class="plate riepilogo">
           <h3>Contenuto dell'invio</h3>
           <div class="riga"><span>Giornata</span><b id="rGiorno">—</b></div>
+          <div class="riga"><span>Seduta</span><b id="rSeduta">—</b></div>
           <div class="riga"><span>Pazienti</span><b id="rPaz">—</b></div>
           <div class="riga"><span>Esami</span><b id="rEsami">—</b></div>
           <div class="riga"><span>Dati grezzi</span><b id="rGrezzi">—</b></div>
@@ -1178,17 +1198,20 @@ function mostraArea(a) {
 document.querySelectorAll('.nav button').forEach(b => b.onclick = () => mostraArea(b.dataset.area));
 
 /* ═══ passo 1 · lettura del PDF ══════════════════════════════════════ */
-const drop = $('drop');
-['dragover','dragenter'].forEach(e => drop.addEventListener(e, ev => {
-  ev.preventDefault(); drop.classList.add('sopra');
-}));
-['dragleave','drop'].forEach(e => drop.addEventListener(e, () => drop.classList.remove('sopra')));
-drop.addEventListener('drop', ev => {
-  ev.preventDefault();
-  const f = ev.dataTransfer.files[0];
-  if (f) leggi(f);
+/* due ingressi, uno per seduta: il tipo di seduta si decide importando */
+document.querySelectorAll('.drop').forEach(drop => {
+  const scegli = f => { seduta = drop.dataset.seduta; leggi(f); };
+  ['dragover','dragenter'].forEach(e => drop.addEventListener(e, ev => {
+    ev.preventDefault(); drop.classList.add('sopra');
+  }));
+  ['dragleave','drop'].forEach(e => drop.addEventListener(e, () => drop.classList.remove('sopra')));
+  drop.addEventListener('drop', ev => {
+    ev.preventDefault();
+    const f = ev.dataTransfer.files[0];
+    if (f) scegli(f);
+  });
+  drop.querySelector('input').addEventListener('change', e => { if (e.target.files[0]) scegli(e.target.files[0]); });
 });
-$('file').addEventListener('change', e => { if (e.target.files[0]) leggi(e.target.files[0]); });
 
 function dice(msg, tipo) { const s = $('stato'); s.textContent = msg; s.className = tipo || ''; }
 
@@ -1244,10 +1267,10 @@ function vai(n) {
   });
   /* le textarea si misurano solo quando la vista è visibile: da nascoste
      scrollHeight vale 0 e resterebbero alte una riga                     */
-  if (n === 2) document.querySelectorAll('#righe textarea.cel').forEach(cresci);
+  if (n === 2) { document.querySelectorAll('#righe textarea.cel').forEach(cresci); disegnaSeduta(); }
   if (n === 3) preparaTrasferimento();
 }
-$('indietro1').onclick = () => { $('file').value=''; vai(1); };
+$('indietro1').onclick = () => { $('file').value=''; $('filePS').value=''; vai(1); };
 $('indietro2').onclick = () => vai(2);
 $('avanti').onclick    = () => vai(3);
 
@@ -1480,6 +1503,7 @@ function aggiornaConteggi() {
   const a = attivi();
   const conSeg = a.filter(p => p.incerto.length).length;
   $('conta').textContent = `${a.length} pazienti · ${a.reduce((s,p)=>s+p.esami.length,0)} esami`;
+  disegnaSeduta();
   $('chipOk').textContent = `${a.length - conSeg} verificati`;
   $('chipWarn').style.display = conSeg ? 'inline-block' : 'none';
   $('chipWarn').textContent = `${conSeg} da controllare`;
@@ -1493,11 +1517,46 @@ function aggiornaConteggi() {
 
 /* Formato compatto: chiavi di una lettera e liste posizionali. Il telefono
    conosce lo schema, quindi i nomi dei campi non vanno trasmessi.        */
+/* Il tipo di seduta si decide al passo 1, scegliendo da quale ingresso
+   importare, e viaggia con la lista: il telefono apre la seduta che
+   riceve, senza scegliere.                                             */
+let seduta = 'elettiva';
+const nomeSeduta = () => seduta === 'emergenza' ? 'Pronto soccorso' : 'TC elettiva';
+
+/* ── giornata d'esame ──
+   È la data della colonna «Orario» dei pazienti, non quella di stampa del
+   report. Se i pazienti non sono tutti dello stesso giorno vale quella
+   più frequente, e la verifica lo segnala. Una giornata già passata si
+   può ancora verificare, ma il telefono non la terrà.                  */
+const RE_GG = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+const isoGG = d => { const m = RE_GG.exec(d || ''); return m ? `${m[3]}-${m[2]}-${m[1]}` : ''; };
+const oggiIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+function giornata() {
+  const conta = {};
+  attivi().forEach(p => { if (RE_GG.test(p.data || '')) conta[p.data] = (conta[p.data] || 0) + 1; });
+  const date = Object.keys(conta).sort((a, b) => conta[b] - conta[a] || isoGG(b).localeCompare(isoGG(a)));
+  const d = date[0] || '';
+  return { d, diverse: date.length > 1, passata: !!d && isoGG(d) < oggiIso(), mancante: !d };
+}
+function disegnaSeduta() {
+  const g = giornata(), c = $('chipSeduta'), cg = $('chipGiorno');
+  c.textContent = nomeSeduta(); c.classList.toggle('ps', seduta === 'emergenza');
+  const lbl = g.d ? new Date(isoGG(g.d) + 'T12:00').toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  cg.textContent = g.mancante ? 'giornata non riconosciuta' : lbl + (g.passata ? ' · giornata passata' : g.diverse ? ' · date diverse' : '');
+  cg.classList.toggle('passata', g.passata || g.mancante || g.diverse);
+  cg.title = g.passata ? 'Il telefono non tiene le giornate passate: la lista verrebbe scartata.'
+           : g.diverse ? 'Non tutti i pazienti sono dello stesso giorno: vale quello più frequente.'
+           : g.mancante ? 'Nessuna data d\'esame nel PDF: il telefono userà la data di oggi.' : '';
+  $('rSeduta').textContent = nomeSeduta();
+  $('rGiorno').textContent = g.d ? g.d + (g.passata ? ' (passata)' : '') : 'oggi (non riconosciuta)';
+}
+
 function payload() {
   const a = attivi();
   return {
     v: 1,
-    d: (a[0] && a[0].data) || '',
+    m: seduta,
+    d: giornata().d,
     p: a.map(p => [
       p.accession, p.nomeCompleto, p.nascita, p.ora, p.quesito,
       p.esami.map(e => e.descrizione).join(' | '),
@@ -1536,8 +1595,8 @@ async function listaCompressa() {
 
 async function preparaTrasferimento() {
   const a = attivi();
+  disegnaSeduta();
   const { json, corpo, metodo } = await listaCompressa();
-  $('rGiorno').textContent = a[0] && a[0].data ? a[0].data : '—';
   $('rPaz').textContent    = a.length;
   $('rEsami').textContent  = a.reduce((s,p)=>s+p.esami.length,0);
   $('rGrezzi').textContent = (json.length/1024).toFixed(1).replace('.',',') + ' KB';
@@ -1626,6 +1685,10 @@ function messaggioRete(a, m) {
     scriviAbbinamento({ t: a.t, k: a.k, dispositivo: String(m.dispositivo || 'telefono').slice(0, 60), quando: Date.now() });
     disegnaRete();
     reteStato(`Abbinato a <b>${esc(abbinamento.dispositivo)}</b>. Ora la lista parte con «Invia la lista al telefono».`, 'ok');
+  }
+  if (m.tipo === 'ricevuta' && reteInvio && m.rif === reteInvio.id && m.passata) {
+    reteInvio = null;
+    return reteStato(`<b>Il telefono ha scartato la lista</b>: è del ${esc(m.data || '')}, una giornata già passata.`, 'ko');
   }
   if (m.tipo === 'ricevuta' && reteInvio && m.rif === reteInvio.id) {
     reteInvio = null;
@@ -2706,17 +2769,18 @@ if (revisione.stato === 'aggiornata') {
 (function () {
   'use strict';
   const INTRO = {
-    // atto I — le carte entrano e si aprono a ventaglio
-    carta: 0, cartaPasso: 130, cartaDur: 900,
-    // atto II — il ventaglio scivola a sinistra, il nome si compone
-    slitta: 1000, slittaDur: 700,
-    glifo: 1150, glifoPasso: 45, glifoDur: 340,
+    // atto I — le carte compaiono al centro, raccolte, in dissolvenza
+    carta: 0, cartaPasso: 80, cartaDur: 500,
+    // atto II — si aprono a ventaglio scivolando a sinistra, il nome si
+    // compone con i tempi di Archivist
+    slitta: 800, slittaDur: 700,
+    glifo: 940, glifoPasso: 12, glifoDur: 340,
     // atto III — il sottotitolo
-    sotto: 1850, sottoDur: 600,
+    sotto: 1600, sottoDur: 600,
     // atto IV — le carte si raccolgono in una, che si gira sul dorso
-    raccogli: 2550, raccogliDur: 450,
-    gira: 3000, giraDur: 650,
-    attesa: 3750,             // quando parte il volo
+    raccogli: 2350, raccogliDur: 450,
+    gira: 2800, giraDur: 650,
+    attesa: 3550,             // quando parte il volo
     // atto V — volo, banda e pagina: stessa durata, stessa curva
     volo: 800, dissolvenzaVelo: 340,
   };

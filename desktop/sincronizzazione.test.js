@@ -47,7 +47,14 @@ const relay = http.createServer((q, r) => {
 const PC  = 'file://' + path.resolve(__dirname, 'protocol-cards-pc.html');
 const TEL = 'file://' + path.resolve(__dirname, '../prototype/index.html');
 
-function paziente(i, data = '28/09/2026') {
+/* le date sono quelle del giorno in cui gira il test: il telefono non
+   tiene le giornate passate                                            */
+const gg = (off = 0) => { const d = new Date(); d.setDate(d.getDate() + off);
+  return { dmy: `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`,
+           iso: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }; };
+const OGGI = gg(0), IERI = gg(-1);
+
+function paziente(i, data = OGGI.dmy) {
   return { accession: '0D2609' + String(i).padStart(4, '0'), cognome: 'PROVA', nome: 'N' + i,
     nomeCompleto: `PROVA PAZIENTE NUMERO ${i}`, nascita: '17/10/1960', data, ora: `${String(8 + (i % 9)).padStart(2, '0')}:${i % 2 ? '15' : '45'}`,
     quesito: i % 2 ? 'Sospetta embolia polmonare' : 'Restaging neoplasia mammaria',
@@ -62,7 +69,7 @@ function paziente(i, data = '28/09/2026') {
 
   /* «riduci movimento»: l'intro non parte e non copre la pagina (ha il suo test) */
   const cPc = await b.newContext({ viewport: { width: 1360, height: 900 }, reducedMotion: 'reduce' });
-  const cTel = await b.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
+  const cTel = await b.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
   const verso = { pc: [], tel: [] };
   for (const [n, c] of [['pc', cPc], ['tel', cTel]]) {
     await c.addInitScript(r => { window.__relay = r; }, RELAY);
@@ -119,11 +126,11 @@ function paziente(i, data = '28/09/2026') {
   ok('ricevuta con i numeri giusti', /3 nuove schede, 0 aggiornate/.test(await pc.locator('#reteStato').textContent()));
   const st = await tel.evaluate(() => state.filter(p => p.id.startsWith('0D2609')));
   ok('3 schede importate sul telefono', st.length === 3, st.length + '');
-  ok('data della giornata convertita', st.every(p => p.data === '2026-09-28'));
+  ok('data della giornata convertita', st.every(p => p.data === OGGI.iso));
   ok('nascita convertita', st.every(p => p.nascita === '1960-10-17'));
   ok('protocollo riconosciuto dal quesito', st.find(p => p.id.endsWith('0001')).proto === 'angio-polm');
   ok('schede elettive da fare', st.every(p => p.modo === 'elettiva' && p.stato === 'todo'));
-  ok('toast sul telefono', await attendi(async () => /dal PC: 3 nuove/.test(await tel.locator('#toast').textContent())),
+  ok('toast sul telefono', await attendi(async () => /Elettiva del \d{2}\/\d{2}\/\d{4}: 3 nuove/.test(await tel.locator('#toast').textContent())),
      await tel.locator('#toast').textContent());
 
   const dentro = [...argomenti.get(abb.t).msg];
@@ -159,6 +166,51 @@ function paziente(i, data = '28/09/2026') {
   const max = Math.max(...nuovi.map(e => Buffer.byteLength(e.message)));
   ok('divisa in più messaggi', nuovi.length >= 2, nuovi.length + ' messaggi');
   ok('ogni messaggio sotto i 4 KB di ntfy', max < 4096, max + ' byte');
+
+  console.log('\n── LA SEDUTA LA DECIDE IL PC ───────────');
+  ok('seduta elettiva per le liste precedenti', await tel.evaluate(() => sessione && sessione.modo === 'elettiva'));
+  ok('due ingressi all\'importazione', await pc.locator('.drop[data-seduta="elettiva"] #file').count() === 1
+     && await pc.locator('.drop[data-seduta="emergenza"] #filePS').count() === 1);
+  /* come se la lista fosse stata importata dall'ingresso del pronto soccorso */
+  await pc.evaluate(lista => { seduta = 'emergenza'; pazienti = lista; vai(2); }, [paziente(900), paziente(901)]);
+  await pc.waitForTimeout(200);
+  ok('verifica: seduta di pronto soccorso', (await pc.locator('#chipSeduta').textContent()) === 'Pronto soccorso');
+  await pc.evaluate(() => vai(3)); await pc.waitForTimeout(300);
+  ok('riepilogo: pronto soccorso', (await pc.locator('#rSeduta').textContent()) === 'Pronto soccorso');
+  ok('la seduta viaggia con la lista', await pc.evaluate(() => payload().m) === 'emergenza');
+  await pc.locator('#reteInvia').click();
+  ok('ricevuta', await attendi(async () => /Ricevuta dal telefono: 2 nuove/.test(await pc.locator('#reteStato').textContent())),
+     (await pc.locator('#reteStato').textContent()).trim());
+  const ps = await tel.evaluate(() => ({ sess: sessione, m: document.body.dataset.m, t: document.getElementById('abTitle').textContent,
+    modi: state.filter(p => ['0D26090900', '0D26090901'].includes(p.id)).map(p => p.modo),
+    viste: document.querySelectorAll('#board .card-mini').length }));
+  ok('il telefono apre la seduta di pronto soccorso', ps.sess.modo === 'emergenza' && ps.m === 'emergenza' && ps.t === 'TC di pronto soccorso',
+     JSON.stringify(ps.sess) + ' · ' + ps.t);
+  ok('le schede arrivano come pronto soccorso', ps.modi.length === 2 && ps.modi.every(m => m === 'emergenza'));
+  ok('in bacheca solo quella seduta', ps.viste === 2, ps.viste + ' schede');
+
+  console.log('\n── GIORNATA D\'ESAME ────────────────────');
+  await pc.evaluate(lista => { seduta = 'elettiva'; pazienti = lista; vai(2); },
+    [paziente(950, IERI.dmy), paziente(951, IERI.dmy), paziente(952, OGGI.dmy)]);
+  await pc.waitForTimeout(200);
+  ok('vale la data più frequente', await pc.evaluate(() => giornata().d) === IERI.dmy);
+  ok('la verifica segnala la giornata passata', /giornata passata/.test(await pc.locator('#chipGiorno').textContent()),
+     await pc.locator('#chipGiorno').textContent());
+  await pc.evaluate(() => vai(3)); await pc.waitForTimeout(300);
+  const primaPassata = await tel.evaluate(() => state.length);
+  await pc.locator('#reteInvia').click();
+  ok('il telefono scarta la giornata passata', await attendi(async () => /scartato la lista/.test(await pc.locator('#reteStato').textContent())),
+     (await pc.locator('#reteStato').textContent()).trim());
+  ok('nessuna scheda di ieri sul telefono', (await tel.evaluate(() => state.length)) === primaPassata
+     && !(await tel.evaluate(d => state.some(p => p.data === d), IERI.iso)));
+  ok('la seduta aperta non cambia', await tel.evaluate(() => sessione.modo) === 'emergenza');
+
+  console.log('\n── SCHEDE PASSATE ──────────────────────');
+  await tel.evaluate(d => { const x = { ...state[0], id: 'VECCHIA', data: d }; state.push(x); persist(); }, IERI.iso);
+  await tel.reload(); await tel.waitForTimeout(400);
+  ok('all\'avvio le schede di ieri spariscono', !(await tel.evaluate(() => state.some(p => p.id === 'VECCHIA'))));
+  ok('le altre restano', (await tel.evaluate(() => state.length)) === primaPassata);
+  await tel.evaluate(() => { Canale.usaRelay(window.__relay); avviaPc(); });
 
   console.log('\n── MESSAGGI ESTRANEI ───────────────────');
   const n0 = await tel.evaluate(() => state.length);

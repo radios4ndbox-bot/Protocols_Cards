@@ -35,6 +35,16 @@ reparto con `sync-test/`.
   a pezzi sotto i 4 KB (oltre, ntfy.sh la trasformerebbe in allegato). Il
   telefono la ricompone, la importa nel calendario e manda la ricevuta.
   Se l'app è chiusa la riceve all'apertura: il relay conserva i messaggi 12 ore.
+- **Seduta.** Elettiva o pronto soccorso si sceglie importando: al passo 1 ci
+  sono due ingressi, «Importa TC elettiva» e «Importa pronto soccorso». La
+  seduta viaggia con la lista. Il telefono non sceglie: all'apertura il dorso della carta
+  con il marchio StructuRad si gira e mostra direttamente la seduta
+  dell'ultima lista ricevuta, con i suoi colori.
+- **Giornata d'esame.** È la data della colonna «Orario» dei pazienti, non
+  quella di stampa del report; se i pazienti non sono tutti dello stesso giorno
+  vale la più frequente, e la verifica lo segnala. Il telefono tiene solo oggi
+  e i giorni a venire: scarta le liste di giornate passate (il PC lo mostra) e
+  all'avvio toglie le schede dei giorni precedenti.
 - **Importazione sul telefono.** Le schede nuove entrano come elettive da fare,
   con 70 kg di peso (il RIS non lo riporta) da correggere in scheda; quelle
   ancora da fare si aggiornano; quelle già lavorate o nel cestino restano
@@ -47,13 +57,14 @@ Il canale è in `canale.js`, condiviso con l'app del telefono.
 ## Intro
 
 All'apertura parte la stessa coreografia di ER Oncology Archivist, con le carte
-al posto del marchio: le quattro fasi (basale, arteriosa, venosa, tardiva)
-entrano e si aprono a ventaglio, il ventaglio scivola a sinistra mentre si
-compone «Protocol Cards», entra il sottotitolo; poi le carte si raccolgono in
+al posto del marchio e lo sfondo del tool: le quattro fasi (basale, arteriosa,
+venosa, tardiva) compaiono raccolte al centro in dissolvenza, poi si aprono a
+ventaglio scivolando a sinistra mentre «Protocol Cards» compare lettera per
+lettera con i tempi di Archivist; entra «Protocols made easy»; poi le carte si raccolgono in
 una, che si gira e mostra sul dorso il marchio StructuRad, e vola nel marchio
 della barra portandosi su la pagina. Nella barra resta la copia del dorso, su
 cui la carta atterra al pixel (lo verifica `intro.test.js`). Dura circa
-quattro secondi e mezzo;
+poco più di quattro secondi;
 si salta con un clic, Esc, Invio o Spazio. Con «riduci movimento» attivo nel
 sistema non parte.
 
