@@ -91,90 +91,25 @@ button,input,select,textarea{font-family:inherit}
 .p{font-size:12px;color:var(--muted);line-height:1.55}
 .blk{margin-top:22px}
 
-/* ═══ CALENDARIO ═══════════════════════════════════════ */
-.cal{background:var(--surface);border:1px solid var(--border);border-radius:17px;
-  padding:14px;box-shadow:var(--sh);margin-top:14px}
-.cal-h{display:flex;align-items:center;gap:8px;margin-bottom:13px}
-.cal-m{flex:1;font-size:15.5px;font-weight:750;text-transform:capitalize;letter-spacing:-.2px}
-.cal-nav{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);
-  background:var(--surface);color:var(--text2);font-size:15px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center}
-.cal-nav:active{background:var(--surface2)}
-.cal-w{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:5px}
-.cal-w span{text-align:center;font-size:9.5px;font-weight:800;letter-spacing:.5px;
-  color:var(--muted);text-transform:uppercase;padding:4px 0}
-.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
-.day{
-  position:relative;aspect-ratio:1;border-radius:11px;border:1px solid transparent;
-  background:transparent;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  font-variant-numeric:tabular-nums;transition:.15s;
-}
-.day:active{transform:scale(.9)}
-.day.out{color:var(--border2);pointer-events:none}
-.day.has{background:var(--surface2);border-color:var(--border)}
-.day.today{background:var(--accent);color:#fff;font-weight:800;
-  box-shadow:0 3px 12px color-mix(in srgb,var(--accent) 40%,transparent)}
-.day-dots{position:absolute;bottom:5px;left:0;right:0;display:flex;gap:3px;justify-content:center}
-.day-dots i{width:5px;height:5px;border-radius:50%}
-.day.today .day-dots i{box-shadow:0 0 0 1.5px rgba(255,255,255,.75)}
-.d-el{background:#2f8f68}
-.d-em{background:linear-gradient(135deg,#e0556e,#8b4bc4)}
-.cal-leg{display:flex;gap:16px;margin-top:14px;padding-top:13px;
-  border-top:1px solid var(--border);font-size:10.5px;color:var(--muted)}
-.cal-leg i{display:inline-block;width:8px;height:8px;border-radius:50%;
-  margin-right:6px;vertical-align:0}
-
-/* ═══ CARD SEDUTA — animazione Uiverse ═════════════════ */
-.tc-wrap{display:flex;flex-direction:column;gap:18px;margin-top:18px}
-
-.tc{
-  --c1:#2f8f68; --sky:#eaf7f1; --front:#ffffff;
-  position:relative;width:100%;height:8em;border-radius:1em;z-index:2;
-  border:solid .15em var(--c1);overflow:hidden;cursor:pointer;font-size:16px;
-  box-shadow:0 0 rgba(0,0,0,.25);transition:.5s all ease-in-out;
-}
-.tc.em{--c1:#c9345a; --sky:#fbeaf2}
-
-.tc-back{
-  position:absolute;z-index:1;top:57.5%;left:50%;width:120%;height:17.5em;
-  background:var(--sky);border-radius:1em;transform:translate(-50%,-50%);
-  transition:.5s all ease-in-out;overflow:hidden;
-}
-.tc.em .tc-back{background:linear-gradient(135deg,#fbeaf2 0%,#f1e8fb 100%)}
-
-/* nuvole rotanti, come nell'originale */
-.tc-back svg{
-  position:absolute;z-index:1;top:-9.5em;left:-3em;width:26em;height:auto;
-  color:var(--c1);opacity:.30;animation:rotate-cloud 15s linear infinite;
-}
-.tc-back svg:nth-child(2){animation:rotate-cloud 15s linear infinite 1s;opacity:.15}
-@keyframes rotate-cloud{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.tc-back svg{animation:none}}
-
-.tc-front{
-  position:absolute;z-index:2;top:95%;left:50%;width:120%;height:12.5em;
-  background:var(--front);border-radius:1em;transform:translate(-50%,-50%);
-  transition:.5s all ease-in-out;
-}
-.tc-day{position:absolute;z-index:3;top:1.25em;left:.7em;color:var(--c1);
-  font-size:1.05em;font-weight:800;letter-spacing:.04em;transition:.5s all ease-in-out}
-.tc-sub{position:absolute;z-index:3;top:3em;left:.75em;color:var(--c1);
-  font-size:.8em;font-weight:600;opacity:.82;transition:.5s all ease-in-out}
-.tc-n{position:absolute;z-index:3;top:1.1em;right:.7em;color:var(--c1);
-  font-size:1.5em;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;
-  transition:.5s all ease-in-out}
-.tc-icon{position:absolute;z-index:4;top:3.6em;right:.6em;width:1.6em;height:auto;
-  color:var(--c1);transform:rotate(0);transition:.5s all ease-in-out}
-
-/* apertura: stessa coreografia del :hover originale, su classe di stato */
-.tc.is-open{height:15em;box-shadow:0 1em color-mix(in srgb,var(--c1) 42%,transparent)}
-.tc.is-open .tc-front{top:105%}
-.tc.is-open .tc-day{top:2.25em}
-.tc.is-open .tc-sub{top:4.1em}
-.tc.is-open .tc-n{top:.9em;font-size:3em}
-.tc.is-open .tc-icon{top:7.2em;right:-1.6em;width:7.5em;transform:rotate(-35deg)}
-.tc:active{transition:.25s all ease-in-out;transform:scale(.97)}
+/* ═══ APERTURA ════════════════════════════════════════
+   All'avvio il dorso della carta, con il marchio StructuRad, riempie lo
+   schermo e si gira: dall'altra parte c'è la seduta. Il giro è in due
+   metà, come una carta vera: il dorso ruota fino a mettersi di taglio,
+   poi l'app entra dal taglio opposto. Tocco per saltare; con «riduci
+   movimento» non c'è.                                                 */
+#apertura{position:fixed;inset:0;z-index:5000;perspective:1400px}
+.ap-dorso{position:absolute;inset:0;display:grid;place-items:center;transform-origin:50% 50%;
+  background:radial-gradient(120% 80% at 50% 40%,#12324A 0%,#0A1A2B 70%);
+  box-shadow:inset 0 0 0 2px rgba(63,214,198,.55);backface-visibility:hidden}
+.ap-dorso svg{width:58%;max-width:280px;height:auto;opacity:0;transform:scale(.92);
+  filter:drop-shadow(0 6px 22px rgba(63,214,198,.3));
+  animation:apLogo .6s cubic-bezier(.22,1,.36,1) .12s forwards}
+@keyframes apLogo{to{opacity:1;transform:none}}
+#apertura.gira .ap-dorso{animation:apGira var(--t-meta,380ms) cubic-bezier(.55,0,.85,.35) forwards}
+@keyframes apGira{to{transform:rotateY(90deg)}}
+body.svela{animation:apSvela var(--t-meta,380ms) cubic-bezier(.15,.65,.45,1) both}
+@keyframes apSvela{from{transform:perspective(1400px) rotateY(-90deg)}}
+@media (prefers-reduced-motion: reduce){#apertura{display:none}}
 
 /* ═══ BOARD ═══════════════════════════════════════════ */
 .legend{display:flex;gap:13px;flex-wrap:wrap;padding:2px 2px 4px;
@@ -536,6 +471,129 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 </head>
 <body>
 
+<!-- ══ APERTURA: il dorso della carta, che si gira sulla seduta ══ -->
+<div id="apertura" aria-hidden="true"><div class="ap-dorso">
+<svg aria-hidden="true" version="1.0" xmlns="http://www.w3.org/2000/svg"
+ viewBox="0 0 340.000000 192.000000"
+ preserveAspectRatio="xMidYMid meet">
+<defs><linearGradient id="sdGradAp" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#4F8BFF"/><stop offset="1" stop-color="#3FD6C6"/></linearGradient></defs>
+<g transform="translate(0.000000,192.000000) scale(0.100000,-0.100000)"
+fill="url(#sdGradAp)" stroke="none">
+<path d="M1615 1895 c-137 -29 -227 -85 -316 -195 -131 -162 -154 -393 -60
+-590 38 -80 146 -190 231 -234 94 -50 177 -66 341 -66 153 0 191 -10 247 -63
+76 -72 100 -176 62 -265 -27 -62 -95 -127 -149 -142 -20 -5 -116 -10 -213 -10
+l-178 0 0 -61 0 -60 208 3 c240 4 263 10 356 98 79 75 110 149 111 265 0 79
+-3 97 -29 149 -36 73 -97 136 -168 172 -50 26 -63 28 -233 35 -209 8 -256 19
+-343 83 -95 70 -151 161 -173 280 -29 157 51 337 188 424 93 59 119 63 432 66
+l286 2 3 62 3 62 -273 -1 c-179 -1 -294 -5 -333 -14z"/>
+<path d="M2314 1713 l1 -198 -315 -5 c-245 -4 -321 -8 -340 -19 -105 -59 -103
+-214 4 -265 26 -12 66 -16 173 -16 104 0 156 -5 213 -20 193 -50 343 -174 424
+-352 76 -164 79 -362 8 -516 -40 -87 -100 -168 -166 -224 -34 -29 -65 -56 -71
+-61 -6 -6 69 -7 200 -4 233 7 320 24 448 88 184 93 352 273 429 463 103 253
+88 624 -34 845 -104 188 -222 305 -393 389 -145 71 -247 92 -451 92 l-130 0 0
+-197z m401 46 c259 -79 441 -266 526 -539 21 -67 24 -94 24 -250 -1 -138 -4
+-189 -19 -239 -39 -141 -109 -263 -208 -362 -102 -101 -211 -164 -351 -200
+-72 -19 -162 -25 -155 -11 96 186 118 265 118 417 0 134 -19 216 -80 340 -85
+176 -239 314 -413 371 -72 24 -103 28 -260 33 -184 6 -196 9 -197 51 0 38 16
+40 333 40 297 0 310 1 338 21 52 37 59 64 59 220 l0 142 108 -6 c65 -4 135
+-15 177 -28z"/>
+<path d="M1596 1709 c-78 -32 -135 -77 -176 -140 -48 -74 -64 -139 -58 -239 8
+-134 83 -247 204 -306 55 -27 68 -29 239 -35 99 -4 194 -12 210 -17 106 -33
+209 -121 258 -221 30 -62 32 -73 32 -176 0 -103 -2 -114 -32 -177 -35 -75
+-103 -149 -175 -191 -79 -46 -144 -57 -340 -57 l-178 0 0 -55 0 -55 98 -1
+c343 -2 399 7 510 82 251 167 322 502 159 746 -116 173 -265 243 -522 243
+-170 0 -204 9 -272 75 -57 56 -73 96 -73 185 0 70 25 124 78 172 73 66 83 68
+388 68 l274 0 0 60 0 60 -287 -1 c-263 0 -292 -2 -337 -20z"/>
+<path d="M925 997 c-36 -21 -216 -119 -395 -215 -36 -19 -68 -38 -72 -41 -4
+-4 34 -28 85 -54 89 -46 125 -65 331 -176 l98 -54 37 19 c187 97 479 259 475
+265 -2 4 -57 35 -122 69 -187 100 -263 140 -329 176 -34 19 -63 34 -65 34 -1
+0 -21 -11 -43 -23z m33 -93 c5 -10 21 -16 38 -16 52 2 173 -48 210 -86 33 -34
+38 -47 34 -87 -3 -36 -29 -63 -87 -92 -54 -26 -67 -28 -173 -28 -102 0 -120 3
+-165 25 -39 19 -57 37 -80 77 -16 29 -35 52 -42 53 -31 1 -26 53 8 71 24 12
+59 3 59 -16 0 -7 -12 -18 -27 -23 -21 -8 -10 -9 48 -5 47 4 83 2 95 -5 18 -11
+18 -11 -2 -12 -26 0 -48 -24 -41 -44 3 -8 24 -24 46 -35 l39 -21 7 30 c4 16 4
+34 0 39 -7 12 52 44 65 36 21 -13 10 -35 -17 -35 -20 0 -24 -3 -16 -11 7 -7
+23 -9 38 -5 23 6 26 11 20 33 -6 25 -5 25 32 19 21 -4 47 -9 58 -12 15 -4 13
+0 -10 20 -46 39 -150 50 -150 17 0 -8 -6 -16 -13 -19 -7 -2 -10 2 -6 11 3 8 1
+18 -5 21 -6 4 -5 19 5 41 18 44 18 55 -2 55 -8 0 -13 -4 -9 -9 9 -16 -28 -30
+-54 -20 -19 7 -21 12 -11 23 21 27 95 33 108 10z m-178 -33 c0 -5 8 -7 18 -4
+10 2 29 -5 43 -16 l24 -21 -33 16 c-41 20 -54 11 -15 -10 15 -8 24 -15 18 -16
+-5 0 -25 9 -43 20 -39 24 -49 25 -32 5 11 -13 10 -14 -4 -9 -19 7 -21 30 -3
+37 19 8 27 8 27 -2z m36 -69 c-4 -3 -14 2 -24 12 -16 18 -16 18 6 6 13 -6 21
+-14 18 -18z"/>
+<path d="M1045 690 c-3 -5 -1 -10 4 -10 6 0 11 5 11 10 0 6 -2 10 -4 10 -3 0
+-8 -4 -11 -10z"/>
+<path d="M42 947 l-33 -34 3 -94 3 -94 105 0 105 0 3 58 3 58 41 -3 41 -3 43
+-140 c24 -77 43 -143 44 -147 0 -5 -38 -8 -85 -8 l-84 0 -3 58 -3 57 -74 3
+-74 3 -34 -38 c-33 -38 -33 -39 -31 -128 l3 -90 105 0 105 0 3 53 3 52 85 0
+c46 0 84 -3 84 -7 0 -5 -18 -69 -40 -143 -22 -74 -40 -136 -40 -137 0 -2 -20
+-3 -45 -3 l-45 0 0 55 0 55 -78 0 c-75 0 -79 -1 -110 -33 l-33 -34 3 -94 3
+-94 105 0 105 0 3 53 3 52 48 0 c27 0 53 6 59 13 9 11 42 114 80 252 l17 60
+83 3 82 3 188 -97 187 -98 175 94 c96 51 210 112 253 135 l78 42 -45 27 c-24
+14 -51 26 -58 26 -13 -1 -219 -109 -207 -110 4 0 23 7 42 15 112 47 78 -26
+-44 -94 -57 -32 -109 -41 -109 -18 0 8 -2 9 -8 1 -13 -20 -68 -8 -151 34 -49
+25 -81 37 -81 29 0 -6 -10 0 -21 16 -27 35 -37 34 -31 -3 3 -18 0 -30 -7 -30
+-6 0 -11 7 -11 15 0 8 -9 15 -20 15 -11 0 -20 7 -20 15 0 9 -8 19 -17 22 -16
+6 -15 8 5 13 20 4 12 11 -53 46 l-76 41 -50 -26 c-27 -14 -49 -28 -49 -31 0
+-3 15 -15 33 -25 l32 -20 -44 -3 c-24 -2 -47 0 -51 5 -4 4 -27 71 -50 148 -24
+77 -47 148 -52 158 -6 13 -21 17 -58 17 l-50 0 0 55 0 55 -78 0 c-75 0 -79 -1
+-110 -33z m168 -92 l0 -115 -90 0 -90 0 0 80 0 80 30 0 c26 0 30 4 30 28 0 39
+5 42 67 42 l53 0 0 -115z m-130 75 c0 -5 -7 -10 -16 -10 -8 0 -12 5 -9 10 3 6
+10 10 16 10 5 0 9 -4 9 -10z m128 -402 l-3 -111 -85 0 -85 0 -3 82 -3 81 31 0
+c27 0 30 3 30 30 l0 30 60 0 61 0 -3 -112z m-128 77 c0 -8 -7 -15 -16 -15 -14
+0 -14 3 -4 15 7 8 14 15 16 15 2 0 4 -7 4 -15z m130 -400 l0 -115 -90 0 -90 0
+0 80 0 80 30 0 c26 0 30 4 30 28 0 39 5 42 67 42 l53 0 0 -115z m-130 80 c0
+-8 -7 -15 -16 -15 -14 0 -14 3 -4 15 7 8 14 15 16 15 2 0 4 -7 4 -15z"/>
+<path d="M130 904 c0 -22 4 -25 28 -22 19 2 28 9 30 26 3 19 -1 22 -27 22 -27
+0 -31 -4 -31 -26z"/>
+<path d="M60 850 c0 -6 29 -10 66 -10 41 0 63 4 59 10 -3 6 -33 10 -66 10 -33
+0 -59 -4 -59 -10z"/>
+<path d="M87 813 c18 -2 50 -2 70 0 21 2 7 4 -32 4 -38 0 -55 -2 -38 -4z"/>
+<path d="M60 779 c0 -5 30 -9 67 -9 36 0 64 2 62 4 -9 8 -129 13 -129 5z"/>
+<path d="M130 585 c0 -21 5 -25 30 -25 25 0 30 4 30 25 0 21 -5 25 -30 25 -25
+0 -30 -4 -30 -25z"/>
+<path d="M87 523 c18 -2 50 -2 70 0 21 2 7 4 -32 4 -38 0 -55 -2 -38 -4z"/>
+<path d="M60 490 c0 -6 29 -10 66 -10 41 0 63 4 59 10 -3 6 -33 10 -66 10 -33
+0 -59 -4 -59 -10z"/>
+<path d="M87 453 c18 -2 50 -2 70 0 21 2 7 4 -32 4 -38 0 -55 -2 -38 -4z"/>
+<path d="M130 255 c0 -21 5 -25 30 -25 25 0 30 4 30 25 0 21 -5 25 -30 25 -25
+0 -30 -4 -30 -25z"/>
+<path d="M60 199 c0 -5 28 -9 62 -9 34 0 59 2 57 4 -10 8 -119 14 -119 5z"/>
+<path d="M87 163 c18 -2 50 -2 70 0 21 2 7 4 -32 4 -38 0 -55 -2 -38 -4z"/>
+<path d="M87 123 c18 -2 50 -2 70 0 21 2 7 4 -32 4 -38 0 -55 -2 -38 -4z"/>
+<path d="M1315 470 c-39 -22 -51 -35 -56 -59 -25 -120 -278 -190 -436 -121
+-60 25 -123 89 -123 123 0 17 -13 28 -59 50 l-59 28 -58 -29 -57 -29 64 -35
+c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
+78 152 78 24 0 5 17 -48 46 l-58 31 -49 -27z"/>
+<path d="M995 440 c-3 -6 1 -7 9 -4 18 7 21 14 7 14 -6 0 -13 -4 -16 -10z"/>
+<path d="M753 378 c14 -18 32 -31 39 -29 19 5 30 4 53 -4 11 -3 -9 9 -45 29
+-35 20 -66 36 -68 36 -3 0 7 -15 21 -32z"/>
+<path d="M1168 389 c-21 -11 -38 -22 -38 -25 0 -3 4 -3 9 1 6 3 14 -2 19 -11
+9 -16 12 -15 36 9 25 25 34 48 19 46 -5 -1 -25 -10 -45 -20z"/>
+<path d="M540 319 c-19 -11 -43 -25 -53 -30 -16 -9 6 -24 140 -96 87 -47 201
+-110 253 -139 l95 -53 95 51 c52 28 118 64 145 80 28 15 98 54 157 86 59 31
+108 59 108 62 0 3 -25 18 -55 33 l-55 27 -45 -22 c-38 -19 -45 -26 -45 -52 0
+-41 -69 -105 -140 -131 -81 -29 -252 -27 -333 4 -70 28 -124 78 -133 125 -5
+28 -14 39 -45 56 -47 24 -45 24 -89 -1z"/>
+<path d="M870 330 c0 -5 7 -10 15 -10 8 0 12 -6 9 -14 -4 -11 6 -16 40 -21 25
+-4 54 -4 63 0 10 5 25 7 35 6 9 -1 19 3 23 8 4 7 0 8 -11 4 -12 -4 -15 -3 -10
+5 5 8 -6 6 -27 -4 -32 -15 -35 -15 -85 10 -29 15 -52 22 -52 16z"/>
+<path d="M1083 334 c9 -3 15 -10 12 -15 -4 -5 -1 -9 5 -9 19 0 5 25 -16 27
+-16 2 -16 1 -1 -3z"/>
+<path d="M703 266 c4 -10 7 -21 7 -25 0 -16 56 -64 95 -82 45 -21 83 -26 48
+-6 -16 9 -19 16 -12 28 6 12 5 19 -5 22 -10 4 -12 0 -9 -14 7 -24 -4 -24 -42
+1 -27 18 -23 27 9 21 19 -4 -14 26 -55 48 -36 21 -41 22 -36 7z"/>
+<path d="M1240 263 c-1 -38 -86 -109 -121 -100 -10 3 -17 1 -14 -3 3 -5 -3
+-11 -12 -13 -15 -4 -15 -5 3 -6 29 -1 123 47 138 73 21 32 29 66 17 66 -6 0
+-11 -8 -11 -17z"/>
+<path d="M1215 250 c3 -5 8 -10 11 -10 2 0 4 5 4 10 0 6 -5 10 -11 10 -5 0 -7
+-4 -4 -10z"/>
+<path d="M1188 223 c7 -3 16 -2 19 1 4 3 -2 6 -13 5 -11 0 -14 -3 -6 -6z"/>
+<path d="M898 133 c7 -3 16 -2 19 1 4 3 -2 6 -13 5 -11 0 -14 -3 -6 -6z"/>
+</g>
+</svg>
+</div></div>
+
 <div class="appbar">
   <button class="ico hide" id="navBack" aria-label="Indietro">←</button>
   <div>
@@ -547,72 +605,8 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
   <button class="ico" id="btnSet" aria-label="Impostazioni">⚙</button>
 </div>
 
-<!-- ══ CALENDARIO ══ -->
-<main class="view" id="calendar">
-  <div class="h2">Calendario</div>
-  <p class="p">Seleziona una giornata per aprire le sedute.</p>
-  <div class="cal">
-    <div class="cal-h">
-      <div class="cal-m" id="calM"></div>
-      <button class="cal-nav" id="calPrev" aria-label="Mese precedente">‹</button>
-      <button class="cal-nav" id="calNext" aria-label="Mese successivo">›</button>
-    </div>
-    <div class="cal-w"><span>lun</span><span>mar</span><span>mer</span><span>gio</span>
-      <span>ven</span><span>sab</span><span>dom</span></div>
-    <div class="cal-g" id="calG"></div>
-    <div class="cal-leg">
-      <span><i class="d-el"></i>elettiva</span><span><i class="d-em"></i>emergenza</span>
-    </div>
-  </div>
-</main>
-
-<!-- ══ SCELTA SEDUTA ══ -->
-<main class="view hidden" id="session">
-  <div class="h2" id="sesTitle"></div>
-  <p class="p">Scegli il tipo di seduta.</p>
-  <div class="tc-wrap">
-    <div class="tc" id="tcEl" data-m="elettiva">
-      <div class="tc-back">
-        <svg viewBox="0 0 400 400" fill="currentColor"><g>
-          <ellipse cx="300" cy="112" rx="54" ry="35"/><ellipse cx="258" cy="128" rx="35" ry="25"/>
-          <ellipse cx="342" cy="130" rx="31" ry="22"/></g></svg>
-        <svg viewBox="0 0 400 400" fill="currentColor"><g>
-          <ellipse cx="118" cy="292" rx="46" ry="30"/><ellipse cx="84" cy="305" rx="30" ry="21"/>
-          <ellipse cx="152" cy="306" rx="27" ry="19"/></g></svg>
-      </div>
-      <div class="tc-front"></div>
-      <div class="tc-day">TC ELETTIVA</div>
-      <div class="tc-sub" id="elSub">—</div>
-      <div class="tc-n" id="elN">0</div>
-      <svg class="tc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/>
-        <path d="M9 15l2 2 4-4"/></svg>
-    </div>
-
-    <div class="tc em" id="tcEm" data-m="emergenza">
-      <div class="tc-back">
-        <svg viewBox="0 0 400 400" fill="currentColor"><g>
-          <ellipse cx="300" cy="112" rx="54" ry="35"/><ellipse cx="258" cy="128" rx="35" ry="25"/>
-          <ellipse cx="342" cy="130" rx="31" ry="22"/></g></svg>
-        <svg viewBox="0 0 400 400" fill="currentColor"><g>
-          <ellipse cx="118" cy="292" rx="46" ry="30"/><ellipse cx="84" cy="305" rx="30" ry="21"/>
-          <ellipse cx="152" cy="306" rx="27" ry="19"/></g></svg>
-      </div>
-      <div class="tc-front"></div>
-      <div class="tc-day">TC DI EMERGENZA</div>
-      <div class="tc-sub" id="emSub">—</div>
-      <div class="tc-n" id="emN">0</div>
-      <svg class="tc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2l9.5 17.5a1.4 1.4 0 01-1.2 2.1H3.7a1.4 1.4 0 01-1.2-2.1z"/>
-        <path d="M12 9v5M12 17.5v.5"/></svg>
-    </div>
-  </div>
-</main>
-
 <!-- ══ BOARD ══ -->
-<main class="view hidden" id="board">
+<main class="view" id="board">
   <button class="newcard hidden" id="btnNew">+ Nuova scheda manuale</button>
   <div class="legend">
     <span><i style="background:var(--st-todo)"></i>da protocollare</span>
@@ -984,8 +978,15 @@ function learn(p){
 /* ═══ BOOT ═══════════════════════════════════════════════ */
 const detail = $('detail'), grid = $('sessions');
 let cur = null, pick = [], mode = 'sugg', selOpt = null;
-let view = 'calendar', selDate = TODAY, selMode = null;
-const calCursor = new Date();
+let view = 'board';
+/* La seduta mostrata è quella dell'ultima lista arrivata dal PC: giorno e
+   tipo (elettiva o pronto soccorso) li decide il tool PC. Il telefono non
+   sceglie. Senza PC abbinato si vede l'esempio di oggi, in elettiva.   */
+let sessione = load('sessione', null) || (load('pc', null) ? null : { data:TODAY, modo:'elettiva' });
+let selDate = sessione ? sessione.data : TODAY, selMode = sessione ? sessione.modo : null;
+function impostaSessione(s){
+  sessione = s; selDate = s ? s.data : TODAY; selMode = s ? s.modo : null; save('sessione', s);
+}
 
 AGENTS.forEach(a => { const o=document.createElement('option');
   o.value=a.id; o.textContent=`${a.l} — ${it(a.c,2)} gI/ml`; $('ddAgent').appendChild(o); });
@@ -1007,43 +1008,28 @@ const ttl = ms => { const h=Math.floor(ms/3600000), m=Math.floor(ms%3600000/6000
   return h>0 ? `${h}h ${m}m` : `${m}m`; };
 
 /* ═══ NAVIGAZIONE ════════════════════════════════════════ */
-const VIEWS = ['calendar','session','board','newcard','settings','trash'];
+const VIEWS = ['board','newcard','settings','trash'];
 function show(v){
   view = v;
   VIEWS.forEach(k => $(k).classList.toggle('hidden', k!==v));
   document.body.dataset.m = (v==='board'||v==='newcard') && selMode ? selMode : '';
-  $('navBack').classList.toggle('hide', v==='calendar');
+  $('navBack').classList.toggle('hide', v==='board');
 
   const T = $('abTitle'), S = $('abSub');
-  if(v==='calendar'){ T.textContent='Protocol Cards';
-    S.textContent = new Date().toLocaleDateString('it-IT',
-      {weekday:'long',day:'numeric',month:'long'}); }
-  else if(v==='session'){ T.textContent='Seduta'; S.textContent=dmy(selDate); }
-  else if(v==='board'){ T.textContent = selMode==='emergenza'?'TC di emergenza':'TC elettiva';
+  if(v==='board' && !sessione){ T.textContent='Protocol Cards'; S.textContent='in attesa della lista dal PC'; }
+  else if(v==='board'){ T.textContent = selMode==='emergenza'?'TC di pronto soccorso':'TC elettiva';
     S.textContent = dmy(selDate) + (selDate===TODAY?' · oggi':''); }
   else if(v==='newcard'){ T.textContent='Nuova scheda'; S.textContent=dmy(selDate); }
   else if(v==='settings'){ T.textContent='Impostazioni'; S.textContent=''; }
   else { T.textContent='Cestino'; S.textContent=''; }
 
-  if(v==='calendar') renderCal();
-  if(v==='session')  renderSession();
   if(v==='board')    renderBoard();
   if(v==='settings'){ renderSettings(); renderPc(); }
   if(v==='trash')    renderTrash();
 }
-$('navBack').onclick = async () => {
-  if(busy) return;
-  if(view==='board'){
-    busy = true;
-    await staggerOut(boardNodes());
-    await shrink(selMode==='emergenza' ? $('tcEm') : $('tcEl'), () => show('session'));
-    busy = false;
-  }
-  else if(view==='newcard') show('board');
-  else show('calendar');
-};
-$('btnSet').onclick   = () => show(view==='settings' ? 'calendar' : 'settings');
-$('btnTrash').onclick = () => show(view==='trash'    ? 'calendar' : 'trash');
+$('navBack').onclick = () => { if(!busy) show('board'); };
+$('btnSet').onclick   = () => show(view==='settings' ? 'board' : 'settings');
+$('btnTrash').onclick = () => show(view==='trash'    ? 'board' : 'trash');
 
 /* ═══ ESPANSIONE A TUTTO SCHERMO E RITORNO ═══════════════
    Un clone della card viene animato dal suo rettangolo alle dimensioni
@@ -1148,62 +1134,6 @@ const detailNodes = () => [
   detail.querySelector('.d-act'),
 ].filter(Boolean);
 
-/* ═══ CALENDARIO ═════════════════════════════════════════ */
-const byDay = d => ({
-  el: state.filter(p => p.data===d && p.modo==='elettiva').length,
-  em: state.filter(p => p.data===d && p.modo==='emergenza').length,
-});
-
-function renderCal(){
-  const y = calCursor.getFullYear(), m = calCursor.getMonth();
-  $('calM').textContent = calCursor.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
-  const start = (new Date(y,m,1).getDay()+6)%7;        // lunedì = 0
-  const days  = new Date(y,m+1,0).getDate();
-  const g = $('calG'); g.innerHTML='';
-  for(let i=0;i<start;i++){
-    const e=document.createElement('button'); e.className='day out'; e.disabled=true; g.appendChild(e);
-  }
-  for(let d=1; d<=days; d++){
-    const ds = `${y}-${pad(m+1)}-${pad(d)}`;
-    const c = byDay(ds);
-    const b = document.createElement('button');
-    b.className = 'day' + (ds===TODAY ? ' today' : (c.el+c.em ? ' has' : ''));
-    b.dataset.d = ds;
-    b.innerHTML = d + (c.el+c.em ? `<span class="day-dots">${
-      (c.el?'<i class="d-el"></i>':'') + (c.em?'<i class="d-em"></i>':'')}</span>` : '');
-    b.onclick = () => { selDate = ds; show('session'); };
-    g.appendChild(b);
-  }
-}
-$('calPrev').onclick = () => { calCursor.setDate(1);
-  calCursor.setMonth(calCursor.getMonth()-1); renderCal(); };
-$('calNext').onclick = () => { calCursor.setDate(1);
-  calCursor.setMonth(calCursor.getMonth()+1); renderCal(); };
-
-/* ═══ SCELTA SEDUTA — animazione Uiverse ═════════════════ */
-function renderSession(){
-  const c = byDay(selDate);
-  const lbl = new Date(selDate+'T12:00').toLocaleDateString('it-IT',
-    {weekday:'long',day:'numeric',month:'long'});
-  $('sesTitle').textContent = selDate===TODAY ? 'Oggi' : lbl;
-  $('elSub').textContent = lbl;
-  $('emSub').textContent = lbl;
-  $('elN').textContent = c.el;
-  $('emN').textContent = c.em;
-  ['tcEl','tcEm'].forEach(i => $(i).classList.remove('is-open'));
-}
-
-/* la card si allarga a tutto schermo, poi le schede entrano scaglionate */
-async function openSession(el){
-  if(busy) return;
-  busy = true;
-  selMode = el.dataset.m;
-  await grow(el, 'is-open', () => { show('board'); staggerIn(boardNodes()); });
-  busy = false;
-}
-$('tcEl').onclick = () => openSession($('tcEl'));
-$('tcEm').onclick = () => openSession($('tcEm'));
-
 /* ═══ BOARD ══════════════════════════════════════════════ */
 const summary = p => p.fasi.map(f=>`<span>${PH[f.fase].l.slice(0,3)}</span>`).join('');
 const isAM = p => parseInt(p.ora.slice(0,2),10) < 14;
@@ -1214,9 +1144,15 @@ function renderBoard(){
   $('btnNew').classList.toggle('hidden', selMode!=='emergenza');
   const list = inBoard();
   grid.innerHTML='';
+  if(!sessione){
+    grid.innerHTML = `<div class="empty" style="margin-top:30px">Nessuna lista ancora.<br>
+      Dal tool PC, al passo «Trasferisci», abbina il telefono e invia la lista.</div>`;
+    $('btnEod').disabled = true;
+    return;
+  }
   if(!list.length){
     grid.innerHTML = `<div class="empty" style="margin-top:30px">Nessun esame
-      ${selMode==='emergenza'?'di emergenza':'elettivo'} in questa giornata.</div>`;
+      ${selMode==='emergenza'?'di pronto soccorso':'elettivo'} in questa giornata.</div>`;
     $('btnEod').disabled = true;
     return;
   }
@@ -1736,12 +1672,13 @@ $('btnReset').onclick = () => {
     'Tutte le schede e il cestino verranno eliminati. Le liste arriveranno di nuovo dal PC. '
     + 'I protocolli appresi restano.',
     'Svuota', () => { state=[]; trash=[]; persist(); purge();
-                      selMode=null; show('calendar'); toast('Schede eliminate'); });
+                      show('board'); toast('Schede eliminate'); });
   ask('Ripristina i dati di esempio',
     'Le schede attuali e il cestino verranno sostituiti dai dati di esempio. '
     + 'I protocolli appresi restano.',
     'Ripristina', () => { state=freshState(); trash=[]; persist(); purge();
-                          selMode=null; show('calendar'); toast('Dati ripristinati'); }, true);
+                          impostaSessione({ data:TODAY, modo:'elettiva' }); show('board');
+                          toast('Dati ripristinati'); }, true);
 };
 
 /* ═══ COLLEGAMENTO AL PC ═════════════════════════════════
@@ -1773,6 +1710,7 @@ function importaLista(pl){
   if(!pl || pl.v!==1 || !Array.isArray(pl.p)) throw new Error('formato lista sconosciuto');
   togliEsempio();
   const data = isoDa(pl.d) || TODAY;
+  const modo = pl.m==='emergenza' ? 'emergenza' : 'elettiva';   // lo decide il PC
   const cestino = new Set(trash.map(t => t.id));
   const r = { nuove:0, aggiornate:0, invariate:0, data };
   pl.p.forEach(row => {
@@ -1780,7 +1718,7 @@ function importaLista(pl){
     const [id,nome,nascita,ora,quesito,esame] = row.map(x => String(x==null ? '' : x).trim());
     if(!id || cestino.has(id)) return;
     const proto = matchProtocol(esame, quesito), pr = proto ? PROTOCOLS[proto] : null;
-    const campi = { nome, nascita:isoDa(nascita), data,
+    const campi = { nome, nascita:isoDa(nascita), data, modo,
                     ora:/^\d{2}:\d{2}$/.test(ora) ? ora : '08:00', esame, quesito };
     const ex = state.find(p => p.id===id);
     if(ex){
@@ -1794,20 +1732,19 @@ function importaLista(pl){
     }
     /* il RIS non riporta il peso: 70 kg come per la scheda manuale, da
        correggere nella scheda prima di calcolare il mezzo di contrasto */
-    state.push({ id, ...campi, peso:70, modo:'elettiva', proto,
+    state.push({ id, ...campi, peso:70, proto,
                  stato:'todo', fasi:[], note:'', prev:false, prevDate:'', agent:null,
                  idr:pr?pr.idr:1.4, giKg:pr?pr.giKg:0.5 });
     r.nuove++;
   });
   persist();
-  return r;
+  impostaSessione({ data, modo });                 // si apre la seduta appena arrivata
+  return { ...r, modo };
 }
 
 function ridisegnaDopoImport(){
   if(busy || cur) return;
-  if(view==='calendar') renderCal();
-  else if(view==='session') renderSession();
-  else if(view==='board') renderBoard();
+  if(view==='board') show('board');                // titolo e colori della seduta
   else if(view==='settings') renderSettings();
 }
 
@@ -1844,7 +1781,7 @@ async function avviaPc(){
       pcRicevute = [...pcRicevute, lista.id].slice(-50);
       link.ultima = Date.now(); salvaPc();
       ridisegnaDopoImport(); renderPc();
-      toast(`Lista del ${dmy(r.data)} dal PC: ${r.nuove} ${r.nuove===1?'nuova':'nuove'}`
+      toast(`${r.modo==='emergenza'?'Pronto soccorso':'Elettiva'} del ${dmy(r.data)}: ${r.nuove} ${r.nuove===1?'nuova':'nuove'}`
         + (r.aggiornate ? `, ${r.aggiornate} aggiornate` : ''));
       Canale.invia(sess, 'tel', { tipo:'ricevuta', rif:lista.id,
         nuove:r.nuove, aggiornate:r.aggiornate, invariate:r.invariate }).catch(()=>{});
@@ -1920,13 +1857,39 @@ document.addEventListener('keydown', e => {
   if(e.key!=='Escape') return;
   if($('mask').classList.contains('open')) $('mask').classList.remove('open');
   else if(cur) close();
-  else if(view!=='calendar') $('navBack').click();
+  else if(view!=='board') $('navBack').click();
 });
 
 /* ═══ AVVIO ══════════════════════════════════════════════ */
 purge();
-show('calendar');
+show('board');
 avviaPc();
+apertura();
+
+/* il dorso a tutto schermo si gira sulla seduta */
+function apertura(){
+  const ap = $('apertura'); if(!ap) return;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ ap.remove(); return; }
+  const META = 380;                                   // ogni metà del giro
+  const fondo = getComputedStyle(document.body).backgroundColor;
+  ap.style.background = fondo;                        // dietro la carta, il fondo dell'app
+  document.documentElement.style.background = fondo;
+  ap.style.setProperty('--t-meta', META+'ms');
+  document.body.style.setProperty('--t-meta', META+'ms');
+  let girata = false;
+  const gira = () => {
+    if(girata) return; girata = true; clearTimeout(attesa);
+    ap.classList.add('gira');
+    setTimeout(() => {
+      ap.remove();
+      document.body.classList.add('svela');
+      if(view==='board' && sessione) staggerIn(boardNodes());
+      setTimeout(() => { document.body.classList.remove('svela'); document.documentElement.style.background=''; }, META);
+    }, META);
+  };
+  const attesa = setTimeout(gira, 1100);
+  ap.addEventListener('click', gira);
+}
 setInterval(() => { purge(); if(view==='trash') renderTrash(); }, 60000);
 </script>
 </body>

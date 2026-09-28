@@ -218,6 +218,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .rete-stato.ko{color:var(--coral-ink)}
 #qrAbb{display:block;margin:16px auto 4px;border-radius:12px;background:#fff;box-shadow:var(--well-s);
   image-rendering:pixelated;max-width:100%;height:auto}
+.seduta{display:flex;align-items:center;gap:12px;margin:2px 0 14px;font-size:.84rem;color:var(--ink-2)}
 .rete .nota{margin-top:10px;font-size:.76rem;color:var(--ink-3);line-height:1.5}
 
 /* ═══ PROTOCOLLI ══════════════════════════════════════════════════ */
@@ -1010,6 +1011,13 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     <div class="tras-griglia">
       <div class="plate rete" id="rete">
         <h3>Invio al telefono</h3>
+        <div class="seduta">
+          <span>Seduta</span>
+          <div class="seg" role="radiogroup" aria-label="Tipo di seduta">
+            <button role="radio" data-seduta="elettiva">Elettiva</button>
+            <button role="radio" data-seduta="emergenza">Pronto soccorso</button>
+          </div>
+        </div>
         <div class="rete-stato" id="reteStato"></div>
         <canvas id="qrAbb" width="260" height="260" hidden></canvas>
         <div class="nota" id="reteNota" hidden>Il codice contiene la chiave del canale: non fotografarlo
@@ -1024,6 +1032,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         <div class="plate riepilogo">
           <h3>Contenuto dell'invio</h3>
           <div class="riga"><span>Giornata</span><b id="rGiorno">—</b></div>
+          <div class="riga"><span>Seduta</span><b id="rSeduta">—</b></div>
           <div class="riga"><span>Pazienti</span><b id="rPaz">—</b></div>
           <div class="riga"><span>Esami</span><b id="rEsami">—</b></div>
           <div class="riga"><span>Dati grezzi</span><b id="rGrezzi">—</b></div>
@@ -4864,10 +4873,29 @@ function aggiornaConteggi() {
 
 /* Formato compatto: chiavi di una lettera e liste posizionali. Il telefono
    conosce lo schema, quindi i nomi dei campi non vanno trasmessi.        */
+/* Il tipo di seduta lo decide il PC e viaggia con la lista: il telefono
+   apre la seduta che riceve, senza scegliere. Si ricorda per il PC.   */
+const CH_SEDUTA = 'protocol-cards.pc.seduta';
+let seduta = (() => { try { return localStorage.getItem(CH_SEDUTA) === 'emergenza' ? 'emergenza' : 'elettiva'; }
+                      catch (_) { return 'elettiva'; } })();
+function disegnaSeduta() {
+  document.querySelectorAll('[data-seduta]').forEach(b => {
+    const on = b.dataset.seduta === seduta;
+    b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
+  });
+  $('rSeduta').textContent = seduta === 'emergenza' ? 'Pronto soccorso' : 'Elettiva';
+}
+document.querySelectorAll('[data-seduta]').forEach(b => b.onclick = () => {
+  seduta = b.dataset.seduta;
+  try { localStorage.setItem(CH_SEDUTA, seduta); } catch (_) {}
+  disegnaSeduta();
+});
+
 function payload() {
   const a = attivi();
   return {
     v: 1,
+    m: seduta,
     d: (a[0] && a[0].data) || '',
     p: a.map(p => [
       p.accession, p.nomeCompleto, p.nascita, p.ora, p.quesito,
@@ -4907,6 +4935,7 @@ async function listaCompressa() {
 
 async function preparaTrasferimento() {
   const a = attivi();
+  disegnaSeduta();
   const { json, corpo, metodo } = await listaCompressa();
   $('rGiorno').textContent = a[0] && a[0].data ? a[0].data : '—';
   $('rPaz').textContent    = a.length;

@@ -4,14 +4,13 @@ const ok=(l,c,x='')=>{console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  → '+x:
 const w = (loc)=>loc.evaluate(e=>Math.round(e.getBoundingClientRect().width));
 (async()=>{
   const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
-  const p=await b.newPage({viewport:{width:412,height:915},deviceScaleFactor:1,hasTouch:true,isMobile:true});
+  const p=await b.newPage({viewport:{width:412,height:915},reducedMotion:'reduce',deviceScaleFactor:1,hasTouch:true,isMobile:true});
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.goto('file://'+require('path').resolve(__dirname,'../index.html')+'');
   await p.evaluate(()=>localStorage.clear()); await p.reload(); await p.waitForTimeout(350);
 
   // GALIMBERTI: fegato cirrotico, 4 fasi con 2 sigle diverse
-  await p.locator('.day.today').click(); await p.waitForTimeout(300);
-  await p.locator('#tcEl').click(); await p.waitForTimeout(1300);
+  /* la bacheca è la schermata iniziale: la seduta d'esempio di oggi, elettiva */
   const nomi = await p.locator('.mini-name').allTextContents();
   await p.locator('.card-mini').nth(nomi.indexOf('GALIMBERTI NATALE')).click(); await p.waitForTimeout(1400);
   await p.locator('#applyBtn').click(); await p.waitForTimeout(450);

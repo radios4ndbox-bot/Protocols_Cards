@@ -35,6 +35,10 @@ reparto con `sync-test/`.
   a pezzi sotto i 4 KB (oltre, ntfy.sh la trasformerebbe in allegato). Il
   telefono la ricompone, la importa nel calendario e manda la ricevuta.
   Se l'app è chiusa la riceve all'apertura: il relay conserva i messaggi 12 ore.
+- **Seduta.** Elettiva o pronto soccorso si sceglie qui, al passo 3, e viaggia
+  con la lista. Il telefono non sceglie: all'apertura il dorso della carta
+  con il marchio StructuRad si gira e mostra direttamente la seduta
+  dell'ultima lista ricevuta, con i suoi colori.
 - **Importazione sul telefono.** Le schede nuove entrano come elettive da fare,
   con 70 kg di peso (il RIS non lo riporta) da correggere in scheda; quelle
   ancora da fare si aggiornano; quelle già lavorate o nel cestino restano

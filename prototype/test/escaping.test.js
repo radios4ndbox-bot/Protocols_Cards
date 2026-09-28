@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 let fail=0; const ok=(l,c,x='')=>{console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  → '+x:''));if(!c)fail++;};
 (async()=>{
   const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
-  const p=await b.newPage({viewport:{width:412,height:915},hasTouch:true,isMobile:true});
+  const p=await b.newPage({viewport:{width:412,height:915},reducedMotion:'reduce',hasTouch:true,isMobile:true});
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   let iniettato=false;
   await p.exposeFunction('segnalaIniezione',()=>{iniettato=true;});
@@ -11,8 +11,9 @@ let fail=0; const ok=(l,c,x='')=>{console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x
 
   console.log('── RILIEVO 5 · testo ostile nei campi ──');
   const veleno = '<img src=x onerror=segnalaIniezione()>SOTTO<b>grassetto</b>';
-  await p.locator('.day.today').click(); await p.waitForTimeout(300);
-  await p.locator('#tcEm').click(); await p.waitForTimeout(1300);
+  /* seduta di pronto soccorso: nell'app vera la decide il PC con la lista */
+  await p.evaluate(()=>localStorage.setItem('pc.v4.sessione', JSON.stringify({data:TODAY, modo:'emergenza'})));
+  await p.reload(); await p.waitForTimeout(350);
   await p.locator('#btnNew').click(); await p.waitForTimeout(350);
   await p.locator('#nNome').fill(veleno);
   await p.locator('#nEsame').fill('TC ENCEFALO '+veleno);

@@ -23,64 +23,54 @@ const ok = (etichetta, cond, extra = '') => {
   await p.reload();
   await p.waitForTimeout(400);
 
-  console.log('── CALENDARIO ──────────────────────────');
-  ok('parte dal calendario', await p.locator('#calendar:not(.hidden)').count() === 1);
-  ok('oggi evidenziato', await p.locator('.day.today').count() === 1);
-  ok('oggi ha entrambe le sedute', await p.locator('.day.today .day-dots i').count() === 2);
-  ok('giorni con esami marcati', await p.locator('.day.has').count() >= 3,
-     await p.locator('.day.has').count() + ' giorni');
-  const mese = await p.locator('#calM').textContent();
-  await p.locator('#calNext').click(); await p.waitForTimeout(200);
-  ok('cambio mese', (await p.locator('#calM').textContent()) !== mese);
-  await p.locator('#calPrev').click(); await p.waitForTimeout(200);
-  ok('ritorno al mese', (await p.locator('#calM').textContent()) === mese);
-
-  console.log('\n── SCELTA SEDUTA ───────────────────────');
-  await p.locator('.day.today').click(); await p.waitForTimeout(350);
-  ok('vista seduta', await p.locator('#session:not(.hidden)').count() === 1);
-  ok('titolo Oggi', (await p.locator('#sesTitle').textContent()) === 'Oggi');
-  ok('conteggio elettiva', (await p.locator('#elN').textContent()) === '8',
-     await p.locator('#elN').textContent());
-  ok('conteggio emergenza', (await p.locator('#emN').textContent()) === '3');
-  ok('nuvole rotanti', await p.locator('.tc-back svg').count() === 4);
-
-  console.log('\n── ESPANSIONE A TUTTO SCHERMO ──────────');
-  const seq = [];
-  p.locator('#tcEl').click();
-  for (let i = 0; i < 9; i++) {
-    await p.waitForTimeout(55);
-    seq.push(await p.evaluate(() => {
-      const g = document.querySelector('.ghost');
-      if (!g) return null;
-      const r = g.getBoundingClientRect();
-      return { w: Math.round(r.width), h: Math.round(r.height) };
+  console.log('── APERTURA: IL DORSO SI GIRA ──────────');
+  ok('dorso a tutto schermo all\'avvio', await p.evaluate(() => {
+    const r = document.querySelector('#apertura .ap-dorso').getBoundingClientRect();
+    return r.width >= 412 && r.height >= 915; }));
+  ok('con il marchio StructuRad', await p.locator('#apertura .ap-dorso svg path').count() > 10);
+  ok('niente calendario né scelta della seduta',
+     await p.locator('#calendar, #session, #tcEl, #tcEm').count() === 0);
+  const giro = [];
+  for (let i = 0; i < 34; i++) {                      // ~2 s: attesa, giro, rimozione
+    await p.waitForTimeout(60);
+    giro.push(await p.evaluate(() => {
+      const d = document.querySelector('#apertura .ap-dorso');
+      return d ? getComputedStyle(d).transform : 'tolto';
     }));
   }
-  const vivi = seq.filter(Boolean);
-  ok('il clone cresce senza salti all\'indietro',
-     vivi.length > 2 && vivi.every((s, i) => i === 0 || s.w >= vivi[i-1].w),
-     vivi.length + ' fotogrammi');
-  ok('arriva a tutto schermo', vivi.some(s => s.w >= 412 && s.h >= 915));
-  await p.waitForTimeout(1200);
-  ok('nessun clone residuo', await p.locator('.ghost').count() === 0);
+  ok('il dorso ruota di taglio', giro.some(t => t.startsWith('matrix3d')), giro.find(t => t.startsWith('matrix3d')) ? 'sì' : giro.join(' | ').slice(0, 80));
+  ok('poi viene tolto', giro[giro.length - 1] === 'tolto');
+  await p.waitForTimeout(800);
+  ok('sotto c\'è la bacheca', await p.locator('#board:not(.hidden)').count() === 1);
+  ok('nessuna rotazione residua', await p.evaluate(() => getComputedStyle(document.body).transform) === 'none');
 
-  console.log('\n── SCAGLIONAMENTO ──────────────────────');
-  await p.locator('#navBack').click(); await p.waitForTimeout(950);
-  await p.locator('#tcEl').click(); await p.waitForTimeout(500);
-  const rit = await p.evaluate(() => [...document.querySelectorAll('#board .rise')]
-    .map(x => Math.round(parseFloat(getComputedStyle(x).animationDelay) * 1000)));
-  ok('ritardi crescenti dall\'alto', rit.length > 4 && rit.every((v, i) => i === 0 || v > rit[i-1]),
-     rit.length + ' nodi');
-  const passi = [...new Set(rit.slice(1).map((v, i) => v - rit[i]))];
-  ok('passo costante', passi.length === 1, passi.join(',') + ' ms');
-  await p.waitForTimeout(900);
-
-  console.log('\n── TEMA DELLA SEDUTA ───────────────────');
+  console.log('\n── LA SEDUTA LA DECIDE IL PC ───────────');
+  ok('seduta d\'esempio: oggi, elettiva', await p.evaluate(() => sessione && sessione.data === TODAY && sessione.modo === 'elettiva'));
+  ok('titolo della seduta', (await p.locator('#abTitle').textContent()) === 'TC elettiva');
   ok('modalità elettiva', await p.evaluate(() => document.body.dataset.m) === 'elettiva');
   ok('sfondo verde pastello',
      await p.evaluate(() => getComputedStyle(document.body).backgroundColor) === 'rgb(241, 250, 246)');
   ok('8 schede elettive', await p.locator('.card-mini').count() === 8);
   ok('nessuna scheda manuale in elettiva', await p.locator('#btnNew.hidden').count() === 1);
+  ok('indietro nascosto sulla bacheca', await p.locator('#navBack.hide').count() === 1);
+
+  console.log('\n── SCAGLIONAMENTO ──────────────────────');
+  await p.reload();
+  await p.waitForTimeout(1100 + 380 + 60);             // attesa del dorso + prima metà del giro
+  const rit = await p.evaluate(() => [...document.querySelectorAll('#board .rise')]
+    .map(x => Math.round(parseFloat(getComputedStyle(x).animationDelay) * 1000)));
+  ok('le schede entrano dall\'alto mentre la carta si gira', rit.length > 4 && rit.every((v, i) => i === 0 || v > rit[i-1]),
+     rit.length + ' nodi');
+  const passi = [...new Set(rit.slice(1).map((v, i) => v - rit[i]))];
+  ok('passo costante', passi.length === 1, passi.join(',') + ' ms');
+  await p.waitForTimeout(900);
+
+  console.log('\n── UN TOCCO SALTA L\'ATTESA ─────────────');
+  await p.reload(); await p.waitForTimeout(200);
+  await p.locator('#apertura').click();
+  await p.waitForTimeout(900);
+  ok('la carta si è già girata', await p.locator('#apertura').count() === 0);
+  await p.waitForTimeout(500);
 
   console.log('\n── SCHEDA PAZIENTE ─────────────────────');
   const nomi = await p.locator('.mini-name').allTextContents();
@@ -133,10 +123,13 @@ const ok = (etichetta, cond, extra = '') => {
      (await p.locator('.cp-n').first().textContent()) !== prima,
      prima + ' → ' + (await p.locator('.cp-n').first().textContent()));
 
-  console.log('\n── SEDUTA DI EMERGENZA ─────────────────');
-  await p.locator('#navBack').click(); await p.waitForTimeout(950);
-  await p.locator('#tcEm').click(); await p.waitForTimeout(1300);
+  console.log('\n── SEDUTA DI PRONTO SOCCORSO ───────────');
+  /* dal PC arriva la lista con la seduta di pronto soccorso: qui la si
+     imposta come farebbe l'importazione, e l'app riparte su quella     */
+  await p.evaluate(() => localStorage.setItem('pc.v4.sessione', JSON.stringify({ data: TODAY, modo: 'emergenza' })));
+  await p.reload(); await p.waitForTimeout(2200);
   ok('modalità emergenza', await p.evaluate(() => document.body.dataset.m) === 'emergenza');
+  ok('titolo pronto soccorso', (await p.locator('#abTitle').textContent()) === 'TC di pronto soccorso');
   ok('sfondo rosato',
      await p.evaluate(() => getComputedStyle(document.body).backgroundColor) === 'rgb(253, 243, 247)');
   ok('scheda manuale disponibile', await p.locator('#btnNew').isVisible());
@@ -165,9 +158,7 @@ const ok = (etichetta, cond, extra = '') => {
   await p.locator('#mYes').click(); await p.waitForTimeout(500);
   ok('seduta svuotata', await p.locator('.card-mini').count() === 0);
   ok('badge del cestino', (await p.locator('#trashN').textContent()) === String(quanti));
-  await p.locator('#navBack').click(); await p.waitForTimeout(400);
-  ok('elettiva intatta', (await p.locator('#elN').textContent()) === '8',
-     await p.locator('#elN').textContent());
+  ok('elettiva intatta', await p.evaluate(() => state.filter(x => x.data === TODAY && x.modo === 'elettiva').length) === 8);
   await p.locator('#btnTrash').click(); await p.waitForTimeout(350);
   ok('elementi nel cestino', await p.locator('#trashList .item').count() === quanti);
   ok('conto alla rovescia', /\d+h/.test(await p.locator('.ttl').first().textContent()),
@@ -191,7 +182,8 @@ const ok = (etichetta, cond, extra = '') => {
        .some(x => Date.now() - x.deletedAt > 22 * 3600 * 1000)));
 
   console.log('\n── PERSISTENZA ─────────────────────────');
-  ok('riparte dal calendario', await p.locator('#calendar:not(.hidden)').count() === 1);
+  ok('riparte dalla bacheca della seduta', await p.locator('#board:not(.hidden)').count() === 1
+     && await p.evaluate(() => document.body.dataset.m) === 'emergenza');
   ok('protocolli appresi conservati',
      Object.keys(await p.evaluate(() => JSON.parse(localStorage.getItem('pc.v4.learned')))).length === 1);
 

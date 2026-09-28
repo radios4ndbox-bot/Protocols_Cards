@@ -3,7 +3,7 @@ let fail=0;
 const ok=(l,c,x='')=>{console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  → '+x:''));if(!c)fail++;};
 (async()=>{
   const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
-  const p=await b.newPage({viewport:{width:412,height:915},deviceScaleFactor:1,hasTouch:true,isMobile:true});
+  const p=await b.newPage({viewport:{width:412,height:915},reducedMotion:'reduce',deviceScaleFactor:1,hasTouch:true,isMobile:true});
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.goto('file://'+require('path').resolve(__dirname,'../index.html')+'');
   await p.evaluate(()=>localStorage.clear()); await p.reload(); await p.waitForTimeout(350);
@@ -44,8 +44,7 @@ const ok=(l,c,x='')=>{console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  → '+x:
 
   console.log('\n── ZONE APPLICATE AL PROTOCOLLO ────────');
   // ROSSI: TC TORACE + AngioTC Polmonare → deve diventare Torace, non TAs
-  await p.locator('.day.today').click(); await p.waitForTimeout(300);
-  await p.locator('#tcEl').click(); await p.waitForTimeout(1300);
+  /* la bacheca è la schermata iniziale: la seduta d'esempio di oggi, elettiva */
   await p.locator('.card-mini').first().click(); await p.waitForTimeout(1400);
   ok('esame TC TORACE', (await p.locator('#dExam').textContent()).includes('TORACE'));
   await p.locator('#applyBtn').click(); await p.waitForTimeout(400);
