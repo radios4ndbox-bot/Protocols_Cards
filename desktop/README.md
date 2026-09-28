@@ -60,7 +60,7 @@ All'apertura parte la stessa coreografia di ER Oncology Archivist, con le carte
 al posto del marchio e lo sfondo del tool: le quattro fasi (basale, arteriosa,
 venosa, tardiva) compaiono raccolte al centro in dissolvenza, poi si aprono a
 ventaglio scivolando a sinistra mentre «Protocol Cards» compare lettera per
-lettera con i tempi di Archivist; entra «Protocols made easy»; poi le carte si raccolgono in
+lettera con i tempi di Archivist; entra «a StructuRad product»; poi le carte si raccolgono in
 una, che si gira e mostra sul dorso il marchio StructuRad, e vola nel marchio
 della barra portandosi su la pagina. Nella barra resta la copia del dorso, su
 cui la carta atterra al pixel (lo verifica `intro.test.js`). Dura circa

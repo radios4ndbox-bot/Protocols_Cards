@@ -29,6 +29,12 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
   ok('immagini TC incorporate', await p.evaluate(() => [...document.querySelectorAll('#introScena .pc-carta img')]
     .every(i => i.src.startsWith('data:image/jpeg') && i.naturalWidth > 0)));
   ok('nome lettera per lettera', await p.locator('#introScena .intro-glifo').count() === 13);
+  ok('sottotitolo «a StructuRad product»', (await p.locator('#introScena .intro-sotto').textContent()) === 'a StructuRad product');
+  const COPY = '© 2026 StructuRad. All rights reserved. Powered by RadioPako.';
+  ok('copyright visibile anche durante l\'intro', (await p.locator('.copyright').textContent()) === COPY
+     && await p.evaluate(() => { const r = document.querySelector('.copyright').getBoundingClientRect();
+       return document.elementFromPoint(r.left + 4, r.top + r.height / 2) !== null
+         && +getComputedStyle(document.querySelector('.copyright')).zIndex > +getComputedStyle(document.getElementById('introScena')).zIndex; }));
   ok('barra nascosta durante l\'intro', !(await visibile(p, '.nav button')));
   ok('dorso con il marchio StructuRad sull\'ultima carta', await p.locator('#introScena .pc-carta:last-child .pc-dorso svg path').count() > 10);
   /* registro di ogni fotogramma: dove sta la carta in volo e dove il marchio */
@@ -67,6 +73,9 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
     const m = document.querySelector('.top .mark').getBoundingClientRect();
     const v = document.querySelector('.top .mark .pc-dorso').getBoundingClientRect();
     return Math.abs(v.width - m.width) < .5 && Math.abs(v.height - m.height) < .5 && Math.abs(v.left - m.left) < .5; }));
+  ok('copyright in basso a destra dopo l\'intro', await p.evaluate(() => {
+    const r = document.querySelector('.copyright').getBoundingClientRect();
+    return r.right > innerWidth - 40 && r.bottom > innerHeight - 30; }));
   ok('pagina ferma al suo posto', await p.evaluate(() => getComputedStyle(document.querySelector('main')).transform === 'none'));
   await p.close();
 
