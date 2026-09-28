@@ -36,6 +36,7 @@ const pezzi = {
   QRCODE:      [path.join(VENDOR, 'qrcode.js'),         'qrcode.js'],
   RISPARSER:   [path.join(QUI, 'ris-parser.js'),        'ris-parser.js'],
   PROTOCOLLI:  [path.join(QUI, 'protocolli.js'),        'protocolli.js'],
+  CANALE:      [path.join(QUI, 'canale.js'),            'canale.js'],
 };
 
 let html = leggi(SORGENTE);

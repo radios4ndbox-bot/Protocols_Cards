@@ -215,6 +215,16 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .spiega{margin-top:20px;padding:0 6px;font-size:.84rem;color:var(--ink-2);line-height:1.65}
 .spiega b{color:var(--ink)}
 .spiega ol{margin:8px 0 8px 18px;padding:0}
+.rete{padding:22px 26px;margin-bottom:20px}
+.rete h3{font-size:1.2rem;margin-bottom:8px}
+.rete [hidden]{display:none!important}
+.rete-stato{font-size:.86rem;color:var(--ink-2);line-height:1.6}
+.rete-stato b{color:var(--ink)}
+.rete-stato.ok{color:var(--jade-ink)}
+.rete-stato.ko{color:var(--coral-ink)}
+#qrAbb{display:block;margin:16px auto 4px;border-radius:12px;background:#fff;box-shadow:var(--well-s);
+  image-rendering:pixelated;max-width:100%;height:auto}
+.rete .nota{margin-top:10px;font-size:.76rem;color:var(--ink-3);line-height:1.5}
 
 /* ═══ PROTOCOLLI ══════════════════════════════════════════════════ */
 .pgrid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:26px;align-items:start}
@@ -559,7 +569,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   .mdc-row,.prova{grid-template-columns:1fr}
 }
 @media print{
-  body::before,.top,.intro,.passi,.barra,.spiega,.azioni{display:none!important}
+  body::before,.top,.intro,.passi,.barra,.spiega,.azioni,.rete{display:none!important}
   .plate,.qr-box{box-shadow:none}
 }
 </style>
@@ -575,7 +585,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
       <button data-area="proto">Protocolli <span class="nb" id="navN"></span></button>
       <button data-area="builder">Protocol builder</button>
     </nav>
-    <div class="privacy"><i></i>Nessun dato paziente lascia questo computer</div>
+    <div class="privacy" id="privacy"><i></i>Nessun dato paziente lascia questo computer</div>
   </div>
 </header>
 
@@ -663,6 +673,18 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
         <div class="qr-sotto" id="qrSotto"></div>
       </div>
       <div>
+        <div class="plate rete" id="rete">
+          <h3>Invio via rete</h3>
+          <div class="rete-stato" id="reteStato"></div>
+          <canvas id="qrAbb" width="260" height="260" hidden></canvas>
+          <div class="nota" id="reteNota" hidden>Il codice contiene la chiave del canale: non fotografarlo
+            e non condividerlo. Serve una volta sola.</div>
+          <div class="azioni">
+            <button class="btn solid sm" id="reteInvia" hidden>Invia la lista al telefono</button>
+            <button class="btn sm" id="reteAbbina">Abbina un telefono</button>
+            <button class="btn sm danger" id="reteScollega" hidden>Scollega</button>
+          </div>
+        </div>
         <div class="plate riepilogo">
           <h3>Contenuto del trasferimento</h3>
           <div class="riga"><span>Giornata</span><b id="rGiorno">—</b></div>
@@ -679,13 +701,15 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
         <div class="spiega">
           <b>Come si trasferisce</b>
           <ol>
-            <li>Apri Protocol Cards sul telefono e scegli la scansione.</li>
-            <li>Inquadra il codice qui accanto.</li>
-            <li>Se i codici sono più di uno si alternano da soli: tieni inquadrato
-                finché il telefono non li ha raccolti tutti, in qualsiasi ordine.</li>
+            <li><b>Via rete</b>: abbina il telefono una volta, poi basta «Invia la lista al
+                telefono». La lista passa dal relay cifrata, con una chiave che conoscono
+                solo questo PC e il telefono; se l'app è chiusa la riceve all'apertura,
+                entro 12 ore.</li>
+            <li><b>Senza rete</b>: apri Protocol Cards sul telefono, scegli la scansione e
+                inquadra il codice qui accanto. Se i codici sono più di uno si alternano da
+                soli: tieni inquadrato finché il telefono non li ha raccolti tutti.</li>
           </ol>
-          Il codice contiene solo i dati della lista. Non passa da nessuna rete:
-          viaggia dallo schermo alla fotocamera.
+          Il codice qui accanto non passa da nessuna rete: viaggia dallo schermo alla fotocamera.
         </div>
       </div>
     </div>
@@ -3892,6 +3916,188 @@ var qrcode = function() {
   else root.Protocolli = api;
 })(this);
 </script>
+<script>/* ═══════════════════════════════════════════════════════════════════════
+   PROTOCOL CARDS · canale cifrato PC ↔ telefono
+
+   PC e telefono non si vedono in rete: il PC è nella rete ospedaliera,
+   il telefono su quella mobile. Entrambi si collegano IN USCITA a un
+   relay pubblico (ntfy.sh) e si scambiano messaggi su un argomento
+   segreto. Il relay vede solo testo cifrato (verificato in reparto con
+   sync-test/: relay raggiungibile, canale aperto, andata e ritorno).
+
+   L'abbinamento è una coppia { t, k }: argomento del relay e chiave
+   AES-GCM a 256 bit. Nasce sul PC, passa al telefono solo nel QR, nel
+   frammento dell'indirizzo (#…), che non viene mai inviato ad alcun
+   server. Da lì in poi entrambi lo conservano e lo riusano.
+
+   Busta: { v, da, iv, ct }. Il mittente è dato autenticato, così un
+   messaggio del PC non può essere rispedito al PC come se fosse del
+   telefono.
+
+   La lista viaggia a pezzi: ntfy.sh trasforma in allegato i messaggi
+   oltre i 4 KB, e l'allegato non arriverebbe nel flusso. Ogni pezzo sta
+   largamente sotto il limite anche dopo cifratura e base64.
+
+   Condiviso fra tool PC (incorporato da build.js) e app del telefono.
+   ═══════════════════════════════════════════════════════════════════════ */
+(function (root) {
+  'use strict';
+
+  let RELAY = 'https://ntfy.sh';        // sostituibile solo dai test, con usaRelay
+  const PEZZO = 2400;                   // caratteri di lista per messaggio
+
+  const b64u = {
+    da: bytes => {
+      let s = '';
+      const u = new Uint8Array(bytes);
+      for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    },
+    a: s => {
+      s = s.replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+    },
+  };
+
+  function casuale(n) {
+    const A = 'abcdefghijkmnpqrstuvwxyz23456789';     // niente caratteri ambigui
+    return Array.from(crypto.getRandomValues(new Uint8Array(n)), b => A[b % A.length]).join('');
+  }
+
+  const RE_ARG = /^pcsync-[a-z0-9]{22}$/;
+  const valido = a => !!a && RE_ARG.test(a.t || '') && /^[A-Za-z0-9_-]{43}$/.test(a.k || '');
+
+  /* ─── abbinamento ─────────────────────────────────────────────────── */
+  async function nuovoAbbinamento() {
+    const chiave = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+    return { t: 'pcsync-' + casuale(22), k: b64u.da(await crypto.subtle.exportKey('raw', chiave)) };
+  }
+
+  /* { t, k } dal frammento dell'indirizzo; null se non c'è o è incompleto */
+  function daFrammento(hash) {
+    const q = new URLSearchParams(String(hash || '').replace(/^#/, ''));
+    const a = { t: q.get('t'), k: q.get('k') };
+    return valido(a) ? a : null;
+  }
+  const frammento = a => `#t=${a.t}&k=${a.k}`;
+
+  async function apri(a) {
+    if (!valido(a)) throw new Error('abbinamento non valido');
+    const chiave = await crypto.subtle.importKey('raw', b64u.a(a.k), 'AES-GCM', false, ['encrypt', 'decrypt']);
+    return { argomento: a.t, chiave };
+  }
+
+  /* ─── busta cifrata ───────────────────────────────────────────────── */
+  async function cifra(sess, da, oggetto) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: new TextEncoder().encode(da) },
+      sess.chiave, new TextEncoder().encode(JSON.stringify(oggetto)));
+    return JSON.stringify({ v: 1, da, iv: b64u.da(iv), ct: b64u.da(ct) });
+  }
+
+  async function decifra(sess, testo) {
+    const b = JSON.parse(testo);
+    if (b.v !== 1 || !b.da || !b.iv || !b.ct) throw new Error('busta sconosciuta');
+    const chiaro = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64u.a(b.iv), additionalData: new TextEncoder().encode(b.da) },
+      sess.chiave, b64u.a(b.ct));
+    return { da: b.da, msg: JSON.parse(new TextDecoder().decode(chiaro)) };
+  }
+
+  /* ─── relay ───────────────────────────────────────────────────────── */
+  async function invia(sess, da, oggetto) {
+    const corpo = await cifra(sess, da, oggetto);
+    const r = await fetch(`${RELAY}/${sess.argomento}`, { method: 'POST', body: corpo, cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status === 429 ? 'troppi invii ravvicinati, riprova fra un minuto' : 'relay: HTTP ' + r.status);
+    return corpo.length;
+  }
+
+  /* ascolto con EventSource: si riconnette da solo se la rete cade. Con
+     since=all il relay consegna anche quanto arrivato mentre si era
+     chiusi (ntfy.sh conserva i messaggi 12 ore): il telefono riceve la
+     lista anche se l'app era chiusa al momento dell'invio. Alla
+     riconnessione può ripetere messaggi già consegnati: si scartano per
+     identificativo. I propri messaggi e quelli che non si decifrano con
+     la chiave si ignorano.                                             */
+  function ascolta(sess, io, { messaggio, stato = () => {} }) {
+    const visti = new Set();
+    const es = new EventSource(`${RELAY}/${sess.argomento}/sse?since=all`);
+    es.onopen = () => stato('aperto');
+    es.onerror = () => stato(es.readyState === EventSource.CLOSED ? 'chiuso' : 'riconnessione');
+    es.onmessage = async ev => {
+      let e; try { e = JSON.parse(ev.data); } catch (_) { return; }
+      if (e.event !== 'message' || visti.has(e.id)) return;
+      visti.add(e.id);
+      let m;
+      try { m = await decifra(sess, e.message); } catch (_) { return stato('scartato'); }
+      if (m.da !== io) messaggio(m.msg);
+    };
+    return () => es.close();
+  }
+
+  /* ─── lista a pezzi ───────────────────────────────────────────────── */
+
+  /* somma di controllo sull'intero corpo: ogni pezzo è già autenticato
+     dalla cifratura, questa conferma che la ricomposizione è completa  */
+  function somma(s) {
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+    return h.toString(36).toUpperCase().padStart(7, '0').slice(0, 7);
+  }
+
+  function pezzi(corpo) {
+    const n = Math.max(1, Math.ceil(corpo.length / PEZZO));
+    return Array.from({ length: n }, (_, i) => corpo.slice(i * PEZZO, (i + 1) * PEZZO));
+  }
+
+  /* corpo: la lista già compressa e in base64url; z: 'deflate' o 'nessuna' */
+  const nuovoId = () => Date.now().toString(36) + casuale(4);
+
+  /* l'id si può scegliere prima, così una conferma che arriva mentre
+     l'ultimo pezzo è ancora in viaggio viene già riconosciuta          */
+  async function inviaLista(sess, da, { corpo, z, id = nuovoId() }, avanzamento = () => {}) {
+    const s = somma(corpo), p = pezzi(corpo);
+    for (let i = 0; i < p.length; i++) {
+      await invia(sess, da, { tipo: 'lista', id, s, z, i, n: p.length, x: p[i] });
+      avanzamento(i + 1, p.length);
+    }
+    return { id, n: p.length };
+  }
+
+  /* ricompone le liste man mano che arrivano i pezzi, in qualsiasi ordine */
+  function raccoglitore() {
+    const aperte = new Map();
+    return function aggiungi(m) {
+      if (!m || m.tipo !== 'lista' || typeof m.x !== 'string' || !(m.n > 0) || !(m.i >= 0 && m.i < m.n)) return null;
+      let l = aperte.get(m.id);
+      if (!l) aperte.set(m.id, l = { n: m.n, s: m.s, z: m.z, parti: new Array(m.n) });
+      if (l.n !== m.n || l.s !== m.s) return null;
+      l.parti[m.i] = m.x;
+      for (let i = 0; i < l.n; i++) if (l.parti[i] === undefined) return null;
+      aperte.delete(m.id);
+      const corpo = l.parti.join('');
+      if (somma(corpo) !== l.s) throw new Error('lista ricomposta con somma di controllo errata');
+      return { id: m.id, corpo, z: l.z };
+    };
+  }
+
+  /* dal corpo ricevuto all'oggetto lista */
+  async function leggiLista({ corpo, z }) {
+    let dati = b64u.a(corpo);
+    if (z === 'deflate') {
+      const ds = new DecompressionStream('deflate-raw');
+      const w = ds.writable.getWriter(); w.write(dati); w.close();
+      dati = new Uint8Array(await new Response(ds.readable).arrayBuffer());
+    } else if (z !== 'nessuna') throw new Error('compressione sconosciuta: ' + z);
+    return JSON.parse(new TextDecoder().decode(dati));
+  }
+
+  root.Canale = {
+    get RELAY() { return RELAY; }, usaRelay: u => { RELAY = u; }, PEZZO, nuovoAbbinamento, daFrammento, frammento, valido, apri,
+    cifra, decifra, invia, ascolta, somma, pezzi, nuovoId, inviaLista, raccoglitore, leggiLista,
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
 <script>
 'use strict';
 
@@ -4294,13 +4500,19 @@ let frames = [], iFrame = 0, timer = null, giro = 0;
 
 function fermaRotazione() { clearInterval(timer); timer = null; }
 
+/* la lista pronta da trasmettere: compressa e in base64url, uguale per
+   i codici QR e per l'invio via rete                                   */
+async function listaCompressa() {
+  const json = JSON.stringify(payload());
+  const { dati, metodo } = await comprimi(json);
+  return { json, corpo: base64url(dati), metodo };
+}
+
 async function preparaTrasferimento() {
   fermaRotazione();
   const mio = ++giro;                 // solo l'ultima esecuzione può avviare il timer
   const a = attivi();
-  const json = JSON.stringify(payload());
-  const { dati, metodo } = await comprimi(json);
-  const corpo = base64url(dati);
+  const { json, corpo, metodo } = await listaCompressa();
   const somma = checksum(corpo);
 
   const n = Math.max(1, Math.ceil(corpo.length / MAX_FRAME));
@@ -4322,6 +4534,7 @@ async function preparaTrasferimento() {
     : `La lista è divisa in <b>${n} codici</b> che si alternano ogni secondo.
        Tieni il telefono inquadrato finché non li ha raccolti tutti.`;
 
+  disegnaRete();
   if (mio !== giro) return;           // nel frattempo ne è partita un'altra
   fermaRotazione();
   iFrame = 0;
@@ -4346,6 +4559,131 @@ $('scaricaJson').onclick = () => {
   scarica(`protocol-cards-${g.replace(/\//g,'-')}.json`, payload());
 };
 $('stampa').onclick = () => window.print();
+
+/* ═══ invio via rete ═════════════════════════════════════════════════
+   Canale cifrato verso il telefono attraverso il relay (canale.js). Il
+   relay si contatta solo su richiesta, con «Abbina» o «Invia»: aprire
+   il tool resta un'operazione senza rete.
+
+   L'abbinamento { t, k } si salva solo quando il telefono conferma di
+   averlo letto dal QR; da lì vale finché non si scollega.            */
+const CH_ABB  = 'protocol-cards.pc.abbinamento';
+const APP_TEL = 'https://radios4ndbox-bot.github.io/Protocols_Cards/prototype/index.html';
+let abbinamento = leggiAbbinamento();
+let inAbbinamento = null;            // { t, k } mostrato nel QR, non ancora confermato
+let reteChiudi = null, reteSess = null, reteInvio = null;
+disegnaRete();
+
+function leggiAbbinamento() {
+  try {
+    const a = JSON.parse(localStorage.getItem(CH_ABB) || 'null');
+    return a && Canale.valido(a) ? a : null;
+  } catch (_) { return null; }
+}
+function scriviAbbinamento(a) {
+  abbinamento = a;
+  try { a ? localStorage.setItem(CH_ABB, JSON.stringify(a)) : localStorage.removeItem(CH_ABB); } catch (_) {}
+}
+
+function reteStato(html, tono = '') { const e = $('reteStato'); e.className = 'rete-stato ' + tono; e.innerHTML = html; }
+const erroreRete = e => e instanceof TypeError ? 'relay non raggiungibile, controlla la rete' : e.message;
+
+function disegnaRete() {
+  const a = abbinamento;
+  $('privacy').lastChild.textContent = a ? 'I dati paziente escono solo cifrati, verso il telefono abbinato'
+                                         : 'Nessun dato paziente lascia questo computer';
+  $('reteInvia').hidden = !a;
+  $('reteScollega').hidden = !a && !inAbbinamento;
+  $('reteScollega').textContent = inAbbinamento ? 'Annulla' : 'Scollega';
+  $('reteAbbina').textContent = a ? 'Abbina un altro telefono' : 'Abbina un telefono';
+  $('reteAbbina').hidden = !!inAbbinamento;
+  $('qrAbb').hidden = $('reteNota').hidden = !inAbbinamento;
+  if (inAbbinamento || reteInvio) return;          // lo stato lo scrivono loro
+  reteStato(a
+    ? `Telefono abbinato: <b>${esc(a.dispositivo || 'telefono')}</b>. La lista verificata parte con un clic.`
+    : 'Nessun telefono abbinato. Abbinalo una volta inquadrando un codice, poi le liste partono con un clic.');
+}
+
+function fermaAscolto() { if (reteChiudi) reteChiudi(); reteChiudi = reteSess = null; }
+
+/* un solo ascolto alla volta, sul canale dell'abbinamento in corso */
+async function ascoltaRete(a, suAperto) {
+  fermaAscolto();
+  const sess = reteSess = await Canale.apri(a);
+  reteChiudi = Canale.ascolta(sess, 'pc', {
+    stato: s => {
+      if (sess !== reteSess) return;
+      if (s === 'aperto' && suAperto) suAperto();
+      if (s === 'riconnessione' && inAbbinamento) reteStato('Relay non raggiungibile, riprovo…', 'ko');
+    },
+    messaggio: m => { if (sess === reteSess) messaggioRete(a, m); },
+  });
+  return sess;
+}
+
+function messaggioRete(a, m) {
+  if (m.tipo === 'ciao' && inAbbinamento && inAbbinamento.t === a.t) {
+    inAbbinamento = null;
+    scriviAbbinamento({ t: a.t, k: a.k, dispositivo: String(m.dispositivo || 'telefono').slice(0, 60), quando: Date.now() });
+    disegnaRete();
+    reteStato(`Abbinato a <b>${esc(abbinamento.dispositivo)}</b>. Ora la lista parte con «Invia la lista al telefono».`, 'ok');
+  }
+  if (m.tipo === 'ricevuta' && reteInvio && m.rif === reteInvio.id) {
+    reteInvio = null;
+    const n = x => Number(x) || 0;
+    reteStato(`<b>Ricevuta dal telefono</b>: ${n(m.nuove)} nuove schede, ${n(m.aggiornate)} aggiornate`
+      + (n(m.invariate) ? `, ${n(m.invariate)} già lavorate lasciate com'erano` : '') + '.', 'ok');
+  }
+}
+
+$('reteAbbina').onclick = async () => {
+  if (abbinamento && !confirm('Il telefono abbinato ora non riceverà più le liste. Abbinarne un altro?')) return;
+  reteInvio = null;
+  try {
+    const a = await Canale.nuovoAbbinamento();
+    inAbbinamento = a;
+    disegnaRete();
+    $('qrAbb').hidden = true;                      // si mostra solo a canale aperto
+    reteStato('Collegamento al relay…');
+    await ascoltaRete(a, () => {
+      if (inAbbinamento !== a) return;
+      disegnaQR($('qrAbb'), APP_TEL + Canale.frammento(a));
+      $('qrAbb').hidden = false;
+      reteStato('Inquadra il codice con la fotocamera del telefono: si apre Protocol Cards e si abbina da solo.');
+    });
+  } catch (e) {
+    inAbbinamento = null; fermaAscolto(); disegnaRete();
+    reteStato('Abbinamento non riuscito: ' + esc(erroreRete(e)), 'ko');
+  }
+};
+
+$('reteScollega').onclick = () => {
+  if (inAbbinamento) { inAbbinamento = null; fermaAscolto(); disegnaRete(); return; }
+  if (!confirm('Scollegare il telefono? Per inviare di nuovo servirà un nuovo abbinamento.')) return;
+  scriviAbbinamento(null); inAbbinamento = reteInvio = null; fermaAscolto(); disegnaRete();
+};
+
+$('reteInvia').onclick = async () => {
+  const a = abbinamento;
+  if (!a || !attivi().length) return;
+  const b = $('reteInvia');
+  b.disabled = true;
+  try {
+    const sess = reteSess && reteSess.argomento === a.t ? reteSess : await ascoltaRete(a);
+    const { corpo, metodo } = await listaCompressa();
+    const invio = reteInvio = { id: Canale.nuovoId() };
+    reteStato('Invio in corso…');
+    await Canale.inviaLista(sess, 'pc', { corpo, z: metodo === 'deflate' ? 'deflate' : 'nessuna', id: invio.id },
+      (i, n) => { if (reteInvio === invio) reteStato(n > 1 ? `Invio in corso: parte ${i} di ${n}…` : 'Invio in corso…'); });
+    if (reteInvio !== invio) return;               // già confermata, o scollegato nel frattempo
+    reteStato(`Lista inviata, <b>${attivi().length} pazienti</b>. In attesa di conferma dal telefono:
+      se l'app è chiusa la riceverà all'apertura, entro 12 ore.`);
+  } catch (e) {
+    reteInvio = null;
+    disegnaRete();
+    reteStato('Invio non riuscito: ' + esc(erroreRete(e)), 'ko');
+  } finally { b.disabled = false; }
+};
 
 /* ═══ disegno del codice QR ══════════════════════════════════════════ */
 function disegnaQR(canvas, testo) {
