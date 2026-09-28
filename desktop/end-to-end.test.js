@@ -54,7 +54,7 @@ const ok = (l,c,x='') => { console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  →
   await primo.locator('.togli').click(); await p.waitForTimeout(250);
   ok('reinclusa', (await p.locator('#conta').textContent()).startsWith('14 pazienti'));
 
-  console.log('\n── QR ──────────────────────────────────');
+  console.log('\n── PASSO 3: INVIO ──────────────────────');
   await p.locator('#avanti').click();
   await p.waitForTimeout(900);
   ok('vista trasferimento', await p.locator('#v3.on').count()===1);
@@ -62,17 +62,10 @@ const ok = (l,c,x='') => { console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  →
      await p.locator('#rGiorno').textContent());
   ok('pazienti', (await p.locator('#rPaz').textContent())==='14');
   ok('esami', (await p.locator('#rEsami').textContent())==='29');
-  const grezzi = await p.locator('#rGrezzi').textContent();
-  const comp   = await p.locator('#rComp').textContent();
-  const frame  = await p.locator('#rFrame').textContent();
-  console.log('       grezzi '+grezzi+' · compressi '+comp+' · '+frame);
+  const comp = await p.locator('#rComp').textContent();
   ok('compressione applicata', /−\d+%/.test(comp), comp);
-  const dipinto = await p.evaluate(()=>{
-    const c=document.getElementById('qr'); const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
-    let scuri=0; for(let i=0;i<d.length;i+=4) if(d[i]<100) scuri++;
-    return scuri;
-  });
-  ok('QR disegnato sul canvas', dipinto>2000, dipinto+' pixel scuri');
+  ok('nessun QR della lista: si invia via rete', await p.locator('#qr').count()===0);
+  ok('abbinamento proposto', await p.locator('#reteAbbina').isVisible());
 
   console.log('\n── PAYLOAD ─────────────────────────────');
   const pl = await p.evaluate(()=>payload());
@@ -83,14 +76,10 @@ const ok = (l,c,x='') => { console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  →
   ok('accession presente', pl.p.every(r=>/^0D\d{8}$/.test(r[0])));
   ok('nascita presente', pl.p.every(r=>/^\d{2}\/\d{2}\/\d{4}$/.test(r[2])));
   ok('orario presente', pl.p.every(r=>/^\d{2}:\d{2}$/.test(r[3])));
-  const frames = await p.evaluate(()=>frames.map(f=>f.length));
-  const intest = await p.evaluate(()=>frames[0].slice(0,24));
-  ok('frame con intestazione e checksum', /^PC1\|[A-Z0-9]{7}\|1\/\d+\|/.test(intest), intest);
-  ok('frame entro il limite', frames.every(l=>l<=1260), 'max '+Math.max(...frames));
 
   console.log('\n── NESSUNA RETE ────────────────────────');
   ok('zero richieste di rete', net.length===0, net.slice(0,3).join(', ')||'nessuna');
-  await p.screenshot({ path:'shot-qr.png' });
+  await p.screenshot({ path:'shot-invio.png' });
 
   console.log('\n────────────────────────────────────────');
   console.log(errs.length? 'ERRORI JS: '+errs.slice(0,4).join(' | ') : 'errori JS: nessuno');

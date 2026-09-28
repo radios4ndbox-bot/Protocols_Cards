@@ -198,13 +198,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .pchip .dots i{width:6px;height:6px;border-radius:50%}
 .pchip.nessuno{background:transparent;box-shadow:none;color:var(--ink-3);cursor:default;font-weight:500}
 
-.qr-griglia{display:grid;grid-template-columns:minmax(320px,440px) 1fr;gap:26px;align-items:start}
-.qr-box{padding:26px;text-align:center}
-#qr{display:block;margin:0 auto;image-rendering:pixelated;border-radius:14px;background:#fff;max-width:100%;height:auto;
-  box-shadow:var(--well-s)}
-.qr-sotto{margin-top:16px;font-size:.84rem;color:var(--ink-2);line-height:1.6}
-.qr-sotto b{color:var(--ink)}
-.frame-n{margin-top:12px;font-size:.78rem;font-weight:700;color:var(--jade-ink);font-variant-numeric:tabular-nums}
+.tras-griglia{display:grid;grid-template-columns:minmax(320px,480px) 1fr;gap:26px;align-items:start}
 .riepilogo{padding:24px 26px}
 .riepilogo h3{font-size:1.2rem;margin-bottom:12px}
 .riga{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.88rem}
@@ -215,7 +209,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .spiega{margin-top:20px;padding:0 6px;font-size:.84rem;color:var(--ink-2);line-height:1.65}
 .spiega b{color:var(--ink)}
 .spiega ol{margin:8px 0 8px 18px;padding:0}
-.rete{padding:22px 26px;margin-bottom:20px}
+.rete{padding:24px 26px}
 .rete h3{font-size:1.2rem;margin-bottom:8px}
 .rete [hidden]{display:none!important}
 .rete-stato{font-size:.86rem;color:var(--ink-2);line-height:1.6}
@@ -546,7 +540,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   .bprev{position:static}
   .pgrid{grid-template-columns:300px minmax(0,1fr);gap:20px}
   .cards{grid-template-columns:1fr}
-  .qr-griglia{grid-template-columns:1fr}
+  .tras-griglia{grid-template-columns:1fr}
   .firma{grid-template-columns:1fr}
   .fase{grid-template-columns:34px minmax(0,1fr) auto}
   .fase select.field{grid-column:2;grid-row:1;max-width:220px}
@@ -570,7 +564,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 }
 @media print{
   body::before,.top,.intro,.passi,.barra,.spiega,.azioni,.rete{display:none!important}
-  .plate,.qr-box{box-shadow:none}
+  .plate{box-shadow:none}
 }
 </style>
 </head>
@@ -633,7 +627,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
       <span class="chip proto" id="chipProto"></span>
       <span class="sp"></span>
       <button class="btn sm" id="indietro1">← Cambia file</button>
-      <button class="btn solid sm" id="avanti">Genera il QR →</button>
+      <button class="btn solid sm" id="avanti">Trasferisci →</button>
     </div>
     <div class="nota" style="margin:0 0 18px">
       Le righe evidenziate sono quelle su cui il parser <b>non è sicuro</b>: controllale.
@@ -666,50 +660,40 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
       <span class="sp"></span>
       <button class="btn sm" id="indietro2">← Torna alla verifica</button>
     </div>
-    <div class="qr-griglia">
-      <div class="plate qr-box">
-        <canvas id="qr" width="420" height="420"></canvas>
-        <div class="frame-n" id="frameN"></div>
-        <div class="qr-sotto" id="qrSotto"></div>
+    <div class="tras-griglia">
+      <div class="plate rete" id="rete">
+        <h3>Invio al telefono</h3>
+        <div class="rete-stato" id="reteStato"></div>
+        <canvas id="qrAbb" width="260" height="260" hidden></canvas>
+        <div class="nota" id="reteNota" hidden>Il codice contiene la chiave del canale: non fotografarlo
+          e non condividerlo. Serve una volta sola.</div>
+        <div class="azioni">
+          <button class="btn solid sm" id="reteInvia" hidden>Invia la lista al telefono</button>
+          <button class="btn sm" id="reteAbbina">Abbina un telefono</button>
+          <button class="btn sm danger" id="reteScollega" hidden>Scollega</button>
+        </div>
       </div>
       <div>
-        <div class="plate rete" id="rete">
-          <h3>Invio via rete</h3>
-          <div class="rete-stato" id="reteStato"></div>
-          <canvas id="qrAbb" width="260" height="260" hidden></canvas>
-          <div class="nota" id="reteNota" hidden>Il codice contiene la chiave del canale: non fotografarlo
-            e non condividerlo. Serve una volta sola.</div>
-          <div class="azioni">
-            <button class="btn solid sm" id="reteInvia" hidden>Invia la lista al telefono</button>
-            <button class="btn sm" id="reteAbbina">Abbina un telefono</button>
-            <button class="btn sm danger" id="reteScollega" hidden>Scollega</button>
-          </div>
-        </div>
         <div class="plate riepilogo">
-          <h3>Contenuto del trasferimento</h3>
+          <h3>Contenuto dell'invio</h3>
           <div class="riga"><span>Giornata</span><b id="rGiorno">—</b></div>
           <div class="riga"><span>Pazienti</span><b id="rPaz">—</b></div>
           <div class="riga"><span>Esami</span><b id="rEsami">—</b></div>
           <div class="riga"><span>Dati grezzi</span><b id="rGrezzi">—</b></div>
           <div class="riga"><span>Dopo compressione</span><b id="rComp">—</b></div>
-          <div class="riga"><span>Codici QR</span><b id="rFrame">—</b></div>
           <div class="azioni">
             <button class="btn sm" id="scaricaJson">Scarica come file JSON</button>
-            <button class="btn sm" id="stampa">Stampa il QR</button>
           </div>
         </div>
         <div class="spiega">
           <b>Come si trasferisce</b>
           <ol>
-            <li><b>Via rete</b>: abbina il telefono una volta, poi basta «Invia la lista al
-                telefono». La lista passa dal relay cifrata, con una chiave che conoscono
-                solo questo PC e il telefono; se l'app è chiusa la riceve all'apertura,
-                entro 12 ore.</li>
-            <li><b>Senza rete</b>: apri Protocol Cards sul telefono, scegli la scansione e
-                inquadra il codice qui accanto. Se i codici sono più di uno si alternano da
-                soli: tieni inquadrato finché il telefono non li ha raccolti tutti.</li>
+            <li>La prima volta premi «Abbina un telefono» e inquadra il codice con la
+                fotocamera del telefono: si apre Protocol Cards e si abbina da solo.</li>
+            <li>Da lì in poi basta «Invia la lista al telefono». La lista passa dal relay
+                cifrata, con una chiave che conoscono solo questo PC e il telefono; se l'app
+                è chiusa la riceve all'apertura, entro 12 ore.</li>
           </ol>
-          Il codice qui accanto non passa da nessuna rete: viaggia dallo schermo alla fotocamera.
         </div>
       </div>
     </div>
@@ -836,7 +820,6 @@ function mostraArea(a) {
   $('aLista').classList.toggle('on', a === 'lista');
   $('aProto').classList.toggle('on', a === 'proto');
   $('aBuilder').classList.toggle('on', a === 'builder');
-  if (a !== 'lista') fermaRotazione();
   if (a === 'proto') { disegnaLibreria(); disegnaEditor(); }
   else if (a === 'builder') disegnaBuilder();
   else {
@@ -915,7 +898,7 @@ function vai(n) {
   /* le textarea si misurano solo quando la vista è visibile: da nascoste
      scrollHeight vale 0 e resterebbero alte una riga                     */
   if (n === 2) document.querySelectorAll('#righe textarea.cel').forEach(cresci);
-  if (n === 3) preparaTrasferimento(); else fermaRotazione();
+  if (n === 3) preparaTrasferimento();
 }
 $('indietro1').onclick = () => { $('file').value=''; vai(1); };
 $('indietro2').onclick = () => vai(2);
@@ -1159,7 +1142,7 @@ function aggiornaConteggi() {
   $('chipProto').innerHTML = a.length ? `<b>${n.personale}</b> personali · <b>${n.ufficiale}</b> ufficiali${n.nessuno ? ` · <b>${n.nessuno}</b> da impostare` : ''}` : '';
 }
 
-/* ═══ passo 3 · payload e QR ═════════════════════════════════════════ */
+/* ═══ passo 3 · payload e invio ══════════════════════════════════════ */
 
 /* Formato compatto: chiavi di una lettera e liste posizionali. Il telefono
    conosce lo schema, quindi i nomi dei campi non vanno trasmessi.        */
@@ -1197,21 +1180,7 @@ function base64url(bytes) {
   return s;
 }
 
-/* somma di controllo: un trasferimento parziale o corrotto dev'essere
-   riconosciuto, non accettato in silenzio                              */
-function checksum(s) {
-  let h = 5381;
-  for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
-  return h.toString(36).toUpperCase().padStart(7, '0').slice(0, 7);
-}
-
-const MAX_FRAME = 1200;          // caratteri per codice, con margine
-let frames = [], iFrame = 0, timer = null, giro = 0;
-
-function fermaRotazione() { clearInterval(timer); timer = null; }
-
-/* la lista pronta da trasmettere: compressa e in base64url, uguale per
-   i codici QR e per l'invio via rete                                   */
+/* la lista pronta da trasmettere: compressa e in base64url */
 async function listaCompressa() {
   const json = JSON.stringify(payload());
   const { dati, metodo } = await comprimi(json);
@@ -1219,42 +1188,16 @@ async function listaCompressa() {
 }
 
 async function preparaTrasferimento() {
-  fermaRotazione();
-  const mio = ++giro;                 // solo l'ultima esecuzione può avviare il timer
   const a = attivi();
   const { json, corpo, metodo } = await listaCompressa();
-  const somma = checksum(corpo);
-
-  const n = Math.max(1, Math.ceil(corpo.length / MAX_FRAME));
-  const dim = Math.ceil(corpo.length / n);
-  frames = [];
-  for (let i = 0; i < n; i++)
-    frames.push(`PC1|${somma}|${i+1}/${n}|${corpo.slice(i*dim, (i+1)*dim)}`);
-
   $('rGiorno').textContent = a[0] && a[0].data ? a[0].data : '—';
   $('rPaz').textContent    = a.length;
   $('rEsami').textContent  = a.reduce((s,p)=>s+p.esami.length,0);
   $('rGrezzi').textContent = (json.length/1024).toFixed(1).replace('.',',') + ' KB';
   $('rComp').textContent   = (corpo.length/1024).toFixed(1).replace('.',',') + ' KB'
-                           + (metodo==='deflate' ? ` (−${Math.round(100-corpo.length/json.length*100)}%)` : '');
-  $('rFrame').textContent  = n === 1 ? '1 (statico)' : `${n} (a rotazione)`;
-
-  $('qrSotto').innerHTML = n === 1
-    ? `La giornata sta in <b>un solo codice</b>: inquadralo e basta.`
-    : `La lista è divisa in <b>${n} codici</b> che si alternano ogni secondo.
-       Tieni il telefono inquadrato finché non li ha raccolti tutti.`;
-
+                           + (metodo==='deflate' && corpo.length < json.length
+                              ? ` (−${Math.round(100-corpo.length/json.length*100)}%)` : '');
   disegnaRete();
-  if (mio !== giro) return;           // nel frattempo ne è partita un'altra
-  fermaRotazione();
-  iFrame = 0;
-  mostraFrame();
-  if (n > 1) timer = setInterval(() => { iFrame = (iFrame+1) % frames.length; mostraFrame(); }, 1000);
-}
-
-function mostraFrame() {
-  disegnaQR($('qr'), frames[iFrame]);
-  $('frameN').textContent = frames.length > 1 ? `codice ${iFrame+1} di ${frames.length}` : '';
 }
 
 function scarica(nome, oggetto) {
@@ -1268,7 +1211,6 @@ $('scaricaJson').onclick = () => {
   const g = (attivi()[0] || {}).data || 'lista';
   scarica(`protocol-cards-${g.replace(/\//g,'-')}.json`, payload());
 };
-$('stampa').onclick = () => window.print();
 
 /* ═══ invio via rete ═════════════════════════════════════════════════
    Canale cifrato verso il telefono attraverso il relay (canale.js). Il
@@ -1397,7 +1339,7 @@ $('reteInvia').onclick = async () => {
 
 /* ═══ disegno del codice QR ══════════════════════════════════════════ */
 function disegnaQR(canvas, testo) {
-  const q = qrcode(0, 'L');            // correzione bassa: più dati per codice
+  const q = qrcode(0, 'M');            // codice di abbinamento: corto, correzione media
   q.addData(testo);
   q.make();
   const n = q.getModuleCount();
