@@ -50,23 +50,43 @@ reparto con `sync-test/`.
   ancora da fare si aggiornano; quelle già lavorate o nel cestino restano
   come sono.
 
-Il relay vede solo testo cifrato. Il tool contatta la rete solo quando si
-preme «Abbina» o «Invia»: aprirlo e lavorare resta un'operazione senza rete.
+Il relay vede solo testo cifrato. Senza un telefono abbinato il tool contatta la
+rete solo quando si preme «Abbina»: aprirlo e lavorare resta un'operazione senza
+rete. Con un telefono abbinato si mette in ascolto all'apertura, per il profilo.
 Il canale è in `canale.js`, condiviso con l'app del telefono.
 
-## Backup dei protocolli
+## Profilo dell'operatore
 
-In **Protocolli**, in fondo alla libreria, «Scegli cartella» collega una cartella
-del computer, anche dentro Google Drive o OneDrive per desktop, che ne fanno
-la copia nel cloud. Il tool ci scrive `protocol-cards-backup.json` con entrambe le
-librerie: gli ufficiali come li ha modificati il reparto e i personali, compresi
-quelli appresi. Lo riscrive da solo a ogni modifica, e accanto tiene la versione
-precedente (`protocol-cards-backup.precedente.json`). Nel file ci sono solo
-protocolli: nessun dato paziente, nessuna chiave di abbinamento.
+I protocolli personali, compresi quelli appresi, sono di chi li usa e non del
+PC: vivono nel **profilo**, sul telefono dell'operatore (Impostazioni → «Il tuo
+profilo», con il nome). Abbinando il telefono a un PC qualsiasi, di questo o di
+un altro ospedale, il profilo arriva al PC e i suoi personali diventano quelli
+del tool; ciò che si crea o si impara sul PC torna al telefono dallo stesso
+canale cifrato delle liste. Vince la versione più recente.
 
-Su un PC nuovo, ad esempio in un altro ospedale, «Recupera dal backup» rilegge la
-cartella, mostra cosa contiene e, confermando, sostituisce le librerie; da lì
-la cartella resta collegata per i salvataggi successivi.
+- Sul PC resta solo la copia del profilo abbinato. Se si abbina il telefono di un
+  altro operatore, o si scollega, quella copia sparisce dal PC; i protocolli
+  restano sul telefono.
+- I personali creati prima dei profili restano «di questo PC»: al primo
+  abbinamento il tool propone di portarli nel profilo.
+- Sul telefono «Esporta profilo» ne fa un file, con anche i protocolli appresi
+  sul telefono, da salvare dove si vuole (Drive, mail); «Importa profilo» lo
+  riporta su un telefono nuovo.
+- Con un telefono abbinato il tool si mette in ascolto sul relay all'apertura,
+  per ricevere il profilo; senza abbinamento aprirlo resta senza rete.
+
+## Backup della libreria ufficiale
+
+La libreria ufficiale è del reparto e resta sul PC. In **Protocolli**, in fondo
+alla libreria, «Scegli cartella» collega una cartella del computer, anche dentro
+Google Drive o OneDrive per desktop, che ne fanno la copia nel cloud. Il tool ci
+scrive `protocol-cards-backup.json` e lo riscrive da solo a ogni modifica, con
+accanto la versione precedente (`protocol-cards-backup.precedente.json`). Nel
+file ci sono solo i protocolli ufficiali: niente personali (sono nel profilo),
+nessun dato paziente, nessuna chiave di abbinamento.
+
+Su un PC nuovo «Recupera dal backup» rilegge la cartella, mostra cosa contiene e,
+confermando, sostituisce la libreria ufficiale; la cartella resta collegata.
 
 Serve Chrome o Edge (File System Access). Il browser può chiedere di nuovo il
 permesso a ogni apertura: il backup va in pausa e riparte con «Riattiva».
@@ -175,6 +195,10 @@ node ris-parser.test.js                          # fixture sintetica, nessun dat
 node protocolli.test.js                          # riconoscimento identico al prototipo
 RIS_PDF_DIR=/percorso node end-to-end.test.js    # richiede una lista RIS chiamata lista.pdf
 node sincronizzazione.test.js                    # PC → telefono con un relay finto locale
+node profilo.test.js                             # profilo sul telefono fra due PC, con relay finto
+node backup.test.js                              # backup della libreria ufficiale in una cartella
+node tendine.test.js                             # menu a tendina del tool
+node intro.test.js                               # intro, salto e «riduci movimento"
 ```
 
 Il test end-to-end apre il file costruito da `file://` e verifica anche che

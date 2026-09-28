@@ -137,20 +137,22 @@
 
   /* l'id si può scegliere prima, così una conferma che arriva mentre
      l'ultimo pezzo è ancora in viaggio viene già riconosciuta          */
-  async function inviaLista(sess, da, { corpo, z, id = nuovoId() }, avanzamento = () => {}) {
+  /* tipo: 'lista' per la lista del giorno, 'profilo' per il profilo:
+     stesso trasporto a pezzi, raccolti da due raccoglitori distinti   */
+  async function inviaLista(sess, da, { corpo, z, id = nuovoId(), tipo = 'lista' }, avanzamento = () => {}) {
     const s = somma(corpo), p = pezzi(corpo);
     for (let i = 0; i < p.length; i++) {
-      await invia(sess, da, { tipo: 'lista', id, s, z, i, n: p.length, x: p[i] });
+      await invia(sess, da, { tipo, id, s, z, i, n: p.length, x: p[i] });
       avanzamento(i + 1, p.length);
     }
     return { id, n: p.length };
   }
 
   /* ricompone le liste man mano che arrivano i pezzi, in qualsiasi ordine */
-  function raccoglitore() {
+  function raccoglitore(tipo = 'lista') {
     const aperte = new Map();
     return function aggiungi(m) {
-      if (!m || m.tipo !== 'lista' || typeof m.x !== 'string' || !(m.n > 0) || !(m.i >= 0 && m.i < m.n)) return null;
+      if (!m || m.tipo !== tipo || typeof m.x !== 'string' || !(m.n > 0) || !(m.i >= 0 && m.i < m.n)) return null;
       let l = aperte.get(m.id);
       if (!l) aperte.set(m.id, l = { n: m.n, s: m.s, z: m.z, parti: new Array(m.n) });
       if (l.n !== m.n || l.s !== m.s) return null;
@@ -161,6 +163,15 @@
       if (somma(corpo) !== l.s) throw new Error('lista ricomposta con somma di controllo errata');
       return { id: m.id, corpo, z: l.z };
     };
+  }
+
+  /* da un oggetto al corpo da inviare: JSON compresso, in base64url */
+  async function impacchetta(oggetto) {
+    const dati = new TextEncoder().encode(JSON.stringify(oggetto));
+    if (typeof CompressionStream === 'undefined') return { corpo: b64u.da(dati), z: 'nessuna' };
+    const cs = new CompressionStream('deflate-raw');
+    const w = cs.writable.getWriter(); w.write(dati); w.close();
+    return { corpo: b64u.da(await new Response(cs.readable).arrayBuffer()), z: 'deflate' };
   }
 
   /* dal corpo ricevuto all'oggetto lista */
@@ -176,6 +187,6 @@
 
   root.Canale = {
     get RELAY() { return RELAY; }, usaRelay: u => { RELAY = u; }, PEZZO, nuovoAbbinamento, daFrammento, frammento, valido, apri,
-    cifra, decifra, invia, ascolta, somma, pezzi, nuovoId, inviaLista, raccoglitore, leggiLista,
+    cifra, decifra, invia, ascolta, somma, pezzi, nuovoId, inviaLista, raccoglitore, impacchetta, leggiLista,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

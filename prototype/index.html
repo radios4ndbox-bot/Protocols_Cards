@@ -413,6 +413,12 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 .mini-b{flex-shrink:0;height:30px;padding:0 11px;border-radius:9px;border:1px solid var(--border2);
   background:var(--surface);color:var(--accent-d);font-size:11.5px;font-weight:700;cursor:pointer}
 .mini-b:active{background:var(--accent-s)}
+.prof-l{display:block;font-size:9.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px}
+.prof-nome{width:100%;height:40px;padding:0 12px;border:1px solid var(--border);border-radius:10px;
+  background:var(--surface2);font:inherit;font-size:14px;font-weight:600;color:var(--text)}
+.prof-nome:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-s)}
+.prof-az{display:flex;gap:8px;margin-top:11px}
 .ttl{font-size:10.5px;font-weight:700;color:var(--danger);background:var(--danger-s);
   border-radius:6px;padding:3px 7px;display:inline-block;margin-top:8px}
 .btn-danger{width:100%;height:44px;border-radius:11px;border:1px solid var(--danger);
@@ -675,6 +681,11 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     </p>
     <div id="learnList"></div>
     <button class="btn-danger" id="btnClearLearn" style="display:none">Cancella tutti i protocolli appresi</button>
+  </div>
+  <div class="blk">
+    <div class="sec-t">Il tuo profilo</div>
+    <div id="profBox"></div>
+    <input type="file" id="profFile" accept=".json,application/json" hidden>
   </div>
   <div class="blk">
     <div class="sec-t">Collegamento al PC <span class="sp"></span><span id="pcN"></span></div>
@@ -1033,7 +1044,7 @@ function show(v){
   else { T.textContent='Cestino'; S.textContent=''; }
 
   if(v==='board')    renderBoard();
-  if(v==='settings'){ renderSettings(); renderPc(); }
+  if(v==='settings'){ renderSettings(); renderProfilo(); renderPc(); }
   if(v==='trash')    renderTrash();
 }
 $('navBack').onclick = () => { if(!busy) show('board'); };
@@ -1760,13 +1771,113 @@ function ridisegnaDopoImport(){
   else if(view==='settings') renderSettings();
 }
 
+/* ═══ PROFILO ════════════════════════════════════════════
+   Il profilo dell'operatore vive qui, sul suo telefono: nome e
+   protocolli personali, compresi quelli appresi sul PC. Abbinando il
+   telefono a un PC qualsiasi, di questo o di un altro ospedale, il
+   profilo parte verso il PC, che carica i personali; ciò che il PC crea
+   o impara torna qui dallo stesso canale cifrato. Vince la versione più
+   recente. «Esporta profilo» ne fa un file da tenere al sicuro, anche
+   con i protocolli appresi qui sul telefono: se il telefono si perde,
+   «Importa profilo» lo riporta su quello nuovo.                        */
+let profilo = load('profilo', null);
+let pcSess = null;                       // il canale aperto, per mandare il profilo quando cambia
+const RE_PROF = /^pr-[a-z0-9]{6,20}$/;
+function mioProfilo(){
+  if(!profilo || !RE_PROF.test(profilo.id || '')){
+    const A = 'abcdefghijkmnpqrstuvwxyz23456789';
+    const caso = window.crypto && crypto.getRandomValues
+      ? Array.from(crypto.getRandomValues(new Uint8Array(12)), b => A[b % A.length]).join('')
+      : Array.from({length:12}, () => A[Math.floor(Math.random()*A.length)]).join('');
+    profilo = { id:'pr-'+caso, nome:'', personali:[], aggiornato:0 };
+    save('profilo', profilo);
+  }
+  return profilo;
+}
+async function inviaProfilo(){
+  if(!pcSess) return;
+  const p = mioProfilo();
+  try{
+    const pac = await Canale.impacchetta({ id:p.id, nome:p.nome, aggiornato:p.aggiornato, personali:p.personali });
+    await Canale.inviaLista(pcSess, 'tel', { ...pac, tipo:'profilo' });
+  }catch(_){}                             // riparte al prossimo collegamento
+}
+/* dal PC: i personali tornano solo se sono più recenti di questi */
+function riceviProfilo(x){
+  const p = mioProfilo();
+  if(!x || x.id!==p.id || !Array.isArray(x.personali)) return;
+  if((+x.aggiornato || 0) <= (p.aggiornato || 0)) return;
+  p.personali = x.personali; p.aggiornato = +x.aggiornato; save('profilo', p);
+  if(view==='settings') renderProfilo();
+  toast(`Profilo aggiornato dal PC: ${p.personali.length} protocolli personali`);
+}
+
+function renderProfilo(){
+  const box = $('profBox'); if(!box) return;
+  const p = mioProfilo();
+  const n = p.personali.length, app = p.personali.filter(x => x.appreso).length, tel = Object.keys(learned).length;
+  box.innerHTML = `<div class="item">
+      <label class="prof-l" for="profNome">Nome</label>
+      <input class="prof-nome" id="profNome" type="text" maxlength="60" placeholder="es. Mario Rossi" autocomplete="name">
+      <div class="item-s" style="margin-top:9px"><b>${n}</b> protocoll${n===1?'o':'i'} personal${n===1?'e':'i'}${
+        app ? `, di cui ${app} appres${app===1?'o':'i'} sul PC` : ''} · <b>${tel}</b> appres${tel===1?'o':'i'} qui sul telefono</div>
+      <div class="item-s">Viaggiano con questo telefono: abbinandolo a un PC, di qualsiasi ospedale, i tuoi protocolli personali si caricano lì.</div>
+      <div class="prof-az"><button class="mini-b" id="profEsporta">Esporta profilo</button>
+        <button class="mini-b" id="profImporta">Importa profilo</button></div>
+    </div>`;
+  $('profNome').value = p.nome;
+  $('profNome').onchange = e => { p.nome = e.target.value.trim().slice(0,60); save('profilo', p); inviaProfilo(); toast('Nome del profilo salvato'); };
+  $('profEsporta').onclick = esportaProfilo;
+  $('profImporta').onclick = () => $('profFile').click();
+}
+
+function esportaProfilo(){
+  const p = mioProfilo();
+  const dati = { app:'Protocol Cards', tipo:'profilo', v:1, esportato:new Date().toISOString(),
+    id:p.id, nome:p.nome, aggiornato:p.aggiornato, personali:p.personali, appresiTelefono:learned };
+  const nome = `profilo-protocol-cards-${(p.nome || 'senza-nome').toLowerCase().replace(/[^a-z0-9]+/g,'-')}.json`;
+  const blob = new Blob([JSON.stringify(dati, null, 1)], { type:'application/json' });
+  const file = typeof File === 'function' ? new File([blob], nome, { type:'application/json' }) : null;
+  /* sul telefono il foglio di condivisione: Drive, mail, File… */
+  if(file && navigator.canShare && navigator.canShare({ files:[file] })){
+    navigator.share({ files:[file], title:'Profilo Protocol Cards' }).catch(()=>{});
+    return;
+  }
+  const u = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = u; a.download = nome; a.click();
+  setTimeout(() => URL.revokeObjectURL(u), 1000);
+}
+$('profFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if(!f) return;
+  let j;
+  try{
+    j = JSON.parse(await f.text());
+    if(j.app!=='Protocol Cards' || j.tipo!=='profilo' || !RE_PROF.test(j.id || '') || !Array.isArray(j.personali)) throw 0;
+  }catch(_){ return toast('Non è un profilo di Protocol Cards'); }
+  const app = j.appresiTelefono && typeof j.appresiTelefono==='object' ? j.appresiTelefono : null;
+  ask('Importare il profilo?',
+    `«${j.nome || 'senza nome'}»: ${j.personali.length} protocolli personali`
+    + (app ? ` e ${Object.keys(app).length} appresi sul telefono` : '') + '. Sostituiscono il profilo di questo telefono.',
+    'Importa', () => {
+      /* versione nuova: al prossimo collegamento il PC la prende */
+      profilo = { id:j.id, nome:String(j.nome || '').slice(0,60), personali:j.personali, aggiornato:Date.now() };
+      save('profilo', profilo);
+      if(app){ learned = app; persist(); }
+      renderSettings(); renderProfilo(); inviaProfilo();
+      toast('Profilo importato');
+    }, true);
+};
+
 async function avviaPc(){
   if(pcChiudi){ pcChiudi(); pcChiudi = null; }
+  pcSess = null;
   if(!pcLink){ pcStato = 'spento'; return renderPc(); }
   if(!HAS_CANALE){ pcStato = 'nocripto'; return renderPc(); }
   let sess;
   try{ sess = await Canale.apri(pcLink); }catch(_){ pcStato = 'errore'; return renderPc(); }
   const link = pcLink, aggiungi = Canale.raccoglitore();
+  const aggiungiProfilo = Canale.raccoglitore('profilo'), profiliVisti = new Set();
   pcStato = 'connessione'; renderPc();
   pcChiudi = Canale.ascolta(sess, 'tel', {
     stato: async s => {
@@ -1777,12 +1888,22 @@ async function avviaPc(){
           try{ await Canale.invia(sess, 'tel', { tipo:'ciao', dispositivo:dispositivo() });
                delete link.saluta; salvaPc(); }catch(_){}
         }
+        /* a ogni collegamento il profilo parte verso il PC */
+        if(pcSess!==sess){ pcSess = sess; inviaProfilo(); }
       }
       else if(s==='riconnessione' || s==='chiuso') pcStato = 'riconnessione';
       renderPc();
     },
     messaggio: async m => {
       if(link!==pcLink) return;
+      if(m.tipo==='profilo'){
+        let r;
+        try{ r = aggiungiProfilo(m); }catch(_){ return; }
+        if(!r || profiliVisti.has(r.id)) return;
+        profiliVisti.add(r.id);
+        try{ riceviProfilo(await Canale.leggiLista(r)); }catch(_){}
+        return;
+      }
       let lista;
       try{ lista = aggiungi(m); }
       catch(_){ return toast('Lista dal PC incompleta: rinviala dal PC'); }

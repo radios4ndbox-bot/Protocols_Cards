@@ -265,6 +265,9 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .lib-act .riga-b .btn{flex:1;padding:0 8px}
 .versione{font-size:.72rem;color:var(--ink-2);text-align:center;line-height:1.5}
 .versione code{font-weight:700;color:var(--ink)}
+.profilo-riga{margin:10px 6px 0;font-size:.72rem;line-height:1.45;color:var(--ink-3)}
+.profilo-riga.attivo{color:var(--ink-2)}
+.profilo-riga b{color:var(--jade-ink)}
 .backup{display:flex;flex-direction:column;gap:8px;margin-top:4px;padding:12px;border-radius:var(--r-sm);
   background:var(--plate-2);box-shadow:var(--well-s)}
 .backup-t{display:flex;gap:8px;align-items:flex-start;font-size:.74rem;line-height:1.45;color:var(--ink-2)}
@@ -1147,6 +1150,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         <button role="tab" data-lib="ufficiale">Ufficiali <span id="nUff"></span></button>
         <button role="tab" data-lib="personale">Personali <span id="nPers"></span></button>
       </div>
+      <div class="profilo-riga" id="profiloRiga"></div>
       <label class="cerca">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
         <input class="field" id="libCerca" type="search" placeholder="Cerca per nome o termine…" aria-label="Cerca protocollo">
@@ -1161,12 +1165,12 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         </div>
         <input type="file" id="libFile" accept=".json,application/json" hidden>
         <div class="versione" id="libVer"></div>
-        <!-- backup automatico di entrambe le librerie in una cartella scelta -->
+        <!-- backup automatico della libreria ufficiale in una cartella scelta -->
         <div class="backup" id="backup">
           <div class="backup-t"><i></i><span id="backupStato">Backup automatico spento</span></div>
           <div class="riga-b">
             <button class="btn xs" id="backupCartella">Scegli cartella</button>
-            <button class="btn xs" id="backupRecupera" title="Carica le librerie da un backup: per un PC nuovo">Recupera dal backup</button>
+            <button class="btn xs" id="backupRecupera" title="Carica la libreria ufficiale da un backup: per un PC nuovo">Recupera dal backup</button>
           </div>
         </div>
       </div>
@@ -4559,20 +4563,22 @@ var qrcode = function() {
 
   /* l'id si può scegliere prima, così una conferma che arriva mentre
      l'ultimo pezzo è ancora in viaggio viene già riconosciuta          */
-  async function inviaLista(sess, da, { corpo, z, id = nuovoId() }, avanzamento = () => {}) {
+  /* tipo: 'lista' per la lista del giorno, 'profilo' per il profilo:
+     stesso trasporto a pezzi, raccolti da due raccoglitori distinti   */
+  async function inviaLista(sess, da, { corpo, z, id = nuovoId(), tipo = 'lista' }, avanzamento = () => {}) {
     const s = somma(corpo), p = pezzi(corpo);
     for (let i = 0; i < p.length; i++) {
-      await invia(sess, da, { tipo: 'lista', id, s, z, i, n: p.length, x: p[i] });
+      await invia(sess, da, { tipo, id, s, z, i, n: p.length, x: p[i] });
       avanzamento(i + 1, p.length);
     }
     return { id, n: p.length };
   }
 
   /* ricompone le liste man mano che arrivano i pezzi, in qualsiasi ordine */
-  function raccoglitore() {
+  function raccoglitore(tipo = 'lista') {
     const aperte = new Map();
     return function aggiungi(m) {
-      if (!m || m.tipo !== 'lista' || typeof m.x !== 'string' || !(m.n > 0) || !(m.i >= 0 && m.i < m.n)) return null;
+      if (!m || m.tipo !== tipo || typeof m.x !== 'string' || !(m.n > 0) || !(m.i >= 0 && m.i < m.n)) return null;
       let l = aperte.get(m.id);
       if (!l) aperte.set(m.id, l = { n: m.n, s: m.s, z: m.z, parti: new Array(m.n) });
       if (l.n !== m.n || l.s !== m.s) return null;
@@ -4583,6 +4589,15 @@ var qrcode = function() {
       if (somma(corpo) !== l.s) throw new Error('lista ricomposta con somma di controllo errata');
       return { id: m.id, corpo, z: l.z };
     };
+  }
+
+  /* da un oggetto al corpo da inviare: JSON compresso, in base64url */
+  async function impacchetta(oggetto) {
+    const dati = new TextEncoder().encode(JSON.stringify(oggetto));
+    if (typeof CompressionStream === 'undefined') return { corpo: b64u.da(dati), z: 'nessuna' };
+    const cs = new CompressionStream('deflate-raw');
+    const w = cs.writable.getWriter(); w.write(dati); w.close();
+    return { corpo: b64u.da(await new Response(cs.readable).arrayBuffer()), z: 'deflate' };
   }
 
   /* dal corpo ricevuto all'oggetto lista */
@@ -4598,7 +4613,7 @@ var qrcode = function() {
 
   root.Canale = {
     get RELAY() { return RELAY; }, usaRelay: u => { RELAY = u; }, PEZZO, nuovoAbbinamento, daFrammento, frammento, valido, apri,
-    cifra, decifra, invia, ascolta, somma, pezzi, nuovoId, inviaLista, raccoglitore, leggiLista,
+    cifra, decifra, invia, ascolta, somma, pezzi, nuovoId, inviaLista, raccoglitore, impacchetta, leggiLista,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -5221,9 +5236,11 @@ $('scaricaJson').onclick = () => {
 };
 
 /* ═══ invio via rete ═════════════════════════════════════════════════
-   Canale cifrato verso il telefono attraverso il relay (canale.js). Il
-   relay si contatta solo su richiesta, con «Abbina» o «Invia»: aprire
-   il tool resta un'operazione senza rete.
+   Canale cifrato verso il telefono attraverso il relay (canale.js). Senza
+   un telefono abbinato il relay si contatta solo su richiesta, con
+   «Abbina»: aprire il tool resta un'operazione senza rete. Con un
+   telefono abbinato il PC si mette in ascolto all'apertura, per il
+   profilo dell'operatore (vedi PROFILO).
 
    L'abbinamento { t, k } si salva solo quando il telefono conferma di
    averlo letto dal QR; da lì vale finché non si scollega.            */
@@ -5282,6 +5299,7 @@ async function ascoltaRete(a, suAperto) {
 }
 
 function messaggioRete(a, m) {
+  if (m.tipo === 'profilo') return Profilo.messaggio(m);
   if (m.tipo === 'ciao' && inAbbinamento && inAbbinamento.t === a.t) {
     inAbbinamento = null;
     scriviAbbinamento({ t: a.t, k: a.k, dispositivo: String(m.dispositivo || 'telefono').slice(0, 60), quando: Date.now() });
@@ -5323,8 +5341,13 @@ $('reteAbbina').onclick = async () => {
 
 $('reteScollega').onclick = () => {
   if (inAbbinamento) { inAbbinamento = null; fermaAscolto(); disegnaRete(); return; }
-  if (!confirm('Scollegare il telefono? Per inviare di nuovo servirà un nuovo abbinamento.')) return;
-  scriviAbbinamento(null); inAbbinamento = reteInvio = null; fermaAscolto(); disegnaRete();
+  if (!confirm('Scollegare il telefono? Per inviare di nuovo servirà un nuovo abbinamento. '
+    + 'I protocolli personali del suo profilo restano sul telefono e spariscono da questo PC.')) return;
+  /* prima di andarsene il profilo manda al telefono l'ultima versione */
+  Profilo.invia().finally(() => {
+    Profilo.dimentica();
+    scriviAbbinamento(null); inAbbinamento = reteInvio = null; fermaAscolto(); disegnaRete();
+  });
 };
 
 $('reteInvia').onclick = async () => {
@@ -5375,9 +5398,31 @@ function disegnaQR(canvas, testo) {
    cura. Ogni modifica si salva subito; la firma identifica la versione
    che verrà sincronizzata sul telefono.
    ═══════════════════════════════════════════════════════════════════ */
+/* ═══ PROFILO ════════════════════════════════════════════════════════
+   I protocolli personali sono di chi li usa, non del PC: vivono nel
+   profilo che sta sul telefono dell'operatore. Abbinando il telefono a
+   un PC qualsiasi, di questo o di un altro ospedale, il profilo arriva
+   e i suoi personali diventano quelli del tool; ciò che si crea o si
+   impara sul PC torna al telefono, cifrato, dallo stesso canale delle
+   liste. Vince la versione più recente.
+
+   Sul PC resta la copia del solo profilo abbinato, sotto una chiave sua:
+   se si abbina il telefono di un altro operatore, o si scollega, la copia
+   sparisce dal PC. Senza profilo valgono i personali «di questo PC», che
+   al primo abbinamento si possono portare nel proprio profilo.
+   La libreria ufficiale è del reparto e resta sul PC.                  */
+const CH_PROFILO = 'protocol-cards.pc.profilo';
+const CH_LOCALI  = 'protocol-cards.pc.personali';        // personali senza profilo
+const RE_PROFILO = /^pr-[a-z0-9]{6,20}$/;
+let profilo = (() => {
+  try { const p = JSON.parse(localStorage.getItem(CH_PROFILO) || 'null'); return p && RE_PROFILO.test(p.id) ? p : null; }
+  catch (_) { return null; }
+})();
+const chiavePersonali = () => profilo ? CH_LOCALI + '.' + profilo.id : CH_LOCALI;
+
 /* due librerie con la stessa forma: gli ufficiali (SIRM, curati a mano)
-   e i personali (creati dal reparto o appresi dalle scelte in verifica) */
-const CHIAVI = { ufficiale: 'protocol-cards.pc.libreria', personale: 'protocol-cards.pc.personali' };
+   e i personali (del profilo abbinato, o di questo PC se non c'è)      */
+const CHIAVI = { ufficiale: 'protocol-cards.pc.libreria', get personale() { return chiavePersonali(); } };
 const NUOVA  = { ufficiale: PR.nuovaLibreria, personale: PR.nuovaLibreriaPersonale };
 
 /* mezzi di contrasto per l'anteprima dei volumi: sul telefono la scelta
@@ -5430,17 +5475,128 @@ function ripristinaPersonale(copia) {
   salvaLibreria('personale'); aggiornaNav();
 }
 
-function salvaLibreria(nome = tab) {
-  libs[nome].modificata = Date.now();
+/* dalTelefono: i personali appena arrivati con il profilo. Conservano
+   l'istante della loro versione e non si rimandano indietro.          */
+function salvaLibreria(nome = tab, dalTelefono = null) {
+  libs[nome].modificata = dalTelefono ? dalTelefono.quando : Date.now();
   try { localStorage.setItem(CHIAVI[nome], JSON.stringify(libs[nome])); }
   catch (e) { toast('Impossibile salvare la libreria in questo browser'); }
-  Backup.pianifica();
+  if (nome === 'ufficiale') Backup.pianifica();          // il backup in cartella è della libreria ufficiale
+  else if (!dalTelefono) Profilo.pianifica();            // i personali tornano al telefono
 }
 function aggiornaNav() {
   $('navN').textContent = libs.ufficiale.protocolli.length + libs.personale.protocolli.length;
   $('nUff').textContent = libs.ufficiale.protocolli.length;
   $('nPers').textContent = libs.personale.protocolli.length;
+  disegnaProfilo();
 }
+function disegnaProfilo() {
+  const r = $('profiloRiga'); if (!r) return;
+  r.classList.toggle('attivo', !!profilo);
+  r.innerHTML = profilo
+    ? `Personali del profilo <b>${esc(profilo.nome || 'senza nome')}</b>, dal telefono abbinato.`
+    : 'Personali di questo PC. Abbina il tuo telefono per portarli con te da un computer all\'altro.';
+}
+
+const Profilo = (() => {
+  let timer = null, adozioneChiesta = false;
+  const raccogli = Canale.raccoglitore('profilo');
+  const visti = new Set();
+
+  function scrivi(p) {
+    profilo = p;
+    try { p ? localStorage.setItem(CH_PROFILO, JSON.stringify(p)) : localStorage.removeItem(CH_PROFILO); } catch (_) {}
+  }
+  /* mette in uso una libreria personale e ridisegna ciò che ne dipende */
+  function usa(l, dalTelefono) {
+    sostituisciLibreria(l, 'personale');
+    salvaLibreria('personale', dalTelefono);
+    aggiornaNav(); disegnaLibreria();
+    if (area === 'proto') disegnaEditor();
+    if (pazienti.length) aggiornaColonnaProtocolli();
+  }
+  const personaliDi = p => {
+    const l = adattaId(PR.leggiLibreria(JSON.stringify({ protocolli: p.personali })), 'personale');
+    l.base = 'personale';
+    return l;
+  };
+
+  /* un pezzo di profilo dal telefono; a profilo completo, lo si applica */
+  function messaggio(m) {
+    let r;
+    try { r = raccogli(m); } catch (_) { return; }
+    if (!r || visti.has(r.id)) return;
+    visti.add(r.id);
+    Canale.leggiLista(r).then(ricevi).catch(() => toast('Profilo dal telefono non leggibile'));
+  }
+
+  function ricevi(p) {
+    if (!p || !RE_PROFILO.test(p.id || '') || !Array.isArray(p.personali)) return;
+    let arrivata;
+    try { arrivata = personaliDi(p); } catch (_) { return toast('Profilo dal telefono non leggibile'); }
+    const nome = String(p.nome || '').slice(0, 60), quando = +p.aggiornato || 0;
+    if (profilo && profilo.id !== p.id) dimentica();     // un altro operatore: il profilo di prima resta sul suo telefono
+    const nuovo = !profilo;
+    scrivi({ id: p.id, nome });
+    /* la copia sul PC di questo profilo, se c'è già; altrimenti vuota */
+    const copia = nuovo ? caricaLibreria('personale') : libs.personale;
+    if (quando >= (copia.modificata || 0)) usa(arrivata, { quando });
+    else { usa(copia, { quando: copia.modificata }); pianifica(); }   // sul PC è più recente: torna al telefono
+    if (nuovo) toast(`Profilo di ${nome || 'questo telefono'}: ${libs.personale.protocolli.length} protocolli personali`);
+    proponiAdozione();
+  }
+
+  /* i personali creati prima dei profili, rimasti «di questo PC»: al primo
+     profilo abbinato si propone di portarli con sé                      */
+  function proponiAdozione() {
+    if (adozioneChiesta || !profilo) return;
+    let locali;
+    try { const t = localStorage.getItem(CH_LOCALI); locali = t ? PR.leggiLibreria(t) : null; } catch (_) { locali = null; }
+    if (!locali || !locali.protocolli.length) return;
+    adozioneChiesta = true;
+    const n = locali.protocolli.length, appresi = locali.protocolli.filter(x => x.appreso).length;
+    chiedi(`Portare i protocolli di questo PC nel profilo di ${profilo.nome || 'questo telefono'}?`,
+      `Su questo PC ci sono ${n} protocoll${n === 1 ? 'o' : 'i'} personal${n === 1 ? 'e' : 'i'} senza profilo`
+      + (appresi ? `, di cui ${appresi} appres${appresi === 1 ? 'o' : 'i'}` : '')
+      + '. Entrano nel profilo e da lì viaggiano con il telefono; su questo PC non restano senza profilo.', 'Porta nel profilo', () => {
+        const ids = new Set(libs.personale.protocolli.map(x => x.id));
+        const unita = { ...libs.personale, protocolli: [...libs.personale.protocolli, ...locali.protocolli.filter(x => !ids.has(x.id))] };
+        usa(unita, null);                                 // versione nuova: parte verso il telefono
+        try { localStorage.removeItem(CH_LOCALI); } catch (_) {}
+        toast(`${n} protocoll${n === 1 ? 'o portato' : 'i portati'} nel profilo`);
+      });
+  }
+
+  /* i personali tornano al telefono poco dopo l'ultima modifica */
+  function pianifica() {
+    if (!profilo || !abbinamento) return;
+    clearTimeout(timer); timer = setTimeout(invia, 1500);
+  }
+  async function invia() {
+    clearTimeout(timer); timer = null;
+    if (!profilo || !abbinamento) return false;
+    try {
+      const sess = reteSess && reteSess.argomento === abbinamento.t ? reteSess : await ascoltaRete(abbinamento);
+      const pac = await Canale.impacchetta({ id: profilo.id, nome: profilo.nome, aggiornato: libs.personale.modificata || 0,
+        personali: libs.personale.protocolli.map(PR.canonico) });
+      await Canale.inviaLista(sess, 'pc', { ...pac, tipo: 'profilo' });
+      return true;
+    } catch (_) { return false; }                        // riprova alla prossima modifica o al prossimo collegamento
+  }
+
+  /* il profilo lascia questo PC: la sua copia si cancella, restano i
+     personali «di questo PC»                                          */
+  function dimentica() {
+    try { localStorage.removeItem(chiavePersonali()); } catch (_) {}
+    scrivi(null);
+    sostituisciLibreria(caricaLibreria('personale'), 'personale');
+    aggiornaNav(); disegnaLibreria();
+    if (area === 'proto') disegnaEditor();
+    if (pazienti.length) aggiornaColonnaProtocolli();
+  }
+
+  return { messaggio, ricevi, pianifica, invia, dimentica };
+})();
 const sel = () => lib.protocolli.find(p => p.id === selId);
 const conMdc = p => p.fasi.some(f => PR.FASI[f.fase].mdc);
 const data = ms => new Date(ms).toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'numeric' });
@@ -5966,8 +6122,8 @@ $('libReset').onclick = () => {
     uff ? 'Ripristina' : 'Svuota', () => {
       const vecchia = libs[nome];
       sostituisciLibreria(NUOVA[nome](), nome);
-      try { localStorage.removeItem(CHIAVI[nome]); } catch (_) {}
-      Backup.pianifica();
+      if (uff) { try { localStorage.removeItem(CHIAVI[nome]); } catch (_) {} Backup.pianifica(); }
+      else salvaLibreria('personale');               // vuota ma recente: il profilo sul telefono si svuota
       disegnaEditor(); disegnaLibreria(); aggiornaColonnaProtocolli();
       toast(uff ? 'Libreria ripristinata' : 'Libreria personale svuotata', 'Annulla', () => {
         sostituisciLibreria(vecchia, nome); salvaLibreria(nome); disegnaEditor(); disegnaLibreria(); aggiornaColonnaProtocolli();
@@ -5975,14 +6131,14 @@ $('libReset').onclick = () => {
     });
 };
 
-/* ═══ backup automatico delle librerie ═══════════════════════════════
+/* ═══ backup automatico della libreria ufficiale ═════════════════════
    Una cartella scelta una volta (anche dentro Google Drive o OneDrive:
-   la copia nel cloud la fa il loro programma) riceve un file con
-   entrambe le librerie: gli ufficiali come li ha modificati il reparto
-   e i personali, compresi quelli appresi. Si riscrive da solo a ogni
-   modifica; la versione precedente resta accanto, un passo indietro.
-   Su un PC nuovo «Recupera dal backup» rilegge la cartella e la tiene
-   per i salvataggi successivi.
+   la copia nel cloud la fa il loro programma) riceve un file con la
+   libreria ufficiale come l'ha modificata il reparto. I personali no:
+   sono dell'operatore e viaggiano nel suo profilo, sul telefono.
+   Si riscrive da solo a ogni modifica; la versione precedente resta
+   accanto, un passo indietro. Su un PC nuovo «Recupera dal backup»
+   rilegge la cartella e la tiene per i salvataggi successivi.
 
    La cartella è un handle del File System Access (Chrome, Edge),
    conservato in IndexedDB. Chrome può chiedere di nuovo il permesso a
@@ -6007,10 +6163,9 @@ const Backup = (() => {
 
   function contenuto() {
     return JSON.stringify({
-      app: 'Protocol Cards', tipo: 'backup', v: 1, salvato: new Date().toISOString(),
-      firme: { ufficiale: PR.firma(libs.ufficiale.protocolli), personale: PR.firma(libs.personale.protocolli) },
+      app: 'Protocol Cards', tipo: 'backup', v: 2, salvato: new Date().toISOString(),
+      firma: PR.firma(libs.ufficiale.protocolli),
       ufficiale: { ...libs.ufficiale, protocolli: libs.ufficiale.protocolli.map(PR.canonico) },
-      personale: { ...libs.personale, protocolli: libs.personale.protocolli.map(PR.canonico) },
     }, null, 1);
   }
   const testoDi = async (dir, nome) => (await (await dir.getFileHandle(nome)).getFile()).text();
@@ -6063,39 +6218,35 @@ const Backup = (() => {
     disegna();
   }
 
-  /* dal backup di una cartella alle librerie di questo PC */
+  /* dal backup di una cartella alla libreria ufficiale di questo PC */
   async function recupera(dir) {
     if (!dir) {
       try { dir = await showDirectoryPicker({ id: 'protocol-cards-backup', mode: 'readwrite', startIn: cartella || 'documents' }); }
       catch (e) { if (e.name !== 'AbortError') toast('Cartella non disponibile: ' + e.message); return; }
     }
-    let j, uff, pers;
+    let j, uff;
     try {
       j = JSON.parse(await testoDi(dir, FILE));
-      if (j.app !== 'Protocol Cards' || j.tipo !== 'backup') throw new Error('non è un backup di Protocol Cards');
+      if (j.app !== 'Protocol Cards' || j.tipo !== 'backup' || !j.ufficiale) throw new Error('non è un backup di Protocol Cards');
       uff = adattaId(PR.leggiLibreria(JSON.stringify(j.ufficiale)), 'ufficiale');
-      pers = adattaId(PR.leggiLibreria(JSON.stringify(j.personale)), 'personale');
       uff.base = j.ufficiale.base || uff.base; if (j.ufficiale.rev) uff.rev = j.ufficiale.rev;
-      pers.base = 'personale';
     } catch (e) {
       return chiedi('Backup non leggibile', e.name === 'NotFoundError'
         ? `Nella cartella «${dir.name}» non c'è un backup di Protocol Cards (${FILE}).`
-        : `«${dir.name}»: ${e.message}. Le librerie di questo PC non sono state toccate.`, null);
+        : `«${dir.name}»: ${e.message}. La libreria di questo PC non è stata toccata.`, null);
     }
     const quando = j.salvato ? new Date(j.salvato).toLocaleString('it-IT', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
-    const appresi = pers.protocolli.filter(p => p.appreso).length;
-    chiedi('Recuperare le librerie dal backup?',
-      `Backup del ${quando}: ${uff.protocolli.length} protocolli ufficiali e ${pers.protocolli.length} `
-      + (pers.protocolli.length === 1 ? 'personale' : 'personali')
-      + (appresi ? `, di cui ${appresi} ${appresi === 1 ? 'appreso' : 'appresi'}` : '') + `. Sostituiranno quelli di questo PC, e «${dir.name}» resterà la cartella del backup.`,
+    chiedi('Recuperare la libreria ufficiale dal backup?',
+      `Backup del ${quando}: ${uff.protocolli.length} protocolli ufficiali. Sostituiranno quelli di questo PC, e `
+      + `«${dir.name}» resterà la cartella del backup. I protocolli personali non sono nel backup: arrivano dal profilo sul telefono.`,
       'Recupera', async () => {
-        const vecchie = { ufficiale: libs.ufficiale, personale: libs.personale };
+        const vecchia = libs.ufficiale;
         cartella = dir; stato = 'attivo';
         await scriviKv('cartellaBackup', dir);
-        ['ufficiale', 'personale'].forEach(n => { sostituisciLibreria(n === 'ufficiale' ? uff : pers, n); salvaLibreria(n); });
+        sostituisciLibreria(uff, 'ufficiale'); salvaLibreria('ufficiale');
         disegnaEditor(); disegnaLibreria(); aggiornaNav(); if (pazienti.length) aggiornaColonnaProtocolli();
-        toast('Librerie recuperate dal backup', 'Annulla', () => {
-          ['ufficiale', 'personale'].forEach(n => { sostituisciLibreria(vecchie[n], n); salvaLibreria(n); });
+        toast('Libreria ufficiale recuperata dal backup', 'Annulla', () => {
+          sostituisciLibreria(vecchia, 'ufficiale'); salvaLibreria('ufficiale');
           disegnaEditor(); disegnaLibreria(); aggiornaNav();
         });
       });
@@ -6108,7 +6259,7 @@ const Backup = (() => {
     const ora = ultimo ? new Date(ultimo).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : '';
     t.innerHTML = {
       'non-supportato': 'Il backup automatico richiede Chrome o Edge. Qui puoi usare «Esporta».',
-      spento: 'Backup automatico spento. Scegli una cartella, anche dentro Google Drive: ci terrà una copia sempre aggiornata dei protocolli.',
+      spento: 'Backup della libreria ufficiale spento. Scegli una cartella, anche dentro Google Drive: ci terrà una copia sempre aggiornata.',
       attivo: `Backup ${nome.startsWith('«') ? 'in ' + nome : nome}` + (ora ? ` · aggiornato alle ${ora}` : ''),
       pausa: `Backup ${nome.startsWith('«') ? 'in ' + nome : nome} in pausa: il browser chiede di nuovo il permesso.`,
       errore: `Backup ${nome.startsWith('«') ? 'in ' + nome : nome} non riuscito: ${esc(errore)}`,
@@ -6511,6 +6662,9 @@ function toast(msg, azione, cb) {
 aggiornaNav();
 aggiornaConteggi();
 Backup.avvia();
+/* con un telefono abbinato il PC si rimette in ascolto: il profilo può
+   arrivare, o essere più vecchio di quello sul PC e riceverlo           */
+if (abbinamento) ascoltaRete(abbinamento).catch(() => {});
 if (revisione.stato === 'aggiornata') {
   salvaLibreria('ufficiale');
   toast('Libreria ufficiale aggiornata: riconosce più quesiti reali');

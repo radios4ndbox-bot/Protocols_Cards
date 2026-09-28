@@ -1,4 +1,5 @@
-/* Backup automatico delle librerie in una cartella.
+/* Backup automatico della libreria ufficiale in una cartella. I
+   personali non ci sono: viaggiano nel profilo, sul telefono.
    La finestra di scelta della cartella non si può aprire in un test: al
    suo posto si usa lo spazio file privato del browser (OPFS), che
    Chromium espone con la stessa interfaccia di una cartella vera. OPFS
@@ -45,7 +46,8 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
   await p.waitForTimeout(200);
   let j = JSON.parse(await leggi('protocol-cards-backup.json') || 'null');
   ok('il backup viene scritto subito', !!j && j.app === 'Protocol Cards' && j.tipo === 'backup');
-  ok('con entrambe le librerie', j && j.ufficiale.protocolli.length === 14 && Array.isArray(j.personale.protocolli));
+  ok('con la libreria ufficiale', j && j.ufficiale.protocolli.length === 14);
+  ok('senza i personali: stanno nel profilo', j && !('personale' in j));
   ok('nessun dato paziente né chiave', j && !/pcsync-|"k":/.test(JSON.stringify(j)));
   ok('stato attivo con la cartella', /^Backup /.test(await p.locator('#backupStato').textContent()) && await p.locator('#backup.attivo').count() === 1,
      await p.locator('#backupStato').textContent());
@@ -60,11 +62,13 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
   await p.waitForTimeout(1300);
   j = JSON.parse(await leggi('protocol-cards-backup.json'));
   ok('modifica ai protocolli ufficiali salvata', j.ufficiale.protocolli[0].idr === 1.9);
-  ok('protocollo appreso salvato', j.personale.protocolli.some(x => x.id === 'p-prova' && x.appreso && x.appreso.volte === 3));
+  ok('i personali non entrano nel backup', !('personale' in j) && !/p-prova/.test(JSON.stringify(j)));
   ok('la versione precedente resta accanto', (await leggi('protocol-cards-backup.precedente.json')) === primo);
   await p.evaluate(async () => { for (let i = 0; i < 10; i++) salvaLibreria('personale'); await new Promise(r => setTimeout(r, 1200)); });
+  await p.evaluate(async () => { for (let i = 0; i < 10; i++) { libs.ufficiale.protocolli[1].giKg = .5 + i / 100; salvaLibreria('ufficiale'); }
+    await new Promise(r => setTimeout(r, 1200)); });
   j = JSON.parse(await leggi('protocol-cards-backup.json'));
-  ok('una raffica di modifiche finisce nel file', j.personale.protocolli.some(x => x.id === 'p-prova'));
+  ok('di una raffica di modifiche resta l\'ultima', j.ufficiale.protocolli[1].giKg === .59, j.ufficiale.protocolli[1].giKg);
 
   console.log('\n── RIAPERTURA DEL TOOL ─────────────────');
   await p.reload(); await p.waitForTimeout(500);
@@ -75,16 +79,16 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
   /* un altro ospedale: il tool parte vuoto, la cartella del backup c'è */
   await p.evaluate(() => { localStorage.clear(); indexedDB.deleteDatabase('protocol-cards'); });
   await p.reload(); await p.waitForTimeout(500);
-  ok('librerie di partenza', await p.evaluate(() => libs.personale.protocolli.length === 0 && libs.ufficiale.protocolli[0].idr !== 1.9));
+  ok('libreria di partenza', await p.evaluate(() => libs.ufficiale.protocolli[0].idr !== 1.9));
   ok('backup spento', await p.evaluate(() => Backup.stato()) === 'spento');
   await p.evaluate(async () => Backup.recupera(await navigator.storage.getDirectory()));
   await p.waitForTimeout(300);
-  ok('chiede conferma con i numeri del backup', /14 protocolli ufficiali e 1 personale, di cui 1 appreso/.test(await p.locator('#mTesto, .mask.on').first().textContent()),
+  ok('chiede conferma con i numeri del backup', /14 protocolli ufficiali\. Sostituiranno/.test(await p.locator('#mTesto, .mask.on').first().textContent()),
      (await p.locator('.mask.on').first().textContent()).replace(/\s+/g, ' ').slice(0, 160));
   await p.locator('.mask.on .btn.solid').click(); await p.waitForTimeout(1300);
   ok('protocolli ufficiali recuperati', await p.evaluate(() => libs.ufficiale.protocolli[0].idr) === 1.9);
-  ok('protocollo appreso recuperato', await p.evaluate(() => libs.personale.protocolli.some(x => x.id === 'p-prova' && x.appreso.volte === 3)));
-  ok('e salvati su questo PC', await p.evaluate(() => JSON.parse(localStorage.getItem('protocol-cards.pc.personali')).protocolli.length) === 1);
+  ok('e salvati su questo PC', await p.evaluate(() => JSON.parse(localStorage.getItem('protocol-cards.pc.libreria')).protocolli[0].idr) === 1.9);
+  ok('i personali non si toccano', await p.evaluate(() => libs.personale.protocolli.length) === 0);
   ok('la cartella del backup resta collegata', await p.evaluate(() => Backup.stato()) === 'attivo');
 
   console.log('\n── CARTELLA SENZA BACKUP ───────────────');
@@ -92,7 +96,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
     const vuota = await d.getDirectoryHandle('vuota', { create: true }); await Backup.recupera(vuota); });
   await p.waitForTimeout(300);
   ok('lo dice e non tocca nulla', /non c'è un backup/.test(await p.locator('.mask.on').first().textContent())
-     && await p.evaluate(() => libs.personale.protocolli.length) === 1);
+     && await p.evaluate(() => libs.ufficiale.protocolli[0].idr) === 1.9);
 
   console.log('\n────────────────────────────────────────');
   console.log(errs.length ? 'ERRORI JS: ' + errs.slice(0, 4).join(' | ') : 'errori JS: nessuno');
