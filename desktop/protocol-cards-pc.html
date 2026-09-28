@@ -599,23 +599,15 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   --curva-traino:cubic-bezier(.65,0,.2,1);   /* volo, banda e pagina: un movimento solo */
 }
 
+/* lo stesso fondo del tool (body e body::before): all'uscita la scena
+   diventa trasparente e sotto c'è già la pagina, identica            */
 #introScena{position:fixed;inset:0;z-index:2000;overflow:hidden;cursor:pointer;
-  background:radial-gradient(1200px 700px at 50% 35%,#FFFFFF 0%,#F4F7FB 70%);
+  background:radial-gradient(48vw 40vw at 12% 6%,rgba(183,212,245,.55),transparent 62%),
+    radial-gradient(40vw 36vw at 88% 22%,rgba(124,207,176,.30),transparent 64%),
+    radial-gradient(52vw 44vw at 60% 96%,rgba(232,115,92,.12),transparent 66%),var(--canvas);
   display:flex;align-items:center;justify-content:center;
   transition:opacity .6s var(--intro-ease),visibility 0s linear 0s}
 #introScena.chiusa{opacity:0;visibility:hidden;transition:opacity .6s var(--intro-ease),visibility 0s linear .6s}
-/* bagliori nei gradienti, non in un filtro: la deriva è una transform */
-.intro-macchie{position:fixed;inset:-14em;opacity:.35;will-change:transform;
-  background-color:#F4F7FB;
-  background-image:
-    radial-gradient(ellipse 260px 200px at 50% 50%,rgba(124,207,176,.12) 0%,rgba(124,207,176,.08) 24%,rgba(124,207,176,.035) 50%,transparent 100%),
-    radial-gradient(ellipse 290px 220px at 50% 50%,rgba(183,212,245,.11) 0%,rgba(183,212,245,.075) 24%,rgba(183,212,245,.03) 50%,transparent 100%),
-    radial-gradient(ellipse 280px 360px at 50% 50%,rgba(124,207,176,.10) 0%,rgba(124,207,176,.07) 24%,rgba(124,207,176,.03) 50%,transparent 100%),
-    radial-gradient(ellipse 260px 330px at 50% 50%,rgba(47,111,237,.10) 0%,rgba(47,111,237,.06) 24%,rgba(47,111,237,.025) 50%,transparent 100%);
-  background-size:760px 600px,1240px 460px,880px 1160px,700px 880px;
-  background-position:271px 478px,62px 291px,67px 861px,553px 413px;
-  animation:introDeriva 36s linear infinite}
-@keyframes introDeriva{50%{transform:translate3d(-118px,-74px,0)}}
 
 .intro-palco{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
   width:100%;padding:0 24px}
@@ -668,15 +660,15 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   font:400 calc(var(--cw) * .15)/1.05 var(--f-disp);color:#EEF3F1}
 .pc-carta footer small{font:600 calc(var(--cw) * .085)/1 var(--f-text);letter-spacing:.08em;
   text-transform:uppercase;color:rgba(238,243,241,.55)}
-/* le carte arrivano dall'alto a destra e ruotano fino al loro posto nel
-   ventaglio: la stessa animazione del CSS di partenza, sfalsata       */
+/* le carte compaiono al centro, raccolte, in dissolvenza; poi si aprono
+   a ventaglio mentre la riga scivola a sinistra: stessa durata e stessa
+   curva della slitta, un movimento solo. Il fill «backwards» le tiene
+   raccolte finché non tocca a loro.                                    */
 .intro-palco.in-scena .pc-carta{
-  animation:introCarta var(--t-carta-dur,900ms) ease-in-out var(--d,0ms) backwards}
-@keyframes introCarta{
-  0%{opacity:0;rotate:45deg;transform:translate(50vw,-50vh) rotate(5deg)}
-  40%{opacity:1}
-  75%{transform:translate(0,0) rotate(0)}
-  100%{transform:none}}
+  animation:introCartaEntra var(--t-carta-dur,500ms) ease-out var(--d,0ms) backwards,
+            introCartaApre var(--t-slitta-dur,700ms) var(--intro-ease) var(--t-slitta,800ms) backwards}
+@keyframes introCartaEntra{from{opacity:0;transform:scale(.94)}}
+@keyframes introCartaApre{from{rotate:0deg}}
 #introScena .pc-carta:nth-child(1):hover{transform:translate(calc(-1.2rem * sin(40deg)),calc(-1.2rem * cos(40deg))) rotate(-10deg)}
 #introScena .pc-carta:nth-child(2):hover{transform:translate(calc(-1.2rem * sin(35deg)),calc(-1.2rem * cos(35deg))) rotate(-5deg)}
 #introScena .pc-carta:nth-child(3):hover{transform:translate(calc(-1.2rem * sin(20deg)),calc(-1.2rem * cos(20deg))) rotate(-5deg)}
@@ -714,7 +706,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
    d'ingresso, che vince su una transizione: serve un'animazione d'uscita
    che parta dal suo stato finale.                                      */
 #introScena.in-uscita{background:transparent;pointer-events:none;transition:background .45s ease}
-#introScena.in-uscita .intro-macchie,#introScena.in-uscita .intro-titolo{opacity:0;transition:opacity .3s ease}
+#introScena.in-uscita .intro-titolo{opacity:0;transition:opacity .3s ease}
 #introScena.in-uscita .intro-sotto{animation:introSottoVia .35s ease forwards}
 @keyframes introSottoVia{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-8px) scale(.96)}}
 
@@ -723,7 +715,9 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   opacity:0;visibility:hidden}
 #introVelo.armato{opacity:1;visibility:visible}
 #introVelo .velo-sfondo{position:absolute;inset:0;
-  background:radial-gradient(1200px 700px at 50% 35%,#FFFFFF 0%,#F4F7FB 70%)}
+  background:radial-gradient(48vw 40vw at 12% 6%,rgba(183,212,245,.55),transparent 62%),
+    radial-gradient(40vw 36vw at 88% 22%,rgba(124,207,176,.30),transparent 64%),
+    radial-gradient(52vw 44vw at 60% 96%,rgba(232,115,92,.12),transparent 66%),var(--canvas)}
 #introVelo .velo-fronte{position:absolute;left:0;right:0;bottom:0;height:2px;opacity:0;
   background:linear-gradient(90deg,#7CCFB0,#B7D4F5);
   box-shadow:0 0 26px 6px rgba(124,207,176,.45),0 0 70px 18px rgba(183,212,245,.22)}
@@ -767,7 +761,6 @@ main.sale{animation:paginaSale var(--t-volo,800ms) var(--curva-traino) both;will
 <!-- ═══ INTRO: la banda che risale e la scena ═══ -->
 <div id="introVelo" aria-hidden="true"><div class="velo-sfondo"></div><div class="velo-fronte"></div></div>
 <div id="introScena" aria-hidden="true">
-  <div class="intro-macchie"></div>
   <div class="intro-palco" id="introPalco">
     <div class="intro-riga">
       <div class="intro-logo" id="introLogo">
@@ -924,7 +917,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         </svg>
       </div>
     </div>
-    <div class="intro-sotto">Protocolli TC di reparto</div>
+    <div class="intro-sotto">Protocols made easy</div>
   </div>
 </div>
 
@@ -6147,17 +6140,18 @@ if (revisione.stato === 'aggiornata') {
 (function () {
   'use strict';
   const INTRO = {
-    // atto I — le carte entrano e si aprono a ventaglio
-    carta: 0, cartaPasso: 130, cartaDur: 900,
-    // atto II — il ventaglio scivola a sinistra, il nome si compone
-    slitta: 1000, slittaDur: 700,
-    glifo: 1150, glifoPasso: 45, glifoDur: 340,
+    // atto I — le carte compaiono al centro, raccolte, in dissolvenza
+    carta: 0, cartaPasso: 80, cartaDur: 500,
+    // atto II — si aprono a ventaglio scivolando a sinistra, il nome si
+    // compone con i tempi di Archivist
+    slitta: 800, slittaDur: 700,
+    glifo: 940, glifoPasso: 12, glifoDur: 340,
     // atto III — il sottotitolo
-    sotto: 1850, sottoDur: 600,
+    sotto: 1600, sottoDur: 600,
     // atto IV — le carte si raccolgono in una, che si gira sul dorso
-    raccogli: 2550, raccogliDur: 450,
-    gira: 3000, giraDur: 650,
-    attesa: 3750,             // quando parte il volo
+    raccogli: 2350, raccogliDur: 450,
+    gira: 2800, giraDur: 650,
+    attesa: 3550,             // quando parte il volo
     // atto V — volo, banda e pagina: stessa durata, stessa curva
     volo: 800, dissolvenzaVelo: 340,
   };
