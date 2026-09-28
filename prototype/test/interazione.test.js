@@ -44,6 +44,10 @@ const ok = (etichetta, cond, extra = '') => {
   ok('sotto c\'è la bacheca', await p.locator('#board:not(.hidden)').count() === 1);
   ok('nessuna rotazione residua', await p.evaluate(() => getComputedStyle(document.body).transform) === 'none');
 
+  console.log('\n── SOLO OGGI E I GIORNI A VENIRE ───────');
+  ok('le schede d\'esempio di ieri non ci sono più', await p.evaluate(() => !state.some(x => x.data < TODAY)));
+  ok('quelle di domani restano', await p.evaluate(() => state.some(x => x.data > TODAY)));
+
   console.log('\n── LA SEDUTA LA DECIDE IL PC ───────────');
   ok('seduta d\'esempio: oggi, elettiva', await p.evaluate(() => sessione && sessione.data === TODAY && sessione.modo === 'elettiva'));
   ok('titolo della seduta', (await p.locator('#abTitle').textContent()) === 'TC elettiva');

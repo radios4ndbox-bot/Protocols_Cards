@@ -1708,8 +1708,11 @@ function togliEsempio(){
 
 function importaLista(pl){
   if(!pl || pl.v!==1 || !Array.isArray(pl.p)) throw new Error('formato lista sconosciuto');
-  togliEsempio();
   const data = isoDa(pl.d) || TODAY;
+  /* una giornata già passata non entra: il telefono tiene solo oggi e i
+     giorni a venire, e il PC viene avvisato che la lista è stata scartata */
+  if(data < iso(new Date())) return { passata:true, data, nuove:0, aggiornate:0, invariate:0 };
+  togliEsempio();
   const modo = pl.m==='emergenza' ? 'emergenza' : 'elettiva';   // lo decide il PC
   const cestino = new Set(trash.map(t => t.id));
   const r = { nuove:0, aggiornate:0, invariate:0, data };
@@ -1779,6 +1782,11 @@ async function avviaPc(){
       try{ r = importaLista(await Canale.leggiLista(lista)); }
       catch(_){ return toast('Lista dal PC non leggibile'); }
       pcRicevute = [...pcRicevute, lista.id].slice(-50);
+      if(r.passata){
+        salvaPc();
+        toast(`Lista del ${dmy(r.data)} scartata: la giornata è passata`);
+        return Canale.invia(sess, 'tel', { tipo:'ricevuta', rif:lista.id, passata:true, data:dmy(r.data) }).catch(()=>{});
+      }
       link.ultima = Date.now(); salvaPc();
       ridisegnaDopoImport(); renderPc();
       toast(`${r.modo==='emergenza'?'Pronto soccorso':'Elettiva'} del ${dmy(r.data)}: ${r.nuove} ${r.nuove===1?'nuova':'nuove'}`
@@ -1838,6 +1846,19 @@ if(typeof Canale !== 'undefined'){
 
 if(pcLink) togliEsempio();
 
+/* Il telefono tiene solo oggi e i giorni a venire: le schede delle
+   giornate passate si tolgono all'avvio, e l'app si ricarica se resta
+   aperta a cavallo della mezzanotte. I protocolli appresi restano.    */
+function togliPassati(){
+  const oggi = iso(new Date()), n = state.length;
+  state = state.filter(p => (p.data || '') >= oggi);
+  if(state.length !== n) persist();
+  if(sessione && sessione.data < oggi) impostaSessione(null);
+}
+togliPassati();
+const cambioGiorno = () => { if(iso(new Date()) !== TODAY) location.reload(); };
+document.addEventListener('visibilitychange', () => { if(!document.hidden) cambioGiorno(); });
+
 /* ═══ MODALE / TOAST ═════════════════════════════════════ */
 let onYes=null;
 function ask(title,body,yes,cb,safe){
@@ -1890,7 +1911,7 @@ function apertura(){
   const attesa = setTimeout(gira, 1100);
   ap.addEventListener('click', gira);
 }
-setInterval(() => { purge(); if(view==='trash') renderTrash(); }, 60000);
+setInterval(() => { cambioGiorno(); purge(); if(view==='trash') renderTrash(); }, 60000);
 </script>
 </body>
 </html>

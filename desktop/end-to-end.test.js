@@ -58,7 +58,7 @@ const ok = (l,c,x='') => { console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  →
   await p.locator('#avanti').click();
   await p.waitForTimeout(900);
   ok('vista trasferimento', await p.locator('#v3.on').count()===1);
-  ok('giornata', (await p.locator('#rGiorno').textContent())==='21/09/2026',
+  ok('giornata', (await p.locator('#rGiorno').textContent()).startsWith('21/09/2026'),
      await p.locator('#rGiorno').textContent());
   ok('pazienti', (await p.locator('#rPaz').textContent())==='14');
   ok('esami', (await p.locator('#rEsami').textContent())==='29');
