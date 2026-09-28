@@ -677,6 +677,10 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
     <button class="btn-danger" id="btnClearLearn" style="display:none">Cancella tutti i protocolli appresi</button>
   </div>
   <div class="blk">
+    <div class="sec-t">Collegamento al PC <span class="sp"></span><span id="pcN"></span></div>
+    <div id="pcBox"></div>
+  </div>
+  <div class="blk">
     <div class="sec-t">Dati</div>
     <button class="btn-ghost" id="btnReset">Ripristina i dati di esempio</button>
   </div>
@@ -807,6 +811,7 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<script src="../desktop/canale.js"></script>
 
 <script>
 'use strict';
@@ -1143,7 +1148,7 @@ function show(v){
   if(v==='calendar') renderCal();
   if(v==='session')  renderSession();
   if(v==='board')    renderBoard();
-  if(v==='settings') renderSettings();
+  if(v==='settings'){ renderSettings(); renderPc(); }
   if(v==='trash')    renderTrash();
 }
 $('navBack').onclick = async () => {
@@ -1854,6 +1859,152 @@ $('btnReset').onclick = () => {
                           selMode=null; show('calendar'); toast('Dati ripristinati'); }, true);
 };
 
+/* ═══ COLLEGAMENTO AL PC ═════════════════════════════════
+   Il tool PC mostra un QR con l'indirizzo di questa app e, nel
+   frammento (#t=…&k=…), argomento e chiave del canale cifrato. Aprendo
+   il link l'app si abbina, toglie la chiave dalla barra degli indirizzi
+   e da lì in poi, a ogni apertura, ascolta il canale: le liste inviate
+   dal PC arrivano anche se nel frattempo l'app era chiusa (il relay le
+   conserva 12 ore). Ogni lista importata si conferma al PC.           */
+const HAS_CANALE = typeof Canale !== 'undefined' && !!(window.crypto && crypto.subtle);
+const isoDa = s => { const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s||'');
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : ''; };
+let pcLink = load('pc', null);            // { t, k, quando, ultima, saluta }
+let pcRicevute = load('pcRicevute', []);  // id delle liste già importate
+let pcStato = 'spento', pcChiudi = null;
+const salvaPc = () => { save('pc', pcLink); save('pcRicevute', pcRicevute); };
+
+/* la lista del PC: { v:1, d:'gg/mm/aaaa', p:[[accession, nome, nascita,
+   ora, quesito, esami]] }. Una scheda già lavorata resta com'è; una
+   ancora da fare si aggiorna; una messa nel cestino non torna.        */
+function importaLista(pl){
+  if(!pl || pl.v!==1 || !Array.isArray(pl.p)) throw new Error('formato lista sconosciuto');
+  const data = isoDa(pl.d) || TODAY;
+  const cestino = new Set(trash.map(t => t.id));
+  const r = { nuove:0, aggiornate:0, invariate:0, data };
+  pl.p.forEach(row => {
+    if(!Array.isArray(row)) return;
+    const [id,nome,nascita,ora,quesito,esame] = row.map(x => String(x==null ? '' : x).trim());
+    if(!id || cestino.has(id)) return;
+    const proto = matchProtocol(esame, quesito), pr = proto ? PROTOCOLS[proto] : null;
+    const campi = { nome, nascita:isoDa(nascita), data,
+                    ora:/^\d{2}:\d{2}$/.test(ora) ? ora : '08:00', esame, quesito };
+    const ex = state.find(p => p.id===id);
+    if(ex){
+      if(ex.stato!=='todo'){ r.invariate++; return; }
+      if(Object.keys(campi).some(k => ex[k]!==campi[k])){
+        Object.assign(ex, campi);
+        if(ex.proto!==proto) Object.assign(ex, { proto, idr:pr?pr.idr:1.4, giKg:pr?pr.giKg:0.5 });
+        r.aggiornate++;
+      }
+      return;
+    }
+    /* il RIS non riporta il peso: 70 kg come per la scheda manuale, da
+       correggere nella scheda prima di calcolare il mezzo di contrasto */
+    state.push({ id, ...campi, peso:70, modo:'elettiva', proto,
+                 stato:'todo', fasi:[], note:'', prev:false, prevDate:'', agent:null,
+                 idr:pr?pr.idr:1.4, giKg:pr?pr.giKg:0.5 });
+    r.nuove++;
+  });
+  persist();
+  return r;
+}
+
+function ridisegnaDopoImport(){
+  if(busy || cur) return;
+  if(view==='calendar') renderCal();
+  else if(view==='session') renderSession();
+  else if(view==='board') renderBoard();
+  else if(view==='settings') renderSettings();
+}
+
+async function avviaPc(){
+  if(pcChiudi){ pcChiudi(); pcChiudi = null; }
+  if(!pcLink){ pcStato = 'spento'; return renderPc(); }
+  if(!HAS_CANALE){ pcStato = 'nocripto'; return renderPc(); }
+  let sess;
+  try{ sess = await Canale.apri(pcLink); }catch(_){ pcStato = 'errore'; return renderPc(); }
+  const link = pcLink, aggiungi = Canale.raccoglitore();
+  pcStato = 'connessione'; renderPc();
+  pcChiudi = Canale.ascolta(sess, 'tel', {
+    stato: async s => {
+      if(link!==pcLink) return;
+      if(s==='aperto'){
+        pcStato = 'aperto';
+        if(link.saluta){
+          try{ await Canale.invia(sess, 'tel', { tipo:'ciao', dispositivo:dispositivo() });
+               delete link.saluta; salvaPc(); }catch(_){}
+        }
+      }
+      else if(s==='riconnessione' || s==='chiuso') pcStato = 'riconnessione';
+      renderPc();
+    },
+    messaggio: async m => {
+      if(link!==pcLink) return;
+      let lista;
+      try{ lista = aggiungi(m); }
+      catch(_){ return toast('Lista dal PC incompleta: rinviala dal PC'); }
+      if(!lista || pcRicevute.includes(lista.id)) return;
+      let r;
+      try{ r = importaLista(await Canale.leggiLista(lista)); }
+      catch(_){ return toast('Lista dal PC non leggibile'); }
+      pcRicevute = [...pcRicevute, lista.id].slice(-50);
+      link.ultima = Date.now(); salvaPc();
+      ridisegnaDopoImport(); renderPc();
+      toast(`Lista del ${dmy(r.data)} dal PC: ${r.nuove} ${r.nuove===1?'nuova':'nuove'}`
+        + (r.aggiornate ? `, ${r.aggiornate} aggiornate` : ''));
+      Canale.invia(sess, 'tel', { tipo:'ricevuta', rif:lista.id,
+        nuove:r.nuove, aggiornate:r.aggiornate, invariate:r.invariate }).catch(()=>{});
+    },
+  });
+}
+
+/* nome del dispositivo per il PC: solo sistema e browser, niente di più */
+function dispositivo(){
+  const u = navigator.userAgent;
+  const so = /iPhone|iPad/.test(u) ? 'iPhone/iPad' : /Android/.test(u) ? 'Android' : 'telefono';
+  const br = /EdgA?\//.test(u) ? 'Edge' : /CriOS|Chrome\//.test(u) ? 'Chrome'
+           : /FxiOS|Firefox\//.test(u) ? 'Firefox' : /Safari\//.test(u) ? 'Safari' : 'browser';
+  return `${so} · ${br}`;
+}
+
+const PC_STATO = { connessione:'collegamento al relay…', aperto:'in ascolto',
+  riconnessione:'rete assente, riprovo…', errore:'abbinamento non valido: rifallo dal PC',
+  nocripto:'questo browser non offre la cifratura: usa Chrome o Safari aggiornati' };
+function renderPc(){
+  const box = $('pcBox'); if(!box) return;
+  $('pcN').textContent = pcLink ? (pcStato==='aperto' ? '●' : '○') : '';
+  if(!pcLink){
+    box.innerHTML = `<div class="item"><div class="item-n">Nessun PC abbinato</div>
+      <div class="item-s">Nel tool PC, al passo «Trasferisci», scegli «Abbina un telefono» e
+      inquadra il codice con la fotocamera: le liste arriveranno da sole.</div></div>`;
+    return;
+  }
+  const quando = t => t ? new Date(t).toLocaleString('it-IT',
+    {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+  box.innerHTML = `<div class="item"><div class="item-h"><div style="min-width:0;flex:1">
+      <div class="item-n">PC del reparto · ${esc(PC_STATO[pcStato] || '—')}</div>
+      <div class="item-s">abbinato il ${esc(quando(pcLink.quando))}
+        · ultima lista ${esc(quando(pcLink.ultima))}</div>
+    </div><button class="mini-b" id="pcOff">Scollega</button></div></div>`;
+  $('pcOff').onclick = () => ask('Scollega dal PC',
+    'Le liste inviate dal PC non arriveranno più. Le schede già ricevute restano.',
+    'Scollega', () => { pcLink = null; pcRicevute = []; salvaPc(); avviaPc(); toast('PC scollegato'); });
+}
+
+/* abbinamento dal link del QR: la chiave non deve restare nella barra
+   degli indirizzi né nella cronologia, si toglie appena letta          */
+if(typeof Canale !== 'undefined'){
+  const a = Canale.daFrammento(location.hash);
+  if(a){
+    history.replaceState(null, '', location.pathname + location.search);
+    if(!pcLink || pcLink.t!==a.t){
+      pcLink = { t:a.t, k:a.k, quando:Date.now(), saluta:true }; pcRicevute = []; salvaPc();
+      setTimeout(() => toast('Abbinato al PC del reparto'), 300);
+    }
+  }
+}
+
 /* ═══ MODALE / TOAST ═════════════════════════════════════ */
 let onYes=null;
 function ask(title,body,yes,cb,safe){
@@ -1879,6 +2030,7 @@ document.addEventListener('keydown', e => {
 /* ═══ AVVIO ══════════════════════════════════════════════ */
 purge();
 show('calendar');
+avviaPc();
 setInterval(() => { purge(); if(view==='trash') renderTrash(); }, 60000);
 </script>
 </body>
