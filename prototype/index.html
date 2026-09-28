@@ -811,6 +811,7 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<script src="../desktop/protocolli.js"></script>
 <script src="../desktop/canale.js"></script>
 
 <script>
@@ -826,88 +827,15 @@ const AGENTS = [
   { id:'visipaque320', l:'Visipaque 320', c:0.32 },
 ];
 
-/* ═══ LIBRERIA PROTOCOLLI (estratto SIRM 2022) ═══════════
-   basale: req = richiesta · opt = opzionale · skip = omettibile
-   kw = termini del quesito · ex = termini dell'esame (disambiguano)     */
-const PROTOCOLS = {
-  'angio-polm': { l:'AngioTC Polmonare', idr:1.5, giKg:0.45, basale:'opt',
-    reg:['TO','TAs','TAc'],
-    kw:['embolia','tromboembolia','tep'], ex:['torace'],
-    nota:'SIRM indica l’acquisizione senza mdc come opzionale in questo protocollo.',
-    fasi:[{fase:'arteriosa',zone:['TAs'],delay:'B-T'}] },
-  'cranio-trauma': { l:'TC Cranio – Trauma cranico acuto', idr:0, giKg:0, basale:'req',
-    reg:['ENC'],
-    kw:['trauma cranico','trauma','caduta'], ex:['encefalo','cranio'],
-    nota:'Protocollo interamente basale: la fase senza mdc è l’esame stesso.',
-    fasi:[{fase:'basale',zone:['ENC'],delay:'',fix:1}] },
-  'encefalo-stroke': { l:'TC Encefalo + angio-TC – Stroke', idr:1.6, giKg:0.35, basale:'req',
-    reg:['ENC'],
-    kw:['stroke','ictus','deficit neurologico','ischemia cerebrale'], ex:['encefalo'],
-    nota:'Obbligatoria per escludere l’emorragia prima di qualunque fase contrastografica.',
-    fasi:[{fase:'basale',zone:['ENC'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1}] },
-  'fegato-cirr': { l:'Fegato cirrotico – Stadiazione', idr:1.4, giKg:0.63, basale:'req',
-    reg:['ADs','ADc','TAs','TAc'],
-    kw:['hcc','epatocarcinoma','cirrosi','epatopatia','sorveglianza'], ex:['addome'],
-    nota:'Studio quadrifasico: la basale serve a riconoscere le lesioni spontaneamente iperdense.',
-    fasi:[{fase:'basale',zone:['ADs'],delay:'',fix:1},{fase:'arteriosa',zone:['ADs'],delay:'B-T',fix:1},
-          {fase:'venosa',zone:['ADc'],delay:'75',fix:1},{fase:'tardiva',zone:['ADs'],delay:'300',fix:1}] },
-  'onco-ristad': { l:'Oncologia – Ristadiazione', idr:1.4, giKg:0.55, basale:'skip',
-    kw:['restaging','ristadiazione','stadiazione'], ex:[],
-    nota:'Nel follow-up oncologico la basale è ridondante se esiste un precedente di confronto.',
-    fasi:[{fase:'venosa',zone:['TAc'],delay:'75'}] },
-  'onco-fup': { l:'Oncologia – Follow-up basso rischio', idr:1.3, giKg:0.50, basale:'skip',
-    kw:['followup','recidiva'], ex:[],
-    nota:'Nel follow-up la basale è ridondante se esiste un precedente di confronto.',
-    fasi:[{fase:'venosa',zone:['ADc'],delay:'75'}] },
-  'vie-biliari': { l:'Vie biliari – Patologia infiammatoria', idr:1.4, giKg:0.60, basale:'req',
-    reg:['ADs','ADc','TAs','TAc'],
-    kw:['colecistite','colangite','litiasi biliare'], ex:['addome'],
-    nota:'La basale è necessaria per identificare i calcoli calcifici, mascherati dopo mdc.',
-    fasi:[{fase:'basale',zone:['ADs'],delay:'',fix:1},{fase:'venosa',zone:['ADs'],delay:'70',fix:1}] },
-  'aorta-endop': { l:'AngioTC Aorta – controllo endoprotesi', idr:1.6, giKg:0.55, basale:'req',
-    reg:['ADc','TAc'],
-    kw:['endoleak','endoprotesi','evar'], ex:['aorta'],
-    nota:'Serve a distinguere le calcificazioni parietali dall’endoleak in fase contrastografica.',
-    fasi:[{fase:'basale',zone:['ADc'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1},
-          {fase:'tardiva',zone:['ADc'],delay:'300',fix:1}] },
-  'aorta-diss': { l:'TC Aorta – Dissezione', idr:1.8, giKg:0.55, basale:'req',
-    reg:['TAc','ADc'],
-    kw:['dissezione','sindrome aortica'], ex:['aorta'],
-    nota:'La basale individua l’ematoma intramurale, isodenso dopo contrasto.',
-    fasi:[{fase:'basale',zone:['TAc'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1}] },
-  'urotc-split': { l:'UROTC Split Bolus', idr:1.2, giKg:0.55, basale:'req',
-    reg:['ADc'],
-    kw:['ematuria','colica renale','idronefrosi','urolitiasi','calcolosi'], ex:['uro'],
-    nota:'La basale è indispensabile per la ricerca di calcoli, indistinguibili dopo mdc.',
-    fasi:[{fase:'basale',zone:['ADc'],delay:'',fix:1},{fase:'venosa',zone:['ADc'],delay:'100',fix:1}] },
-  'addome-acuto': { l:'TC Addome acuto', idr:1.4, giKg:0.60, basale:'opt',
-    reg:['ADs','ADc','TAs','TAc'],
-    kw:['appendicite','diverticolite','occlusione','perforazione','addome acuto','peritonite'],
-    ex:['addome'],
-    nota:'SIRM indica l’acquisizione senza mdc come opzionale.',
-    fasi:[{fase:'venosa',zone:['ADc'],delay:'70'}] },
-  'politrauma': { l:'TC Total body – Politrauma', idr:1.6, giKg:0.60, basale:'opt',
-    reg:['TAc'],
-    kw:['politrauma','trauma maggiore','incidente stradale'], ex:['total body'],
-    nota:'In urgenza la basale è spesso omessa per ridurre i tempi; resta utile sull’encefalo.',
-    fasi:[{fase:'arteriosa',zone:['TAc'],delay:'B-T',fix:1},{fase:'venosa',zone:['ADc'],delay:'70',fix:1}] },
-  'hrct-nodulo': { l:'HRCT – Nodulo polmonare', idr:0, giKg:0, basale:'req',
-    reg:['TO','TAs','TAc'],
-    kw:['nodulo','lungrads','interstiziopatia','fibrosi'], ex:['torace'],
-    nota:'Protocollo senza mdc: l’acquisizione basale è l’intero esame.',
-    fasi:[{fase:'basale',zone:['TAs'],delay:''}] },
-  'torace-mdc': { l:'TC Torace con mdc', idr:1.4, giKg:0.50, basale:'opt',
-    reg:['TO','TAs','TAc'],
-    kw:['versamento','ascesso polmonare','mediastino'], ex:['torace'],
-    nota:'SIRM indica l’acquisizione senza mdc come opzionale.',
-    fasi:[{fase:'venosa',zone:['TAs'],delay:'70'}] },
-};
-
-const LEXICON = ['embolia','dissezione','aneurisma','endoleak','trauma','stroke','ischemia',
-  'emorragia','hcc','cirrosi','epatopatia','colecistite','litiasi','calcoli','ematuria',
-  'idronefrosi','appendicite','diverticolite','occlusione','pielonefrite','nodulo','sarcoidosi',
-  'restaging','ristadiazione','stadiazione','followup','recidiva','neoplasia','metastasi',
-  'linfoma','ascesso','flogosi','infezione','pancreatite','sanguinamento','politrauma','versamento'];
+/* ═══ LIBRERIA PROTOCOLLI ═════════════════════════════════
+   Dal modulo condiviso con il tool PC (desktop/protocolli.js): stessa
+   libreria, stessi termini e stesso riconoscimento. Una lista arrivata
+   dal PC viene riconosciuta qui esattamente come sul PC.              */
+const PR = Protocolli;
+const PROTOCOLS = Object.fromEntries(PR.SIRM_2022
+  .filter(p => p.fasi.every(f => ['basale','arteriosa','venosa','tardiva'].includes(f.fase)))
+  .map(({id, ...v}) => [id, v]));
+const LEXICON = PR.LEXICON;
 
 const ZONES = {
   basale:   [['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
@@ -957,58 +885,13 @@ function eta(s){
   return a;
 }
 
-/* normalizzazione condivisa da firma e matcher */
-function normText(s){
-  return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
-    .replace(/follow[\s-]?up/g,'followup').replace(/lung[\s-]?rads/g,'lungrads')
-    .replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
-}
-
-/* ═══ MATCHER PROTOCOLLO — deterministico ════════════════
-   punteggio = Σ (parole del termine × 2) sui termini del quesito
-             + 1 per ogni termine dell'esame riconosciuto
-   A parità vince il primo in ordine di dichiarazione. Nessuna casualità. */
-function matchProtocol(esame, quesito){
-  const tq = normText(quesito), te = normText(esame);
-  const regione = regionOf(esame);
-  let best = null, bs = 0;
-  for(const [k,v] of Object.entries(PROTOCOLS)){
-    /* la regione dell'esame esclude i protocolli che non la coprono:
-       senza questo vincolo «TC torace · trauma toracico» finiva sul
-       protocollo dell'encefalo, perche' il termine «trauma» pesava piu'
-       del distretto indicato dall'esame                                */
-    if(regione && v.reg && !v.reg.includes(regione)) continue;
-    let sKw = 0, sEx = 0;
-    (v.kw||[]).forEach(w => { if(tq.includes(w)) sKw += w.split(' ').length * 2; });
-    (v.ex||[]).forEach(w => { if(te.includes(w)) sEx += 1; });
-    /* il solo distretto non basta a suggerire: senza un riscontro nel
-       quesito il protocollo non e' candidato                           */
-    if(!sKw) continue;
-    if(sKw + sEx > bs){ bs = sKw + sEx; best = k; }
-  }
-  return bs > 0 ? best : null;
-}
-
-/* ═══ REGIONE ANATOMICA DALL'ESAME ═══════════════════════
-   Deduce la zona da protocollare dalla dicitura dell'esame richiesto:
-   «TC TORACE» → Torace, «TC ADDOME SUPERIORE» → Addome sup., e cosi' via.
-   Le regole sono ordinate dalla piu' specifica alla piu' generica e il
-   primo riscontro vince: stesso esame, stessa zona, sempre.           */
-function regionOf(esame){
-  const t = normText(esame);
-  if(/total body|whole body/.test(t))              return 'TAc';
-  if(/aorta/.test(t))                              return /toracic|ascendente|arco/.test(t) ? 'TAc' : 'ADc';
-  if(/\buro\b|urotc|uro tc|renal|vescic/.test(t))  return 'ADc';
-  if(/encefal|cranio|cerebral|capo/.test(t))       return 'ENC';
-  if(/\bcollo\b|cervical|tiroide|laring|faring|parotid/.test(t)) return 'Collo';
-  if(/rachide|colonna|vertebr|bacino|femore|ginocchio|spalla|omero|arto|polso|caviglia|piede|mano|massiccio|facciale|temporale|orbit|seni paranasal|mandibol/.test(t))
-    return 'ALTRO';                       // distretto riconosciuto ma fuori tassonomia
-  const tor = /torac/.test(t), add = /addom/.test(t), sup = /superior|\bsup\b/.test(t);
-  if(tor && add)                                   return sup ? 'TAs' : 'TAc';
-  if(tor)                                          return 'TO';
-  if(add)                                          return sup ? 'ADs' : 'ADc';
-  return null;
-}
+/* normalizzazione, riconoscimento e regione: dal modulo condiviso.
+   Il riconoscimento ha la stessa regola di sempre (termini del quesito
+   pesati per parola, regione dell'esame che esclude, a parità il primo
+   in elenco) e in più legge le sigle dei quesiti reali: npl, k, sec…  */
+const normText = s => PR.normText(s);
+const matchProtocol = (esame, quesito) => PR.riconosci(PR.SIRM_2022, esame, quesito).id;
+const regionOf = esame => PR.regionOf(esame);
 const ZONE_L = {};
 Object.values(ZONES).forEach(l => l.forEach(([c,lab]) => ZONE_L[c] = lab));
 
@@ -1036,14 +919,8 @@ function fitZones(fasi, esame){
 }
 
 /* ═══ FIRMA DETERMINISTICA ═══════════════════════════════ */
-function normEx(s){
-  return (s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
-    .replace(/\b(CON E SENZA|SENZA E CON|CON|SENZA)\s+(MDC|CONTRASTO)\b/g,'')
-    .replace(/\b(URGENTE|URG|MDC|CONTRASTO)\b/g,'')
-    .replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
-}
-const keywords = q => { const t = normText(q);
-  return [...new Set(LEXICON.filter(k => t.includes(k)))].sort(); };
+const normEx = s => PR.normEx(s);
+const keywords = q => PR.termini(q);
 const signature = p => normEx(p.esame) + '|' + keywords(p.quesito).join(',');
 const canon = f => f.map(x => x.fase+':'+[...x.zone].sort().join('+')+(x.delay?'@'+x.delay:''))
                     .sort().join(' ');

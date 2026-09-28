@@ -3515,6 +3515,16 @@ var qrcode = function() {
 
   const LIMITI = { giKg: [0.10, 1.20], idr: [0.4, 2.5] };
 
+  /* Revisione della libreria di partenza. Una libreria ufficiale salvata
+     sul PC identica a una revisione precedente si aggiorna da sola; una
+     modificata dal reparto resta com'è (vedi aggiornaUfficiale).
+       1 · estratto SIRM 2022
+       2 · termini dai quesiti reali: oncologia generica, follow-up solo
+           oncologico, vie escretriche, pielonefrite/ascesso, enfisema e
+           pneumotorace                                                   */
+  const REVISIONE = 2;
+  const FIRME_PRECEDENTI = { '1JOYMYK': 1 };      // firma(libreria) → revisione
+
   /* ═══ LIBRERIA DI PARTENZA (estratto SIRM 2022) ════════════════════
      basale: req = richiesta · opt = opzionale · skip = omettibile
      kw = termini del quesito · ex = termini dell'esame (disambiguano)
@@ -3542,11 +3552,11 @@ var qrcode = function() {
       fasi:[{fase:'basale',zone:['ADs'],delay:'',fix:1},{fase:'arteriosa',zone:['ADs'],delay:'B-T',fix:1},
             {fase:'venosa',zone:['ADc'],delay:'75',fix:1},{fase:'tardiva',zone:['ADs'],delay:'300',fix:1}] },
     { id:'onco-ristad', l:'Oncologia – Ristadiazione', idr:1.4, giKg:0.55, basale:'skip',
-      kw:['restaging','ristadiazione','stadiazione'], ex:[],
+      kw:['restaging','ristadiazione','stadiazione','neoplasia','metastasi'], ex:[],
       nota:'Nel follow-up oncologico la basale è ridondante se esiste un precedente di confronto.',
       fasi:[{fase:'venosa',zone:['TAc'],delay:'75'}] },
     { id:'onco-fup', l:'Oncologia – Follow-up basso rischio', idr:1.3, giKg:0.50, basale:'skip',
-      kw:['followup','recidiva'], ex:[],
+      kw:['followup + neoplasia','followup + metastasi','recidiva'], ex:[],
       nota:'Nel follow-up la basale è ridondante se esiste un precedente di confronto.',
       fasi:[{fase:'venosa',zone:['ADc'],delay:'75'}] },
     { id:'vie-biliari', l:'Vie biliari – Patologia infiammatoria', idr:1.4, giKg:0.60, basale:'req',
@@ -3567,12 +3577,14 @@ var qrcode = function() {
       fasi:[{fase:'basale',zone:['TAc'],delay:'',fix:1},{fase:'arteriosa',zone:['Angio TC'],delay:'B-T',fix:1}] },
     { id:'urotc-split', l:'UROTC Split Bolus', idr:1.2, giKg:0.55, basale:'req',
       reg:['ADc'],
-      kw:['ematuria','colica renale','idronefrosi','urolitiasi','calcolosi'], ex:['uro'],
+      kw:['ematuria','colica renale','idronefrosi','urolitiasi','calcolosi',
+          'via escretrice','vie escretrici','uroteliale','papilla','pelvi renale'], ex:['uro'],
       nota:'La basale è indispensabile per la ricerca di calcoli, indistinguibili dopo mdc.',
       fasi:[{fase:'basale',zone:['ADc'],delay:'',fix:1},{fase:'venosa',zone:['ADc'],delay:'100',fix:1}] },
     { id:'addome-acuto', l:'TC Addome acuto', idr:1.4, giKg:0.60, basale:'opt',
       reg:['ADs','ADc','TAs','TAc'],
-      kw:['appendicite','diverticolite','occlusione','perforazione','addome acuto','peritonite'],
+      kw:['appendicite','diverticolite','occlusione','perforazione','addome acuto','peritonite',
+          'pielonefrite','ascesso'],
       ex:['addome'],
       nota:'SIRM indica l’acquisizione senza mdc come opzionale.',
       fasi:[{fase:'venosa',zone:['ADc'],delay:'70'}] },
@@ -3583,7 +3595,7 @@ var qrcode = function() {
       fasi:[{fase:'arteriosa',zone:['TAc'],delay:'B-T',fix:1},{fase:'venosa',zone:['ADc'],delay:'70',fix:1}] },
     { id:'hrct-nodulo', l:'HRCT – Nodulo polmonare', idr:0, giKg:0, basale:'req',
       reg:['TO','TAs','TAc'],
-      kw:['nodulo','lungrads','interstiziopatia','fibrosi'], ex:['torace'],
+      kw:['nodulo','lungrads','interstiziopatia','fibrosi','enfisema','bolle','pneumotorace'], ex:['torace'],
       nota:'Protocollo senza mdc: l’acquisizione basale è l’intero esame.',
       fasi:[{fase:'basale',zone:['TAs'],delay:''}] },
     { id:'torace-mdc', l:'TC Torace con mdc', idr:1.4, giKg:0.50, basale:'opt',
@@ -3602,18 +3614,66 @@ var qrcode = function() {
       .replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
   }
 
+  /* ═══ QUESITO: SIGLE E VARIANTI ═════════════════════════════════════
+     I quesiti reali sono scritti di corsa: «npl stomaco», «k colon con
+     sec epatici in CT rival», «RCC», «bolle da PNX», «noduli». Ogni
+     sigla diventa il termine per esteso, parola per parola, così un
+     termine della libreria («neoplasia», «metastasi», «nodulo») la
+     riconosce. La stessa regola vale per il quesito e per i termini dei
+     protocolli: scrivere «npl» o «neoplasia» nella libreria è uguale.  */
+  const SINONIMI = {
+    npl: 'neoplasia', neopl: 'neoplasia', k: 'neoplasia', neoplasie: 'neoplasia',
+    carcinoma: 'neoplasia', adenocarcinoma: 'neoplasia', tumore: 'neoplasia', tumori: 'neoplasia',
+    sec: 'metastasi', mts: 'metastasi', secondarismi: 'metastasi', secondarismo: 'metastasi',
+    secondarieta: 'metastasi',
+    rival: 'rivalutazione', rivalut: 'rivalutazione', rivalutaz: 'rivalutazione',
+    rcc: 'neoplasia renale', pnx: 'pneumotorace', aaa: 'aneurisma aorta addominale',
+    noduli: 'nodulo', fup: 'followup',
+  };
+  function normQuesito(s) {
+    /* «M+» è una sigla con la punteggiatura dentro: va letta prima che
+       la normalizzazione la tolga                                      */
+    const t = normText(String(s || '').replace(/\bm\s*\+/gi, ' metastasi '));
+    return t ? t.split(' ').map(w => SINONIMI[w] || w).join(' ') : '';
+  }
+
+  /* Un termine può chiedere più parole insieme, in qualsiasi punto del
+     quesito, separate da «+»: «followup + neoplasia» vale solo se ci sono
+     entrambe. Pesa quanto le sue parole, come un termine di più parole. */
+  const parti = w => String(w || '').split('+').map(normQuesito).filter(Boolean);
+  const normTermine = w => parti(w).join(' + ');
+  const trovato = (w, tq) => { const p = parti(w); return p.length > 0 && p.every(x => tq.includes(x)); };
+  const pesoTermine = w => parti(w).reduce((n, x) => n + x.split(' ').length, 0) * 2;
+
   /* ═══ REGIONE ANATOMICA DALL'ESAME ═════════════════════════════════
      Regole ordinate dalla più specifica alla più generica: il primo
-     riscontro vince, quindi stesso esame → stessa regione, sempre.     */
+     riscontro vince, quindi stesso esame → stessa regione, sempre.
+     Con più esami (separati da «|» o «·») la regione è l'unione dei
+     distretti del tronco: torace + addome completo → torace-addome
+     completo. Encefalo e collo accanto al tronco non cambiano la regione
+     su cui si imposta il protocollo; da soli restano quelli.           */
+  const TRONCO = ['TO', 'TAs', 'TAc', 'ADs', 'ADc'];
   function regionOf(esame) {
+    const pezzi = String(esame || '').split(/\s[|·]\s/).map(regioneEsame).filter(Boolean);
+    if (pezzi.length < 2) return pezzi[0] || null;
+    const tr = pezzi.filter(r => TRONCO.includes(r));
+    if (!tr.length) return ['ENC', 'Collo', 'ALTRO'].find(r => pezzi.includes(r)) || null;
+    const tor = tr.some(r => r[0] === 'T'), add = tr.some(r => r !== 'TO');
+    const sup = tr.filter(r => r !== 'TO').every(r => r === 'ADs' || r === 'TAs');
+    if (tor && add) return sup ? 'TAs' : 'TAc';
+    if (tor)        return 'TO';
+    return sup ? 'ADs' : 'ADc';
+  }
+  function regioneEsame(esame) {
     const t = normText(esame);
     if (/total body|whole body/.test(t))              return 'TAc';
-    if (/aorta/.test(t))                              return /toracic|ascendente|arco/.test(t) ? 'TAc' : 'ADc';
+    if (/aorta/.test(t))                              return /toracic|toraco|ascendente|arco/.test(t) ? 'TAc' : 'ADc';
     if (/\buro\b|urotc|uro tc|renal|vescic/.test(t))  return 'ADc';
     if (/encefal|cranio|cerebral|capo/.test(t))       return 'ENC';
-    if (/\bcollo\b|cervical|tiroide|laring|faring|parotid/.test(t)) return 'Collo';
+    /* prima del collo: «rachide cervicale» è colonna, non collo */
     if (/rachide|colonna|vertebr|bacino|femore|ginocchio|spalla|omero|arto|polso|caviglia|piede|mano|massiccio|facciale|temporale|orbit|seni paranasal|mandibol/.test(t))
       return 'ALTRO';                       // distretto riconosciuto ma fuori tassonomia
+    if (/\bcollo\b|cervical|tiroide|laring|faring|parotid/.test(t)) return 'Collo';
     const tor = /torac/.test(t), add = /addom/.test(t), sup = /superior|\bsup\b/.test(t);
     if (tor && add) return sup ? 'TAs' : 'TAc';
     if (tor)        return 'TO';
@@ -3629,14 +3689,14 @@ var qrcode = function() {
      il primo in elenco. Restituisce anche i candidati scartati, così il
      tool PC può spiegare perché ha scelto quello che ha scelto.         */
   function riconosci(protocolli, esame, quesito) {
-    const tq = normText(quesito), te = normText(esame);
+    const tq = normQuesito(quesito), te = normText(esame);
     const regione = regionOf(esame);
     const candidati = [];
     let best = null;
     protocolli.forEach((v, ordine) => {
-      const kw = (v.kw || []).filter(w => w && tq.includes(normText(w)));
+      const kw = (v.kw || []).filter(w => w && trovato(w, tq));
       const ex = (v.ex || []).filter(w => w && te.includes(normText(w)));
-      const sKw = kw.reduce((s, w) => s + normText(w).split(' ').length * 2, 0);
+      const sKw = kw.reduce((s, w) => s + pesoTermine(w), 0);
       const fuori = !!(regione && v.reg && v.reg.length && !v.reg.includes(regione));
       if (!sKw && !ex.length) return;
       const c = { id: v.id, punteggio: sKw + ex.length, kw, ex, fuori, ordine };
@@ -3665,7 +3725,7 @@ var qrcode = function() {
       .replace(/\b(URGENTE|URG|MDC|CONTRASTO)\b/g, '')
       .replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
   }
-  const termini = q => { const t = normText(q);
+  const termini = q => { const t = normQuesito(q);
     return [...new Set(LEXICON.filter(k => t.includes(k)))].sort(); };
   const firmaCaso = (esame, quesito) => normEx(esame) + '|' + termini(quesito).join(',');
 
@@ -3712,7 +3772,7 @@ var qrcode = function() {
 
   function analizzaEsempio(esame, quesito) {
     const clinici = termini(quesito);
-    const parole = [...new Set(normText(quesito).split(' ')
+    const parole = [...new Set(normQuesito(quesito).split(' ')
       .filter(w => w.length >= 4 && !VUOTE.has(w) && !/^d+$/.test(w) && !clinici.some(c => c.includes(w) || w.includes(c))))];
     const distretto = [...new Set(normText(esame).split(' ').filter(w => w.length >= 3 && !ESAME_VUOTE.has(w)))];
     const r = regionOf(esame);
@@ -3729,14 +3789,14 @@ var qrcode = function() {
        · stesse fasi e stesso protocollo di partenza
      Restituisce i simili dal più al meno somigliante, con i motivi.    */
   function simili(p, protocolli) {
-    const kw = new Set((p.kw || []).map(normText));
+    const kw = new Set((p.kw || []).map(normTermine));
     const fasiDi = x => JSON.stringify((x.fasi || []).map(f => [f.fase, (f.zone || []).slice().sort(), f.delay || '', !!f.fix]));
     const regOk = q => !(p.reg && p.reg.length) || !(q.reg && q.reg.length) || p.reg.some(r => q.reg.includes(r));
     return (protocolli || []).filter(q => q.id !== p.id).map(q => {
       const motivi = [];
       if ((p.l || '').trim() && normText(q.l) === normText(p.l)) motivi.push({ k: 'nome', t: 'stesso nome' });
       if (p.base && q.id === p.base) motivi.push({ k: 'origine', t: 'è il protocollo da cui sei partito' });
-      const comuni = (q.kw || []).filter(w => kw.has(normText(w)));
+      const comuni = (q.kw || []).filter(w => kw.has(normTermine(w)));
       if (comuni.length && regOk(q)) motivi.push({ k: 'termini', t: 'stessi termini del quesito: ' + comuni.join(', ') });
       else if (q.appreso && regOk(q)) {
         const presi = q.appreso.termini.filter(w => kw.has(w));
@@ -3846,7 +3906,18 @@ var qrcode = function() {
   const clona = x => JSON.parse(JSON.stringify(x));
 
   function nuovaLibreria() {
-    return { v: 1, base: 'SIRM 2022', modificata: 0, protocolli: clona(SIRM_2022) };
+    return { v: 1, base: 'SIRM 2022', rev: REVISIONE, modificata: 0, protocolli: clona(SIRM_2022) };
+  }
+
+  /* Libreria ufficiale salvata sul PC → nuova revisione, se si può senza
+     perdere nulla: solo quando è identica a una revisione precedente.
+     Restituisce { libreria, stato }: 'attuale', 'aggiornata', oppure
+     'modificata' (lavoro del reparto: resta com'è, la nuova revisione si
+     adotta con «Ripristina»).                                          */
+  function aggiornaUfficiale(l) {
+    if (!l || (l.rev || 0) >= REVISIONE) return { libreria: l, stato: 'attuale' };
+    if (FIRME_PRECEDENTI[firma(l.protocolli)]) return { libreria: nuovaLibreria(), stato: 'aggiornata' };
+    return { libreria: l, stato: 'modificata' };
   }
   function nuovaLibreriaPersonale() {
     return { v: 1, base: 'personale', modificata: 0, protocolli: [] };
@@ -3912,13 +3983,15 @@ var qrcode = function() {
       p.fasi.forEach(f => { if (!FASI[f.fase]) throw new Error(`«${p.l || p.id}»: fase «${f.fase}» sconosciuta`); });
       return canonico(p);
     });
-    return { v: 1, base: (j && j.base) || 'importata', modificata: Date.now(), protocolli: out };
+    const l = { v: 1, base: (j && j.base) || 'importata', modificata: Date.now(), protocolli: out };
+    if (j && +j.rev) l.rev = +j.rev;
+    return l;
   }
 
-  const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022, LEXICON,
-    normText, normEx, termini, regionOf, riconosci, fitZones, valida,
+  const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022, LEXICON, REVISIONE,
+    normText, normQuesito, normTermine, normEx, termini, regionOf, riconosci, fitZones, valida,
     firmaCaso, suggerisci, impara, opzioni, analizzaEsempio, simili, sostituisci,
-    nuovaLibreria, nuovaLibreriaPersonale, idLibero, idPersonale, canonico, firma, leggiLibreria, clona };
+    nuovaLibreria, nuovaLibreriaPersonale, aggiornaUfficiale, idLibero, idPersonale, canonico, firma, leggiLibreria, clona };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Protocolli = api;
@@ -4744,6 +4817,11 @@ function caricaLibreria(nome) {
   return NUOVA[nome]();
 }
 const libs = { ufficiale: caricaLibreria('ufficiale'), personale: caricaLibreria('personale') };
+/* nuova revisione della libreria di partenza: si applica da sola solo a
+   una libreria salvata ma mai modificata; il lavoro del reparto non si
+   tocca, e chi vuole la revisione la adotta con «Ripristina»           */
+const revisione = PR.aggiornaUfficiale(libs.ufficiale);
+libs.ufficiale = revisione.libreria;
 let tab = 'ufficiale', lib = libs.ufficiale;
 const primoId = nome => (libs[nome].protocolli[0] || {}).id;
 const selezione = { ufficiale: primoId('ufficiale'), personale: primoId('personale') };
@@ -5082,7 +5160,7 @@ function htmlTermini(p) {
   const tok = (k, ph) => `<div class="tok" data-k="${k}">${p[k].map(w =>
       `<span>${esc(w)}<button data-act="tdel" data-k="${k}" data-w="${esc(w)}" aria-label="Rimuovi ${esc(w)}">×</button></span>`).join('')}
     <input data-tok="${k}" placeholder="${p[k].length ? 'aggiungi…' : ph}" aria-label="Nuovo termine"></div>`;
-  return `<span class="lbl">Termini del quesito <em>— due punti per parola</em></span>${tok('kw', 'es. embolia, poi Invio')}
+  return `<span class="lbl">Termini del quesito <em>— due punti per parola · sigle ammesse · «followup + neoplasia» vuole entrambe</em></span>${tok('kw', 'es. embolia, poi Invio')}
     <span class="lbl">Termini dell'esame <em>— un punto ciascuno</em></span>${tok('ex', 'es. torace, poi Invio')}
     <span class="lbl">Regioni compatibili <em>— nessuna selezionata = qualunque</em></span>
     <div class="zone">${PR.REGIONI.map(([c, l]) =>
@@ -5131,7 +5209,8 @@ function collegaModulo(radice, prendi, dopo) {
       const p = prendi(), k = t.dataset.tok;
       if ((e.key === 'Enter' || e.key === ',') && t.value.trim()) {
         e.preventDefault();
-        const w = PR.normText(t.value);
+        /* i termini del quesito accettano sigle e «+»; quelli dell'esame no */
+        const w = k === 'kw' ? PR.normTermine(t.value) : PR.normText(t.value);
         if (w && !p[k].includes(w)) p[k].push(w);
         dopo(true);
         radice.querySelector(`[data-tok="${k}"]`).focus();
@@ -5688,6 +5767,12 @@ function toast(msg, azione, cb) {
 
 aggiornaNav();
 aggiornaConteggi();
+if (revisione.stato === 'aggiornata') {
+  salvaLibreria('ufficiale');
+  toast('Libreria ufficiale aggiornata: riconosce più quesiti reali');
+} else if (revisione.stato === 'modificata') {
+  toast('Libreria ufficiale modificata da te: la nuova revisione si adotta con «Ripristina» in Protocolli');
+}
 </script>
 </body>
 </html>

@@ -42,6 +42,74 @@ casi.forEach(([esame, q, atteso]) => {
   ok(`${atteso.padEnd(16)} ← ${q.slice(0, 34)}`, r.id === atteso, r.id);
 });
 
+sez('QUESITI REALI: SIGLE E FOLLOW-UP');
+/* quesiti come si scrivono davvero in reparto, dalla lista di prova */
+const TA = 'TAC TORACE CON CONTRASTO | TAC ADDOME COMPLETO, CON E SENZA CONTRASTO';
+const reali = [
+  [TA, 'npl stomaco', 'onco-ristad'],
+  [TA, 'k colon con sec epatici in CT rival', 'onco-ristad'],
+  [TA, 'RCC', 'onco-ristad'],
+  [TA, 'neoplasia mammaria M+ pleura in terapia', 'onco-ristad'],
+  ['TAC ADDOME COMPLETO, CON E SENZA CONTRASTO', 'follow up in npl colon dx e retto', 'onco-fup'],
+  ['TAC ADDOME COMPLETO, CON E SENZA CONTRASTO', 'controllo annuale alta via escretrice, dubbio papilla', 'urotc-split'],
+  ['TAC ADDOME COMPLETO, CON E SENZA CONTRASTO', 'rivalutazione ascesso prostatico e pielonefrite', 'addome-acuto'],
+  ['TAC TORACE', 'Noduli polmonari. Controllo.', 'hrct-nodulo'],
+  ['TAC TORACE CON CONTRASTO', 'enfisema ? in indagini', 'hrct-nodulo'],
+  ['TAC TORACE CON CONTRASTO', 'Accertamenti - BOLLE DA PNX FOLLOW UP', 'hrct-nodulo'],
+  ['TAC TORACE CON CONTRASTO', 'TEP-follow up', 'angio-polm'],
+  ['TAC ADDOME COMPLETO, CON E SENZA CONTRASTO', 'cirrosi epatica senza menzione di alcol', 'fegato-cirr'],
+];
+reali.forEach(([esame, q, atteso]) => {
+  const r = P.riconosci(L, esame, q);
+  ok(`${atteso.padEnd(16)} ← ${q.slice(0, 34)}`, r.id === atteso, r.id);
+});
+ok('«follow up» da solo non è oncologico', P.riconosci(L, 'TAC TORACE', 'follow up').id === null,
+   P.riconosci(L, 'TAC TORACE', 'follow up').id);
+ok('le sigle diventano termini', P.normQuesito('npl stomaco, sec epatici M+') === 'neoplasia stomaco metastasi epatici metastasi',
+   P.normQuesito('npl stomaco, sec epatici M+'));
+ok('sigle solo a parola intera', P.normQuesito('kappa secondo') === 'kappa secondo');
+ok('firma del caso con la sigla sciolta', P.firmaCaso('TC TORACE', 'npl polmone') === P.firmaCaso('TC TORACE', 'neoplasia polmone'));
+ok('termine composto normalizzato', P.normTermine(' Follow-up +NPL ') === 'followup + neoplasia', P.normTermine(' Follow-up +NPL '));
+ok('termine composto: vale solo con tutte le parti', (() => {
+  const x = [{ id:'x', kw:['bolle + pneumotorace'], ex:[], fasi:[] }];
+  return P.riconosci(x, '', 'bolle da PNX').id === 'x' && P.riconosci(x, '', 'bolle').id === null;
+})());
+ok('…e pesa quanto le sue parole', (() => {
+  const x = [{ id:'a', kw:['bolle'], ex:[], fasi:[] }, { id:'b', kw:['bolle + pneumotorace'], ex:[], fasi:[] }];
+  return P.riconosci(x, '', 'bolle da pnx').id === 'b';
+})());
+
+sez('REGIONE CON PIÙ ESAMI');
+ok('torace + addome completo', P.regionOf(TA) === 'TAc', P.regionOf(TA));
+ok('addome + torace, ordine inverso', P.regionOf('TAC ADDOME COMPLETO · TAC TORACE') === 'TAc');
+ok('collo + torace + addome + encefalo → tronco', P.regionOf('TAC COLLO | TAC ADDOME COMPLETO | TAC TORACE | TAC ENCEFALO') === 'TAc',
+   P.regionOf('TAC COLLO | TAC ADDOME COMPLETO | TAC TORACE | TAC ENCEFALO'));
+ok('torace + addome superiore', P.regionOf('TC TORACE | TC ADDOME SUPERIORE') === 'TAs');
+ok('encefalo + collo, senza tronco', P.regionOf('TC ENCEFALO | TC COLLO') === 'ENC');
+ok('rachide cervicale non è collo', P.regionOf('TAC RACHIDE CERVICALE') === 'ALTRO', P.regionOf('TAC RACHIDE CERVICALE'));
+ok('aorta toraco-addominale', P.regionOf('ANGIO-TC DELLAORTA TORACO ADDOMINALE') === 'TAc');
+
+sez('REVISIONE DELLA LIBRERIA');
+{
+  const nuova = P.nuovaLibreria();
+  ok('revisione corrente', nuova.rev === P.REVISIONE && P.REVISIONE >= 2);
+  ok('libreria attuale lasciata', P.aggiornaUfficiale(nuova).stato === 'attuale');
+  /* la revisione 1 salvata sul PC: stessi protocolli, termini di allora */
+  const r1 = P.clona(nuova); delete r1.rev;
+  const vecchi = { 'onco-ristad':['restaging','ristadiazione','stadiazione'], 'onco-fup':['followup','recidiva'],
+    'urotc-split':['ematuria','colica renale','idronefrosi','urolitiasi','calcolosi'],
+    'addome-acuto':['appendicite','diverticolite','occlusione','perforazione','addome acuto','peritonite'],
+    'hrct-nodulo':['nodulo','lungrads','interstiziopatia','fibrosi'] };
+  r1.protocolli.forEach(p => { if (vecchi[p.id]) p.kw = vecchi[p.id]; });
+  const a = P.aggiornaUfficiale(r1);
+  ok('revisione 1 intatta → aggiornata', a.stato === 'aggiornata' && a.libreria.rev === P.REVISIONE, a.stato);
+  ok('…con i nuovi termini', a.libreria.protocolli.find(p => p.id === 'hrct-nodulo').kw.includes('enfisema'));
+  const mod = P.clona(r1); mod.protocolli[0].idr = 1.7;
+  const m = P.aggiornaUfficiale(mod);
+  ok('revisione 1 modificata → lasciata com\'è', m.stato === 'modificata' && m.libreria === mod, m.stato);
+  ok('la revisione sopravvive al salvataggio', P.leggiLibreria(JSON.stringify(nuova)).rev === P.REVISIONE);
+}
+
 sez('REGIONE E CASI LIMITE');
 const tt = P.riconosci(L, 'TC TORACE', 'trauma toracico');
 ok('«trauma» sul torace non finisce sull’encefalo', tt.id !== 'cranio-trauma', tt.id);

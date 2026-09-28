@@ -62,8 +62,23 @@ npm pack qrcode-generator
 
 `protocolli.js` contiene la libreria di partenza (estratto SIRM 2022), il
 riconoscimento dal quesito, la deduzione della regione dall'esame e la
-validazione. È scritto per essere condiviso con il telefono: stesso schema,
-stesso riconoscimento, così il PC mostra esattamente cosa suggerirà il reparto.
+validazione. È condiviso con il telefono, che lo carica da `../desktop/`:
+stessa libreria, stesso riconoscimento, così il PC mostra esattamente cosa
+suggerirà il telefono.
+
+I quesiti reali sono scritti per sigle. Prima del confronto ogni sigla diventa
+il termine per esteso: *npl, neopl, k, carcinoma* → neoplasia; *sec, mts, M+* →
+metastasi; *rival* → rivalutazione; *RCC* → neoplasia renale; *PNX* →
+pneumotorace; *AAA* → aneurisma aorta addominale; *noduli* → nodulo. La regola
+vale anche per i termini scritti nella libreria. Un termine può chiedere più
+parole insieme: `followup + neoplasia` vale solo se ci sono entrambe, in
+qualunque punto del quesito. Con più esami, la regione è l'unione dei distretti
+del tronco (torace + addome completo → torace-addome completo).
+
+La libreria di partenza ha una **revisione**. Se la libreria ufficiale salvata
+sul PC è identica a una revisione precedente, si aggiorna da sola all'apertura.
+Se il reparto l'ha modificata resta com'è, e la nuova revisione si adotta con
+«Ripristina».
 
 La libreria modificata resta nel browser del PC (localStorage): non contiene
 dati personali. La **firma** di 7 caratteri identifica la versione e cambia a
