@@ -318,7 +318,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .fase::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:0 99px 99px 0;background:var(--c)}
 .fase-n{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;
   color:#fff;background:var(--c);box-shadow:inset 1px 2px 3px rgba(255,255,255,.35),inset -2px -3px 5px rgba(0,0,0,.18)}
-.fase select.field{height:38px;font-size:.86rem}
+.fase select.field,.fase .tendina.field{height:38px;font-size:.86rem}
 .rit{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .seg{display:inline-flex;padding:3px;border-radius:99px;background:var(--sunk);box-shadow:var(--well-s)}
 .seg button{border:0;background:transparent;cursor:pointer;padding:6px 13px;border-radius:99px;font-size:.78rem;font-weight:600;color:var(--ink-2);white-space:nowrap}
@@ -560,7 +560,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   .tras-griglia{grid-template-columns:1fr}
   .firma{grid-template-columns:1fr}
   .fase{grid-template-columns:34px minmax(0,1fr) auto}
-  .fase select.field{grid-column:2;grid-row:1;max-width:220px}
+  .fase select.field,.fase .tendina.field{grid-column:2;grid-row:1;max-width:220px}
   .fase-ctl{grid-column:3;grid-row:1}
   .fase .rit{grid-column:2/-1;grid-row:2}
   .ed-top .eyebrow{flex:1 1 100%}
@@ -583,6 +583,46 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   body::before,.top,.intro,.passi,.barra,.spiega,.azioni,.rete{display:none!important}
   .plate{box-shadow:none}
 }
+
+/* ═══ MENU A TENDINA ═════════════════════════════════════════════════
+   L'elenco di un <select> nativo è disegnato dal sistema (grigio, senza
+   raggi né ombre) e il CSS non lo raggiunge. Ogni select del tool viene
+   quindi affiancato da un pulsante e da un elenco del tool; il select
+   resta, nascosto, come fonte del valore: riceve la scelta e il suo
+   evento change, così il codice che lo ascolta non cambia.            */
+.tendina-nativa{position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;
+  padding:0!important;opacity:0;pointer-events:none;overflow:hidden}
+button.tendina{display:flex;align-items:center;min-width:0;text-align:left;cursor:pointer;color:var(--ink)}
+button.tendina > span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button.tendina.field{padding-right:36px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+button.tendina.field[aria-expanded="true"]{box-shadow:var(--well),0 0 0 3px rgba(124,207,176,.55)}
+button.tendina.piatta{border:0;background:transparent;font-weight:600;padding:0 16px 0 0;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);
+  background-position:calc(100% - 5px) 55%,calc(100% - 1px) 55%;background-size:4px 4px;background-repeat:no-repeat}
+button.tendina:disabled{opacity:.5;cursor:not-allowed}
+button.tendina:focus-visible{outline:3px solid var(--jade-ink);outline-offset:2px}
+.tendina-lista{position:fixed;z-index:2050;overflow-y:auto;padding:6px;border-radius:var(--r-sm);
+  background:linear-gradient(180deg,#FCFDFF 0%,#F2F6FD 100%);scrollbar-width:thin;
+  box-shadow:0 22px 38px -18px rgba(35,45,60,.42),0 8px 16px -10px rgba(35,45,60,.2),inset 0 1px 0 #fff,0 0 0 1px rgba(35,45,60,.06);
+  animation:tendinaApre .16s var(--ease) both}
+.tendina-lista.sopra{animation-name:tendinaApreSu}
+@keyframes tendinaApre{from{opacity:0;transform:translateY(-4px) scale(.98)}}
+@keyframes tendinaApreSu{from{opacity:0;transform:translateY(4px) scale(.98)}}
+.tendina-gruppo{padding:10px 12px 5px;font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.tendina-voce{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:12px;font-size:.86rem;line-height:1.3;
+  color:var(--ink);cursor:pointer;white-space:nowrap}
+.tendina-voce > span{overflow:hidden;text-overflow:ellipsis}
+.tendina-voce::before{content:"";flex:0 0 auto;width:14px;height:14px}
+.tendina-voce.scelta{color:var(--jade-ink);font-weight:600}
+.tendina-voce.scelta::before{width:5px;height:10px;margin:0 5px 3px 4px;border:solid currentColor;border-width:0 2px 2px 0;
+  transform:rotate(45deg)}
+.tendina-voce.scelta.vuota{color:var(--ink-3);font-weight:500}
+.tendina-voce.scelta.vuota::before{border:0;transform:none;width:14px;height:14px;margin:0}
+.tendina-voce.attiva{background:var(--plate-2);box-shadow:var(--well-s)}
+.tendina-voce.vuota{color:var(--ink-3)}
+.tendina-voce.spenta{opacity:.45;cursor:default}
 
 /* ═══ COPYRIGHT ══════════════════════════════════════════════════════
    In basso a destra su ogni pagina, anche durante l'intro: sta sopra la
@@ -4565,6 +4605,165 @@ let pazienti = [];
 const esc = s => String(s == null ? '' : s)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const it = (n, d = 1) => Number(n).toFixed(d).replace('.', ',');
+
+/* ═══ menu a tendina ═════════════════════════════════════════════════
+   Ogni <select> del tool, anche quelli creati dopo (editor e builder si
+   ridisegnano), riceve un pulsante e un elenco nello stile del tool. Il
+   select resta nascosto e resta la fonte del valore: la scelta gli viene
+   scritta e il suo evento change parte come prima.                    */
+const Tendina = (() => {
+  let aperta = null;                           // { sel, b, lista, voci, att }
+
+  function migliora(sel) {
+    if (sel.dataset.tendina || sel.multiple) return;
+    sel.dataset.tendina = '1';
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tendina ' + (sel.classList.contains('field') ? sel.className : 'piatta');
+    b.style.cssText = sel.style.cssText;
+    b.setAttribute('aria-haspopup', 'listbox');
+    b.setAttribute('aria-expanded', 'false');
+    if (sel.getAttribute('aria-label')) b.setAttribute('aria-label', sel.getAttribute('aria-label'));
+    b.appendChild(document.createElement('span'));
+    sel.after(b);
+    sel.classList.add('tendina-nativa');
+    sel.tabIndex = -1;
+    sel.setAttribute('aria-hidden', 'true');
+    const etichetta = () => {
+      const o = sel.options[sel.selectedIndex];
+      b.firstChild.textContent = o ? o.text : '';
+      b.disabled = sel.disabled;
+    };
+    etichetta();
+    sel.addEventListener('change', etichetta);
+    sel._etichetta = etichetta;
+    b.addEventListener('click', () => (aperta && aperta.sel === sel) ? chiudi() : apri(sel, b));
+    b.addEventListener('keydown', e => {
+      if (aperta && aperta.sel === sel) return;
+      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) { e.preventDefault(); apri(sel, b); }
+    });
+  }
+
+  function apri(sel, b) {
+    chiudi();
+    sel._etichetta();
+    const lista = document.createElement('div');
+    lista.className = 'tendina-lista';
+    lista.setAttribute('role', 'listbox');
+    const voci = [];
+    const voce = o => {
+      const d = document.createElement('div');
+      const i = [...sel.options].indexOf(o);
+      d.className = 'tendina-voce' + (i === sel.selectedIndex ? ' scelta' : '') + (o.value === '' ? ' vuota' : '')
+                  + (o.disabled ? ' spenta' : '');
+      d.setAttribute('role', 'option');
+      d.setAttribute('aria-selected', i === sel.selectedIndex);
+      const t = document.createElement('span'); t.textContent = o.text; d.appendChild(t);
+      d.dataset.i = i;
+      lista.appendChild(d);
+      if (!o.disabled) voci.push(d);
+    };
+    [...sel.children].forEach(c => {
+      if (c.tagName === 'OPTGROUP') {
+        const g = document.createElement('div');
+        g.className = 'tendina-gruppo'; g.textContent = c.label; lista.appendChild(g);
+        [...c.children].forEach(o => { if (!o.hidden) voce(o); });
+      } else if (!c.hidden) voce(c);
+    });
+    document.body.appendChild(lista);
+    posiziona(b, lista);
+    b.setAttribute('aria-expanded', 'true');
+    aperta = { sel, b, lista, voci, att: -1 };
+    evidenzia(Math.max(0, voci.findIndex(v => +v.dataset.i === sel.selectedIndex)));
+    lista.addEventListener('mousedown', e => e.preventDefault());      // il fuoco resta al pulsante
+    lista.addEventListener('click', e => { const v = e.target.closest('.tendina-voce'); if (v && !v.classList.contains('spenta')) scegli(+v.dataset.i); });
+    lista.addEventListener('mousemove', e => { const v = e.target.closest('.tendina-voce'); if (v) evidenzia(voci.indexOf(v), false); });
+  }
+
+  /* sotto il pulsante se c'è posto, altrimenti sopra; mai fuori schermo */
+  function posiziona(b, lista) {
+    const r = b.getBoundingClientRect(), m = 12, gap = 6;
+    const sotto = innerHeight - r.bottom - m - gap, sopra = r.top - m - gap;
+    const suSopra = sotto < 220 && sopra > sotto;
+    const alta = Math.min(340, suSopra ? sopra : sotto);
+    lista.style.maxHeight = alta + 'px';
+    lista.style.minWidth = r.width + 'px';
+    lista.style.maxWidth = Math.max(r.width, Math.min(560, innerWidth - 2 * m)) + 'px';
+    const larga = lista.offsetWidth;
+    lista.style.left = Math.max(m, Math.min(r.left, innerWidth - m - larga)) + 'px';
+    if (suSopra) { lista.classList.add('sopra'); lista.style.top = Math.max(m, r.top - gap - Math.min(alta, lista.offsetHeight)) + 'px'; }
+    else lista.style.top = (r.bottom + gap) + 'px';
+  }
+
+  function evidenzia(k, scorri = true) {
+    if (!aperta || k < 0 || k >= aperta.voci.length) return;
+    if (aperta.voci[aperta.att]) aperta.voci[aperta.att].classList.remove('attiva');
+    aperta.att = k;
+    aperta.voci[k].classList.add('attiva');
+    if (scorri) aperta.voci[k].scrollIntoView({ block: 'nearest' });
+  }
+
+  function scegli(i) {
+    const { sel, b } = aperta;
+    chiudi();
+    b.focus();
+    if (sel.selectedIndex === i) return;
+    sel.selectedIndex = i;
+    sel.dispatchEvent(new Event('input', { bubbles: true }));
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function chiudi() {
+    if (!aperta) return;
+    aperta.lista.remove();
+    aperta.b.setAttribute('aria-expanded', 'false');
+    aperta = null;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (!aperta) return;
+    const n = aperta.voci.length;
+    if (e.key === 'ArrowDown') { e.preventDefault(); evidenzia(Math.min(n - 1, aperta.att + 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); evidenzia(Math.max(0, aperta.att - 1)); }
+    else if (e.key === 'Home') { e.preventDefault(); evidenzia(0); }
+    else if (e.key === 'End') { e.preventDefault(); evidenzia(n - 1); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (aperta.voci[aperta.att]) scegli(+aperta.voci[aperta.att].dataset.i); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); const b = aperta.b; chiudi(); b.focus(); }
+    else if (e.key === 'Tab') chiudi();
+    else if (e.key.length === 1) {                 // lettera: la prima voce che inizia così
+      const l = e.key.toLowerCase(), da = aperta.att + 1;
+      const k = [...aperta.voci.slice(da), ...aperta.voci.slice(0, da)]
+        .findIndex(v => v.textContent.trim().toLowerCase().startsWith(l));
+      if (k >= 0) evidenzia((da + k) % n);
+    }
+  }, true);
+  document.addEventListener('mousedown', e => {
+    if (aperta && !aperta.lista.contains(e.target) && !aperta.b.contains(e.target)) chiudi();
+  }, true);
+  addEventListener('resize', chiudi);
+  /* se la pagina scorre l'elenco segue il pulsante, come quello nativo;
+     si chiude solo quando il pulsante esce dallo schermo              */
+  addEventListener('scroll', e => {
+    if (!aperta || aperta.lista.contains(e.target)) return;
+    const r = aperta.b.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return chiudi();
+    aperta.lista.classList.remove('sopra');
+    posiziona(aperta.b, aperta.lista);
+  }, true);
+
+  /* i select che esistono ora e quelli che arriveranno */
+  document.querySelectorAll('select').forEach(migliora);
+  new MutationObserver(ms => {
+    for (const m of ms) for (const n of m.addedNodes) {
+      if (n.nodeType !== 1) continue;
+      if (n.tagName === 'SELECT') migliora(n);
+      else if (n.querySelectorAll) n.querySelectorAll('select').forEach(migliora);
+    }
+    if (aperta && !aperta.b.isConnected) chiudi();     // il suo pulsante è stato ridisegnato
+  }).observe(document.body, { childList: true, subtree: true });
+
+  return { migliora, chiudi };
+})();
 
 /* ═══ sezioni ════════════════════════════════════════════════════════ */
 let area = 'lista';
