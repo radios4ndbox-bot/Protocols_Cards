@@ -183,6 +183,42 @@ console.log('\n── PAZIENTE CON QUATTRO O PIÙ NOMI ─────');
   ok('nessuna segnalazione', !(p4.incerto || []).length, (p4.incerto || []).join(', '));
 }
 
+console.log('\n── PIÙ PAGINE, ASSE Y VERSO L\'ALTO ───────');
+{
+  /* Com'è la lista reale letta da pdf.js: y cresce verso l'alto, quindi il
+     blocco di un paziente prosegue verso y minori. Con più pagine le y si
+     intrecciano: la riga più vicina a un'accettazione, in un ordinamento
+     globale, è spesso di un'altra pagina. Il verso va deciso pagina per
+     pagina; prima veniva letto al contrario e ogni paziente perdeva
+     orario, nome, quesito ed esami.                                    */
+  const H = 1000, pagine = [];
+  let n = 0;
+  for (let k = 0; k < 4; k++) {
+    const items = [];
+    intestazionePagina(items, k + 1, 4);
+    let y = 60 + k * 7;                              // sfasamento fra pagine
+    for (let j = 0; j < 3; j++) {
+      n++;
+      const id = String(n).padStart(2, '0');
+      y = emettiPaziente(items, y, {
+        acc:'0D200000' + id, data:'28/09/2026', ora:`${String(8 + n).padStart(2, '0')}:15`,
+        cognome:'COGNOME' + id, nome:'NOME' + id, nascita:'01/01/1950', diagnostica:'TAC 2',
+        diagnostica2:'DESIO', prov1:'DES-RAD', prov2:'TAC', stato:'Da eseguire',
+        quesito:'quesito numero ' + id,
+        esami:[{ codice:'6987411C', descrizione:'TAC TORACE CON CONTRASTO', stato:'Da eseguire' }] });
+    }
+    pagine.push(items.map(i => ({ ...i, y: H - i.y })));      // asse capovolto
+  }
+  const r = parseRis(pagine, { larghezzaPagina: (961 - 64) / (0.8562 - 0.0567) });
+  ok('12 pazienti su 4 pagine', r.pazienti.length === 12, r.pazienti.length + '');
+  ok('orario per tutti', r.pazienti.every(p => /^\d{2}:15$/.test(p.ora)), r.pazienti.map(p => p.ora || '—').join(' '));
+  ok('nome completo per tutti', r.pazienti.every(p => p.nomeCompleto === `COGNOME${p.accession.slice(-2)} NOME${p.accession.slice(-2)}`),
+     r.pazienti.slice(0, 2).map(p => p.nomeCompleto).join(', '));
+  ok('quesito del proprio blocco', r.pazienti.every(p => p.quesito === 'quesito numero ' + p.accession.slice(-2)));
+  ok('un esame ciascuno', r.pazienti.every(p => p.esami.length === 1));
+  ok('nessuna segnalazione', r.conSegnalazioni === 0, r.conSegnalazioni + '');
+}
+
 console.log('\n── SEGNALAZIONI SU DATI INCOMPLETI ─────');
 const monco = [[{ x:X.codice, y:100, t:'0D10000009' },
                 { x:X.orario, y:100, t:'21/09/2026' },

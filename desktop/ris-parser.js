@@ -125,17 +125,24 @@
 
   /* ── direzione di lettura di un blocco, ricavata dal documento ─────
      Dalla riga di accettazione, l'orario HH:MM sta nella riga successiva:
-     da che parte si trovi lo decide il documento, non un'assunzione.   */
-  function direzione(ordinate) {
-    const idxAcc = ordinate
-      .map((r, i) => (RE_ACC.test(r.c.codice || '') ? i : -1))
-      .filter(i => i >= 0);
+     da che parte si trovi lo decide il documento, non un'assunzione.
+     Ogni pagina vota con le proprie righe, ordinate per y: le y di pagine
+     diverse non sono confrontabili, e mescolandole la riga «accanto» a
+     un'accettazione sarebbe spesso di un'altra pagina.                  */
+  function voti(ordinate) {
     let su = 0, giu = 0;
-    for (const i of idxAcc) {
-      const dopo  = ordinate[i + 1], prima = ordinate[i - 1];
+    ordinate.forEach((r, i) => {
+      if (!RE_ACC.test(r.c.codice || '')) return;
+      const dopo = ordinate[i + 1], prima = ordinate[i - 1];
       if (dopo  && RE_ORA.test((dopo.c.orario  || '').trim())) su++;
       if (prima && RE_ORA.test((prima.c.orario || '').trim())) giu++;
-    }
+    });
+    return { su, giu };
+  }
+  /* pagine: righe di ogni pagina, già ordinate per y crescente */
+  function direzione(pagine) {
+    let su = 0, giu = 0;
+    for (const p of pagine) { const v = voti(p); su += v.su; giu += v.giu; }
     return giu > su ? -1 : 1;            // +1 = il blocco prosegue in +y
   }
 
@@ -255,9 +262,10 @@
     /* Il verso di lettura è una proprietà del documento, non della singola
        pagina: una pagina di continuazione non contiene righe di accettazione
        e da sola non offre alcun indizio. Deciderlo pagina per pagina la
-       farebbe leggere al contrario.                                       */
+       farebbe leggere al contrario. Si decide quindi una volta sola,
+       sommando i voti delle pagine che ne danno.                          */
     const dir = o.direzione
-      || direzione(perPagina.flat().slice().sort((a, b) => a.y - b.y));
+      || direzione(perPagina.map(rs => rs.slice().sort((a, b) => a.y - b.y)));
 
     perPagina.forEach(rs => {
       rs.sort((a, b) => (a.y - b.y) * dir);
