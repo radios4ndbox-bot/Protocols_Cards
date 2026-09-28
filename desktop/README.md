@@ -54,6 +54,24 @@ Il relay vede solo testo cifrato. Il tool contatta la rete solo quando si
 preme «Abbina» o «Invia»: aprirlo e lavorare resta un'operazione senza rete.
 Il canale è in `canale.js`, condiviso con l'app del telefono.
 
+## Backup dei protocolli
+
+In **Protocolli**, in fondo alla libreria, «Scegli cartella» collega una cartella
+del computer, anche dentro Google Drive o OneDrive per desktop, che ne fanno
+la copia nel cloud. Il tool ci scrive `protocol-cards-backup.json` con entrambe le
+librerie: gli ufficiali come li ha modificati il reparto e i personali, compresi
+quelli appresi. Lo riscrive da solo a ogni modifica, e accanto tiene la versione
+precedente (`protocol-cards-backup.precedente.json`). Nel file ci sono solo
+protocolli: nessun dato paziente, nessuna chiave di abbinamento.
+
+Su un PC nuovo, ad esempio in un altro ospedale, «Recupera dal backup» rilegge la
+cartella, mostra cosa contiene e, confermando, sostituisce le librerie; da lì
+la cartella resta collegata per i salvataggi successivi.
+
+Serve Chrome o Edge (File System Access). Il browser può chiedere di nuovo il
+permesso a ogni apertura: il backup va in pausa e riparte con «Riattiva».
+Chrome offre anche «Consenti a ogni visita», che evita la richiesta.
+
 ## Intro
 
 All'apertura parte la stessa coreografia di ER Oncology Archivist, con le carte
