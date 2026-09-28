@@ -1,7 +1,7 @@
 # Protocol Cards — tool PC
 
-Importa la lista esami del RIS, permette di verificarla e la trasferisce sul
-telefono con un codice QR. Contiene anche l'editor della **libreria protocolli**:
+Importa la lista esami del RIS, permette di verificarla e la invia al
+telefono attraverso un canale cifrato. Contiene anche l'editor della **libreria protocolli**:
 fasi, zone, mezzo di contrasto, regola della basale e termini che fanno
 riconoscere il protocollo dal quesito.
 
@@ -14,12 +14,14 @@ node protocolli.test.js
 ```
 
 `protocol-cards-pc.html` è un file unico e autosufficiente: pdf.js, l'encoder
-QR, il parser e la libreria protocolli sono incorporati. Va copiato su una chiavetta e aperto in
-Chrome. **Non serve rete**, e il PDF non lascia il computer.
+QR (per l'abbinamento), il parser, la libreria protocolli e il canale sono
+incorporati. Va copiato su una chiavetta e aperto in Chrome. Importare e
+verificare **non richiede rete**, e il PDF non lascia il computer; la rete
+serve solo per abbinare il telefono e inviare la lista.
 
 ## Invio al telefono via rete
 
-Oltre ai codici QR, al passo 3 la lista può partire via rete. Il PC del
+Al passo 3 la lista parte via rete. Il PC del
 reparto e il telefono non si raggiungono direttamente: entrambi si collegano
 in uscita al relay pubblico [ntfy.sh](https://ntfy.sh), come verificato in
 reparto con `sync-test/`.
