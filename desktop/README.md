@@ -44,6 +44,25 @@ Il relay vede solo testo cifrato. Il tool contatta la rete solo quando si
 preme «Abbina» o «Invia»: aprirlo e lavorare resta un'operazione senza rete.
 Il canale è in `canale.js`, condiviso con l'app del telefono.
 
+## Intro
+
+All'apertura parte la stessa coreografia di ER Oncology Archivist, con le carte
+al posto del marchio: le quattro fasi (basale, arteriosa, venosa, tardiva)
+entrano e si aprono a ventaglio, il ventaglio scivola a sinistra mentre si
+compone «Protocol Cards», entra il sottotitolo, poi il ventaglio vola nel
+marchio della barra e si porta su la pagina. Dura circa tre secondi e mezzo;
+si salta con un clic, Esc, Invio o Spazio. Con «riduci movimento» attivo nel
+sistema non parte.
+
+- `intro/fase-*.jpg`: una TC dell'addome per fase, ritagliate dalla figura
+  fornita e incorporate da `build.js` come data URI. Prima di distribuire il
+  tool va verificato che la licenza della figura ne consenta l'uso; per
+  sostituirle basta rimpiazzare i quattro file (360×311 px).
+- Il nome è in Sora 300 (SIL Open Font License), convertito in tracciati:
+  un `<path>` per lettera, nessun font da caricare.
+- `intro.test.js` controlla sequenza, salto e «riduci movimento»; gli altri
+  test aprono il tool con «riduci movimento», così l'intro non li copre.
+
 ## Librerie incorporate
 
 | | versione | licenza |
