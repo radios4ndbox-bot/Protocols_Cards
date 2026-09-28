@@ -615,7 +615,10 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .intro-palco.in-scena .intro-riga{
   animation:introASinistra var(--t-slitta-dur,700ms) var(--intro-ease) var(--t-slitta,1000ms) forwards}
 @keyframes introASinistra{to{transform:translate3d(0,0,0)}}
-.intro-logo{flex-shrink:0}
+/* origine in alto a sinistra: il calcolo del volo (FLIP) sposta e scala
+   a partire dall'angolo; con l'origine al centro, predefinita, la carta
+   atterrava spostata di metà del suo contenitore rimpicciolito         */
+.intro-logo{flex-shrink:0;transform-origin:0 0}
 .intro-logo.in-volo{transition:transform var(--t-volo,800ms) var(--curva-traino)}
 .intro-logo.atterrato{visibility:hidden}
 
@@ -624,11 +627,20 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   width:calc(var(--cw) * 2.3);height:calc(var(--cw) * 2.3)}
 .pc-carta{position:absolute;width:var(--cw);aspect-ratio:2/3;
   left:calc(var(--cw) * .78);bottom:calc(var(--cw) * .12);
-  transform-origin:10% 90%;border-radius:calc(var(--cw) * .1);overflow:hidden;
-  background:#0E1417;border:solid 2px var(--c);
-  box-shadow:0 0 2.2px rgba(0,0,0,.05),0 0 10px rgba(0,0,0,.08),0 0 33px rgba(0,0,0,.14),0 0 80px rgba(0,0,0,.2);
-  transition:rotate .15s ease-in-out,transform .22s ease-in-out;
-  display:flex;flex-direction:column;user-select:none}
+  transform-origin:10% 90%;transform-style:preserve-3d;
+  transition:rotate .15s ease-in-out,transform .22s ease-in-out;user-select:none}
+/* faccia e dorso: il raggio in percentuale (10% della larghezza, lo
+   stesso valore in verticale) resta proporzionale a qualunque scala,
+   così la copia nel marchio della barra coincide con la carta atterrata */
+.pc-faccia,.pc-dorso{position:absolute;inset:0;border-radius:10% / 6.667%;overflow:hidden;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  box-shadow:0 0 2.2px rgba(0,0,0,.05),0 0 10px rgba(0,0,0,.08),0 0 33px rgba(0,0,0,.14),0 0 80px rgba(0,0,0,.2)}
+.pc-faccia{background:#0E1417;border:solid 2px var(--c);display:flex;flex-direction:column}
+/* il dorso: il marchio StructuRad in sfumature di blu e verde acqua */
+.pc-dorso{transform:rotateY(180deg);display:grid;place-items:center;
+  background:radial-gradient(120% 90% at 50% 38%,#12324A 0%,#0A1A2B 70%);
+  border:solid 2px rgba(63,214,198,.6)}
+.pc-dorso svg{display:block;width:74%;height:auto;filter:drop-shadow(0 4px 14px rgba(63,214,198,.3))}
 .pc-carta:nth-child(1){rotate:-40deg}
 .pc-carta:nth-child(2){rotate:-20deg}
 .pc-carta:nth-child(3){rotate:0deg}
@@ -660,6 +672,17 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 #introScena .pc-carta:hover{filter:brightness(1.06)}
 #introScena .pc-carta:hover + .pc-carta{transform:rotate(12deg)}
 #introScena .pc-carta:hover + .pc-carta + .pc-carta{transform:rotate(5deg)}
+
+/* ── atto IV: le carte si raccolgono in una, che si gira sul dorso ── */
+#introScena .pc-ventaglio.raccolto{pointer-events:none}
+#introScena .pc-ventaglio.raccolto .pc-carta{rotate:0deg;transform:none;filter:none;
+  transition:rotate var(--t-raccogli-dur,450ms) var(--intro-ease),transform .2s ease}
+#introScena .pc-ventaglio.girato .pc-carta:not(:last-child){opacity:0;transition:opacity .12s linear}
+#introScena .pc-ventaglio.girato .pc-carta:last-child{transform-origin:50% 50%;
+  transform:perspective(900px) rotateY(180deg);
+  transition:transform var(--t-gira-dur,650ms) cubic-bezier(.45,.05,.2,1)}
+/* saltando l'intro raccolta e giro sono immediati: si vola subito */
+#introScena .pc-ventaglio.subito .pc-carta{transition:none!important}
 
 /* ── il nome, lettera per lettera: solo opacità ── */
 .intro-titolo{width:min(520px,52vw);padding-left:clamp(10px,2vw,26px)}
@@ -706,10 +729,11 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 main.sale{animation:paginaSale var(--t-volo,800ms) var(--curva-traino) both;will-change:transform}
 
 /* il marchio della barra: una copia ferma del ventaglio, dove atterra */
-.mark.con-ventaglio{background:none;box-shadow:none;overflow:visible}
-.mark.con-ventaglio::after{display:none}
-.mark .pc-ventaglio{position:absolute;left:0;top:0;transform-origin:0 0;transform:scale(var(--s,.14))}
-.mark .pc-carta{transition:none;box-shadow:0 0 12px rgba(0,0,0,.25)}
+.mark.con-dorso{width:22px;height:33px;border-radius:0;background:none;box-shadow:none}
+.mark.con-dorso::after{display:none}
+.mark .pc-dorso{transform:none;border-width:calc(2px * var(--s,.22));
+  box-shadow:0 6px 10px -6px rgba(10,26,43,.7)}
+.mark .pc-dorso svg{filter:none}
 .top.intro-in-corso .mark{opacity:0}
 
 /* durante l'intro il contenuto della barra resta nascosto e poi entra a cascata */
@@ -736,14 +760,135 @@ main.sale{animation:paginaSale var(--t-volo,800ms) var(--curva-traino) both;will
     <div class="intro-riga">
       <div class="intro-logo" id="introLogo">
         <div class="pc-ventaglio">
-          <div class="pc-carta" style="--c:#8A94A6"><img src="⟦FASE:basale⟧" alt="">
-            <section><span>BAS</span><i></i></section><footer>Basale<small>senza mdc</small></footer></div>
-          <div class="pc-carta" style="--c:#E0473E"><img src="⟦FASE:arteriosa⟧" alt="">
-            <section><span>ART</span><i></i></section><footer>Arteriosa<small>bolus tracking</small></footer></div>
-          <div class="pc-carta" style="--c:#2F6FED"><img src="⟦FASE:venosa⟧" alt="">
-            <section><span>VEN</span><i></i></section><footer>Venosa<small>70 s</small></footer></div>
-          <div class="pc-carta" style="--c:#1FB5A8"><img src="⟦FASE:tardiva⟧" alt="">
+          <div class="pc-carta" style="--c:#8A94A6"><div class="pc-faccia"><img src="⟦FASE:basale⟧" alt="">
+            <section><span>BAS</span><i></i></section><footer>Basale<small>senza mdc</small></footer></div></div>
+          <div class="pc-carta" style="--c:#E0473E"><div class="pc-faccia"><img src="⟦FASE:arteriosa⟧" alt="">
+            <section><span>ART</span><i></i></section><footer>Arteriosa<small>bolus tracking</small></footer></div></div>
+          <div class="pc-carta" style="--c:#2F6FED"><div class="pc-faccia"><img src="⟦FASE:venosa⟧" alt="">
+            <section><span>VEN</span><i></i></section><footer>Venosa<small>70 s</small></footer></div></div>
+          <div class="pc-carta" style="--c:#1FB5A8"><div class="pc-faccia"><img src="⟦FASE:tardiva⟧" alt="">
             <section><span>TAR</span><i></i></section><footer>Tardiva<small>300 s</small></footer></div>
+            <div class="pc-dorso">
+<svg aria-hidden="true" version="1.0" xmlns="http://www.w3.org/2000/svg"
+ viewBox="0 0 340.000000 192.000000"
+ preserveAspectRatio="xMidYMid meet">
+<defs><linearGradient id="sdGradCarta" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#4F8BFF"/><stop offset="1" stop-color="#3FD6C6"/></linearGradient></defs>
+<g transform="translate(0.000000,192.000000) scale(0.100000,-0.100000)"
+fill="url(#sdGradCarta)" stroke="none">
+<path d="M1615 1895 c-137 -29 -227 -85 -316 -195 -131 -162 -154 -393 -60
+-590 38 -80 146 -190 231 -234 94 -50 177 -66 341 -66 153 0 191 -10 247 -63
+76 -72 100 -176 62 -265 -27 -62 -95 -127 -149 -142 -20 -5 -116 -10 -213 -10
+l-178 0 0 -61 0 -60 208 3 c240 4 263 10 356 98 79 75 110 149 111 265 0 79
+-3 97 -29 149 -36 73 -97 136 -168 172 -50 26 -63 28 -233 35 -209 8 -256 19
+-343 83 -95 70 -151 161 -173 280 -29 157 51 337 188 424 93 59 119 63 432 66
+l286 2 3 62 3 62 -273 -1 c-179 -1 -294 -5 -333 -14z"/>
+<path d="M2314 1713 l1 -198 -315 -5 c-245 -4 -321 -8 -340 -19 -105 -59 -103
+-214 4 -265 26 -12 66 -16 173 -16 104 0 156 -5 213 -20 193 -50 343 -174 424
+-352 76 -164 79 -362 8 -516 -40 -87 -100 -168 -166 -224 -34 -29 -65 -56 -71
+-61 -6 -6 69 -7 200 -4 233 7 320 24 448 88 184 93 352 273 429 463 103 253
+88 624 -34 845 -104 188 -222 305 -393 389 -145 71 -247 92 -451 92 l-130 0 0
+-197z m401 46 c259 -79 441 -266 526 -539 21 -67 24 -94 24 -250 -1 -138 -4
+-189 -19 -239 -39 -141 -109 -263 -208 -362 -102 -101 -211 -164 -351 -200
+-72 -19 -162 -25 -155 -11 96 186 118 265 118 417 0 134 -19 216 -80 340 -85
+176 -239 314 -413 371 -72 24 -103 28 -260 33 -184 6 -196 9 -197 51 0 38 16
+40 333 40 297 0 310 1 338 21 52 37 59 64 59 220 l0 142 108 -6 c65 -4 135
+-15 177 -28z"/>
+<path d="M1596 1709 c-78 -32 -135 -77 -176 -140 -48 -74 -64 -139 -58 -239 8
+-134 83 -247 204 -306 55 -27 68 -29 239 -35 99 -4 194 -12 210 -17 106 -33
+209 -121 258 -221 30 -62 32 -73 32 -176 0 -103 -2 -114 -32 -177 -35 -75
+-103 -149 -175 -191 -79 -46 -144 -57 -340 -57 l-178 0 0 -55 0 -55 98 -1
+c343 -2 399 7 510 82 251 167 322 502 159 746 -116 173 -265 243 -522 243
+-170 0 -204 9 -272 75 -57 56 -73 96 -73 185 0 70 25 124 78 172 73 66 83 68
+388 68 l274 0 0 60 0 60 -287 -1 c-263 0 -292 -2 -337 -20z"/>
+<path d="M925 997 c-36 -21 -216 -119 -395 -215 -36 -19 -68 -38 -72 -41 -4
+-4 34 -28 85 -54 89 -46 125 -65 331 -176 l98 -54 37 19 c187 97 479 259 475
+265 -2 4 -57 35 -122 69 -187 100 -263 140 -329 176 -34 19 -63 34 -65 34 -1
+0 -21 -11 -43 -23z m33 -93 c5 -10 21 -16 38 -16 52 2 173 -48 210 -86 33 -34
+38 -47 34 -87 -3 -36 -29 -63 -87 -92 -54 -26 -67 -28 -173 -28 -102 0 -120 3
+-165 25 -39 19 -57 37 -80 77 -16 29 -35 52 -42 53 -31 1 -26 53 8 71 24 12
+59 3 59 -16 0 -7 -12 -18 -27 -23 -21 -8 -10 -9 48 -5 47 4 83 2 95 -5 18 -11
+18 -11 -2 -12 -26 0 -48 -24 -41 -44 3 -8 24 -24 46 -35 l39 -21 7 30 c4 16 4
+34 0 39 -7 12 52 44 65 36 21 -13 10 -35 -17 -35 -20 0 -24 -3 -16 -11 7 -7
+23 -9 38 -5 23 6 26 11 20 33 -6 25 -5 25 32 19 21 -4 47 -9 58 -12 15 -4 13
+0 -10 20 -46 39 -150 50 -150 17 0 -8 -6 -16 -13 -19 -7 -2 -10 2 -6 11 3 8 1
+18 -5 21 -6 4 -5 19 5 41 18 44 18 55 -2 55 -8 0 -13 -4 -9 -9 9 -16 -28 -30
+-54 -20 -19 7 -21 12 -11 23 21 27 95 33 108 10z m-178 -33 c0 -5 8 -7 18 -4
+10 2 29 -5 43 -16 l24 -21 -33 16 c-41 20 -54 11 -15 -10 15 -8 24 -15 18 -16
+-5 0 -25 9 -43 20 -39 24 -49 25 -32 5 11 -13 10 -14 -4 -9 -19 7 -21 30 -3
+37 19 8 27 8 27 -2z m36 -69 c-4 -3 -14 2 -24 12 -16 18 -16 18 6 6 13 -6 21
+-14 18 -18z"/>
+<path d="M1045 690 c-3 -5 -1 -10 4 -10 6 0 11 5 11 10 0 6 -2 10 -4 10 -3 0
+-8 -4 -11 -10z"/>
+<path d="M42 947 l-33 -34 3 -94 3 -94 105 0 105 0 3 58 3 58 41 -3 41 -3 43
+-140 c24 -77 43 -143 44 -147 0 -5 -38 -8 -85 -8 l-84 0 -3 58 -3 57 -74 3
+-74 3 -34 -38 c-33 -38 -33 -39 -31 -128 l3 -90 105 0 105 0 3 53 3 52 85 0
+c46 0 84 -3 84 -7 0 -5 -18 -69 -40 -143 -22 -74 -40 -136 -40 -137 0 -2 -20
+-3 -45 -3 l-45 0 0 55 0 55 -78 0 c-75 0 -79 -1 -110 -33 l-33 -34 3 -94 3
+-94 105 0 105 0 3 53 3 52 48 0 c27 0 53 6 59 13 9 11 42 114 80 252 l17 60
+83 3 82 3 188 -97 187 -98 175 94 c96 51 210 112 253 135 l78 42 -45 27 c-24
+14 -51 26 -58 26 -13 -1 -219 -109 -207 -110 4 0 23 7 42 15 112 47 78 -26
+-44 -94 -57 -32 -109 -41 -109 -18 0 8 -2 9 -8 1 -13 -20 -68 -8 -151 34 -49
+25 -81 37 -81 29 0 -6 -10 0 -21 16 -27 35 -37 34 -31 -3 3 -18 0 -30 -7 -30
+-6 0 -11 7 -11 15 0 8 -9 15 -20 15 -11 0 -20 7 -20 15 0 9 -8 19 -17 22 -16
+6 -15 8 5 13 20 4 12 11 -53 46 l-76 41 -50 -26 c-27 -14 -49 -28 -49 -31 0
+-3 15 -15 33 -25 l32 -20 -44 -3 c-24 -2 -47 0 -51 5 -4 4 -27 71 -50 148 -24
+77 -47 148 -52 158 -6 13 -21 17 -58 17 l-50 0 0 55 0 55 -78 0 c-75 0 -79 -1
+-110 -33z m168 -92 l0 -115 -90 0 -90 0 0 80 0 80 30 0 c26 0 30 4 30 28 0 39
+5 42 67 42 l53 0 0 -115z m-130 75 c0 -5 -7 -10 -16 -10 -8 0 -12 5 -9 10 3 6
+10 10 16 10 5 0 9 -4 9 -10z m128 -402 l-3 -111 -85 0 -85 0 -3 82 -3 81 31 0
+c27 0 30 3 30 30 l0 30 60 0 61 0 -3 -112z m-128 77 c0 -8 -7 -15 -16 -15 -14
+0 -14 3 -4 15 7 8 14 15 16 15 2 0 4 -7 4 -15z m130 -400 l0 -115 -90 0 -90 0
+0 80 0 80 30 0 c26 0 30 4 30 28 0 39 5 42 67 42 l53 0 0 -115z m-130 80 c0
+-8 -7 -15 -16 -15 -14 0 -14 3 -4 15 7 8 14 15 16 15 2 0 4 -7 4 -15z"/>
+<path d="M130 904 c0 -22 4 -25 28 -22 19 2 28 9 30 26 3 19 -1 22 -27 22 -27
+0 -31 -4 -31 -26z"/>
+<path d="M60 850 c0 -6 29 -10 66 -10 41 0 63 4 59 10 -3 6 -33 10 -66 10 -33
+0 -59 -4 -59 -10z"/>
+<path d="M87 813 c18 -2 50 -2 70 0 21 2 7 4 -32 4 -38 0 -55 -2 -38 -4z"/>
+<path d="M60 779 c0 -5 30 -9 67 -9 36 0 64 2 62 4 -9 8 -129 13 -129 5z"/>
+<path d="M130 585 c0 -21 5 -25 30 -25 25 0 30 4 30 25 0 21 -5 25 -30 25 -25
+0 -30 -4 -30 -25z"/>
+<path d="M87 523 c18 -2 50 -2 70 0 21 2 7 4 -32 4 -38 0 -55 -2 -38 -4z"/>
+<path d="M60 490 c0 -6 29 -10 66 -10 41 0 63 4 59 10 -3 6 -33 10 -66 10 -33
+0 -59 -4 -59 -10z"/>
+<path d="M87 453 c18 -2 50 -2 70 0 21 2 7 4 -32 4 -38 0 -55 -2 -38 -4z"/>
+<path d="M130 255 c0 -21 5 -25 30 -25 25 0 30 4 30 25 0 21 -5 25 -30 25 -25
+0 -30 -4 -30 -25z"/>
+<path d="M60 199 c0 -5 28 -9 62 -9 34 0 59 2 57 4 -10 8 -119 14 -119 5z"/>
+<path d="M87 163 c18 -2 50 -2 70 0 21 2 7 4 -32 4 -38 0 -55 -2 -38 -4z"/>
+<path d="M87 123 c18 -2 50 -2 70 0 21 2 7 4 -32 4 -38 0 -55 -2 -38 -4z"/>
+<path d="M1315 470 c-39 -22 -51 -35 -56 -59 -25 -120 -278 -190 -436 -121
+-60 25 -123 89 -123 123 0 17 -13 28 -59 50 l-59 28 -58 -29 -57 -29 64 -35
+c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
+78 152 78 24 0 5 17 -48 46 l-58 31 -49 -27z"/>
+<path d="M995 440 c-3 -6 1 -7 9 -4 18 7 21 14 7 14 -6 0 -13 -4 -16 -10z"/>
+<path d="M753 378 c14 -18 32 -31 39 -29 19 5 30 4 53 -4 11 -3 -9 9 -45 29
+-35 20 -66 36 -68 36 -3 0 7 -15 21 -32z"/>
+<path d="M1168 389 c-21 -11 -38 -22 -38 -25 0 -3 4 -3 9 1 6 3 14 -2 19 -11
+9 -16 12 -15 36 9 25 25 34 48 19 46 -5 -1 -25 -10 -45 -20z"/>
+<path d="M540 319 c-19 -11 -43 -25 -53 -30 -16 -9 6 -24 140 -96 87 -47 201
+-110 253 -139 l95 -53 95 51 c52 28 118 64 145 80 28 15 98 54 157 86 59 31
+108 59 108 62 0 3 -25 18 -55 33 l-55 27 -45 -22 c-38 -19 -45 -26 -45 -52 0
+-41 -69 -105 -140 -131 -81 -29 -252 -27 -333 4 -70 28 -124 78 -133 125 -5
+28 -14 39 -45 56 -47 24 -45 24 -89 -1z"/>
+<path d="M870 330 c0 -5 7 -10 15 -10 8 0 12 -6 9 -14 -4 -11 6 -16 40 -21 25
+-4 54 -4 63 0 10 5 25 7 35 6 9 -1 19 3 23 8 4 7 0 8 -11 4 -12 -4 -15 -3 -10
+5 5 8 -6 6 -27 -4 -32 -15 -35 -15 -85 10 -29 15 -52 22 -52 16z"/>
+<path d="M1083 334 c9 -3 15 -10 12 -15 -4 -5 -1 -9 5 -9 19 0 5 25 -16 27
+-16 2 -16 1 -1 -3z"/>
+<path d="M703 266 c4 -10 7 -21 7 -25 0 -16 56 -64 95 -82 45 -21 83 -26 48
+-6 -16 9 -19 16 -12 28 6 12 5 19 -5 22 -10 4 -12 0 -9 -14 7 -24 -4 -24 -42
+1 -27 18 -23 27 9 21 19 -4 -14 26 -55 48 -36 21 -41 22 -36 7z"/>
+<path d="M1240 263 c-1 -38 -86 -109 -121 -100 -10 3 -17 1 -14 -3 3 -5 -3
+-11 -12 -13 -15 -4 -15 -5 3 -6 29 -1 123 47 138 73 21 32 29 66 17 66 -6 0
+-11 -8 -11 -17z"/>
+<path d="M1215 250 c3 -5 8 -10 11 -10 2 0 4 5 4 10 0 6 -5 10 -11 10 -5 0 -7
+-4 -4 -10z"/>
+<path d="M1188 223 c7 -3 16 -2 19 1 4 3 -2 6 -13 5 -11 0 -14 -3 -6 -6z"/>
+<path d="M898 133 c7 -3 16 -2 19 1 4 3 -2 6 -13 5 -11 0 -14 -3 -6 -6z"/>
+</g>
+</svg>
+            </div></div>
         </div>
       </div>
       <div class="intro-titolo" id="introTitolo">
@@ -774,7 +919,7 @@ main.sale{animation:paginaSale var(--t-volo,800ms) var(--curva-traino) both;will
 <header class="top intro-in-corso">
   <div class="shell bar">
     <div class="brand"><span class="mark" aria-hidden="true"></span>
-      <div><b>Protocol Cards</b><small>ASST Brianza · Desio</small></div></div>
+      <div><b>Protocol Cards</b><small>CT Assistant</small></div></div>
     <nav class="nav" aria-label="Sezioni">
       <button class="on" data-area="lista">Lista del giorno</button>
       <button data-area="proto">Protocolli <span class="nb" id="navN"></span></button>
@@ -2567,8 +2712,11 @@ if (revisione.stato === 'aggiornata') {
     glifo: 1150, glifoPasso: 45, glifoDur: 340,
     // atto III — il sottotitolo
     sotto: 1850, sottoDur: 600,
-    attesa: 3000,             // quando parte l'uscita
-    // atto IV — volo, banda e pagina: stessa durata, stessa curva
+    // atto IV — le carte si raccolgono in una, che si gira sul dorso
+    raccogli: 2550, raccogliDur: 450,
+    gira: 3000, giraDur: 650,
+    attesa: 3750,             // quando parte il volo
+    // atto V — volo, banda e pagina: stessa durata, stessa curva
     volo: 800, dissolvenzaVelo: 340,
   };
   const BARRA_PASSO = 55, POP_PASSO = 90, ATTESA_AVVIO = 1500;
@@ -2579,25 +2727,25 @@ if (revisione.stato === 'aggiornata') {
   const main = document.querySelector('main');
   let chiusa = false, timer = null, veloInCorso = false;
 
-  /* il marchio della barra riceve una copia ferma del ventaglio, nella
-     scala che fa coincidere al pixel il ventaglio atterrato            */
+  /* Il marchio della barra riceve una copia ferma del dorso, già a
+     misura del marchio: raggio e proporzioni sono in percentuale, e il
+     bordo si scala con --s, cosi' la carta atterrata e la copia
+     coincidono. Il gradiente del logo cambia nome: due gradienti con lo
+     stesso id nello stesso documento si annullano, e la copia uscirebbe
+     nera.                                                              */
   function preparaMarchio() {
-    const v = scena && scena.querySelector('.pc-ventaglio');
-    if (!v || !mark) return;
-    const copia = v.cloneNode(true);
+    const dorso = scena && scena.querySelector('.pc-dorso');
+    if (!dorso || !mark) return;
+    const copia = dorso.cloneNode(true);
+    copia.querySelectorAll('[id]').forEach(e => { e.id += 'Barra'; });
+    copia.querySelectorAll('[fill^="url(#"]').forEach(e =>
+      e.setAttribute('fill', e.getAttribute('fill').replace(/\)$/, 'Barra)')));
     mark.textContent = '';
     mark.appendChild(copia);
-    mark.classList.add('con-ventaglio');
-    scalaMarchio();
+    mark.classList.add('con-dorso');
+    const carta = dorso.parentNode.offsetWidth;
+    if (carta) copia.style.setProperty('--s', (mark.offsetWidth / carta).toFixed(4));
   }
-  function scalaMarchio() {
-    const v = mark && mark.querySelector('.pc-ventaglio');
-    if (!v) return;
-    v.style.removeProperty('--s');
-    const larga = v.offsetWidth;                 // ingombro senza scala
-    if (larga) v.style.setProperty('--s', (mark.offsetWidth / larga).toFixed(4));
-  }
-  window.addEventListener('resize', scalaMarchio);
 
   function fineSubito() {
     chiusa = true;
@@ -2613,7 +2761,10 @@ if (revisione.stato === 'aggiornata') {
   const ms = n => n + 'ms';
   [['--t-carta-dur', INTRO.cartaDur], ['--t-slitta', INTRO.slitta], ['--t-slitta-dur', INTRO.slittaDur],
    ['--t-glifo-dur', INTRO.glifoDur], ['--t-sotto', INTRO.sotto], ['--t-sotto-dur', INTRO.sottoDur],
+   ['--t-raccogli-dur', INTRO.raccogliDur], ['--t-gira-dur', INTRO.giraDur],
    ['--t-volo', INTRO.volo]].forEach(([k, v]) => palco.style.setProperty(k, ms(v)));
+  const ventaglio = palco.querySelector('.pc-ventaglio');
+  const carta = ventaglio.lastElementChild;           // quella che si gira e vola
   palco.querySelectorAll('.pc-carta').forEach((c, i) => c.style.setProperty('--d', ms(INTRO.carta + i * INTRO.cartaPasso)));
   palco.querySelectorAll('.intro-glifo').forEach((g, i) => g.style.setProperty('--d', ms(INTRO.glifo + i * INTRO.glifoPasso)));
   scena.addEventListener('click', chiudi);
@@ -2624,6 +2775,7 @@ if (revisione.stato === 'aggiornata') {
      Mai oltre ATTESA_AVVIO: meglio un'intro con un'immagine in ritardo
      che una scena ferma.                                                */
   let partito = false;
+  const fasi = [];
   function via() {
     if (partito || chiusa) return;
     partito = true;
@@ -2633,6 +2785,8 @@ if (revisione.stato === 'aggiornata') {
       (titolo.getBoundingClientRect().width / 2).toFixed(1) + 'px');
     void palco.offsetWidth;
     palco.classList.add('in-scena');
+    fasi.push(setTimeout(() => ventaglio.classList.add('raccolto'), INTRO.raccogli));
+    fasi.push(setTimeout(() => ventaglio.classList.add('girato'), INTRO.gira));
     timer = setTimeout(chiudi, INTRO.attesa);
   }
   const pronto = () => { if (partito || chiusa) return; void document.body.offsetHeight;
@@ -2643,19 +2797,29 @@ if (revisione.stato === 'aggiornata') {
 
   function tasto(e) { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); chiudi(); } }
 
-  /* ── atto IV: il ventaglio vola nel marchio e si porta su la pagina ── */
+  /* ── atto V: la carta girata vola nel marchio e si porta su la pagina ── */
   function chiudi() {
     if (chiusa) return;
     chiusa = true;
     clearTimeout(timer);
+    fasi.forEach(clearTimeout);
     document.removeEventListener('keydown', tasto);
     scena.removeEventListener('click', chiudi);
 
-    // FLIP, misurato prima di toccare qualunque classe
-    const v = logo.querySelector('.pc-ventaglio');
+    // Saltando l'intro prima del giro, raccolta e giro avvengono di colpo:
+    // si vola sempre con la carta sul dorso, cioè uguale al marchio.
+    palco.querySelectorAll('.pc-carta').forEach(c => { c.style.animation = 'none'; });
+    if (!ventaglio.classList.contains('girato')) {
+      ventaglio.classList.add('subito', 'raccolto', 'girato');
+      void ventaglio.offsetWidth;
+    }
+
+    // FLIP sulla carta, misurato prima di toccare altre classi. La carta
+    // è ferma e piatta (il giro è finito, o è stato istantaneo): il suo
+    // rettangolo è quello che deve coincidere con il marchio.
     let volo = null;
-    if (v && mark) {
-      const da = logo.getBoundingClientRect(), w = v.getBoundingClientRect(), a = mark.getBoundingClientRect();
+    if (mark) {
+      const da = logo.getBoundingClientRect(), w = carta.getBoundingClientRect(), a = mark.getBoundingClientRect();
       if (w.width > 0 && a.width > 0) {
         const scala = a.width / w.width;
         volo = { dx: a.left - da.left - (w.left - da.left) * scala,
@@ -2666,8 +2830,6 @@ if (revisione.stato === 'aggiornata') {
     const corsa = Math.round(window.innerHeight - (top ? top.getBoundingClientRect().bottom : 70));
     const sezioni = sezioniVisibili();
 
-    // le carte si fermano dove sono: il volo parte dal ventaglio com'è
-    palco.querySelectorAll('.pc-carta').forEach(c => { c.style.animation = 'none'; c.style.transform = 'none'; });
     logo.classList.add('in-volo');
     logo.style.transform = `translate(${volo.dx.toFixed(2)}px, ${volo.dy.toFixed(2)}px) scale(${volo.scala.toFixed(4)})`;
     scena.classList.add('in-uscita');
