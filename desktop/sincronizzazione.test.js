@@ -60,7 +60,8 @@ function paziente(i, data = '28/09/2026') {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const errs = [];
 
-  const cPc = await b.newContext({ viewport: { width: 1360, height: 900 } });
+  /* «riduci movimento»: l'intro non parte e non copre la pagina (ha il suo test) */
+  const cPc = await b.newContext({ viewport: { width: 1360, height: 900 }, reducedMotion: 'reduce' });
   const cTel = await b.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
   const verso = { pc: [], tel: [] };
   for (const [n, c] of [['pc', cPc], ['tel', cTel]]) {

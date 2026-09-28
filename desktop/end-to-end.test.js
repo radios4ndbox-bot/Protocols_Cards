@@ -4,7 +4,7 @@ let fail = 0;
 const ok = (l,c,x='') => { console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  → '+x:'')); if(!c) fail++; };
 (async () => {
   const b = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium' });
-  const p = await b.newPage({ viewport:{width:1360,height:900} });
+  const p = await b.newPage({ viewport:{width:1360,height:900}, reducedMotion:'reduce' });   // senza intro
   const errs=[]; const net=[];
   p.on('pageerror', e=>errs.push(e.message));
   p.on('console', m=>{ if(m.type()==='error') errs.push('console: '+m.text().slice(0,120)); });

@@ -67,6 +67,16 @@ for (const [chiave, [file, nome]] of Object.entries(pezzi)) {
   console.log(`  ${nome.padEnd(20)} ${kb.toFixed(0).padStart(5)} KB`);
 }
 
+/* immagini dell'intro: una carta per fase, incorporate come data URI */
+html = html.replace(/⟦FASE:([a-z]+)⟧/g, (_, fase) => {
+  const f = path.join(QUI, 'intro', `fase-${fase}.jpg`);
+  if (!fs.existsSync(f)) { console.error(`✗ manca ${f}`); process.exit(1); }
+  const b = fs.readFileSync(f);
+  totale += b.length * 4 / 3 / 1024;
+  console.log(`  ${('intro/fase-' + fase + '.jpg').padEnd(20)} ${(b.length / 1024).toFixed(0).padStart(5)} KB`);
+  return 'data:image/jpeg;base64,' + b.toString('base64');
+});
+
 fs.writeFileSync(USCITA, html);
 const finale = fs.statSync(USCITA).size / 1024;
 console.log(`  ${'—'.repeat(26)}`);
