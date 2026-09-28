@@ -962,7 +962,10 @@ function freshState(){
   });
 }
 
-let state   = load('state', null) || freshState();
+/* le schede di esempio servono solo finché il telefono non è abbinato
+   a un PC: da lì le schede sono quelle vere, arrivate dalla lista      */
+const ESEMPIO = new Set(SEED.map(r => r[0]));
+let state   = load('state', null) || (load('pc', null) ? [] : freshState());
 let learned = load('learned', {});
 let trash   = load('trash', []);
 let agent   = load('agent', 'iomeron400');
@@ -1729,6 +1732,11 @@ $('btnClearLearn').onclick = () => {
                         toast('Protocolli appresi cancellati'); });
 };
 $('btnReset').onclick = () => {
+  if(pcLink) return ask('Svuota le schede',
+    'Tutte le schede e il cestino verranno eliminati. Le liste arriveranno di nuovo dal PC. '
+    + 'I protocolli appresi restano.',
+    'Svuota', () => { state=[]; trash=[]; persist(); purge();
+                      selMode=null; show('calendar'); toast('Schede eliminate'); });
   ask('Ripristina i dati di esempio',
     'Le schede attuali e il cestino verranno sostituiti dai dati di esempio. '
     + 'I protocolli appresi restano.',
@@ -1754,8 +1762,16 @@ const salvaPc = () => { save('pc', pcLink); save('pcRicevute', pcRicevute); };
 /* la lista del PC: { v:1, d:'gg/mm/aaaa', p:[[accession, nome, nascita,
    ora, quesito, esami]] }. Una scheda già lavorata resta com'è; una
    ancora da fare si aggiorna; una messa nel cestino non torna.        */
+function togliEsempio(){
+  const n = state.length + trash.length;
+  state = state.filter(p => !ESEMPIO.has(p.id));
+  trash = trash.filter(t => !ESEMPIO.has(t.id));
+  if(state.length + trash.length !== n) persist();
+}
+
 function importaLista(pl){
   if(!pl || pl.v!==1 || !Array.isArray(pl.p)) throw new Error('formato lista sconosciuto');
+  togliEsempio();
   const data = isoDa(pl.d) || TODAY;
   const cestino = new Set(trash.map(t => t.id));
   const r = { nuove:0, aggiornate:0, invariate:0, data };
@@ -1850,6 +1866,7 @@ const PC_STATO = { connessione:'collegamento al relay…', aperto:'in ascolto',
   nocripto:'questo browser non offre la cifratura: usa Chrome o Safari aggiornati' };
 function renderPc(){
   const box = $('pcBox'); if(!box) return;
+  $('btnReset').textContent = pcLink ? 'Svuota tutte le schede' : 'Ripristina i dati di esempio';
   $('pcN').textContent = pcLink ? (pcStato==='aperto' ? '●' : '○') : '';
   if(!pcLink){
     box.innerHTML = `<div class="item"><div class="item-n">Nessun PC abbinato</div>
@@ -1881,6 +1898,8 @@ if(typeof Canale !== 'undefined'){
     }
   }
 }
+
+if(pcLink) togliEsempio();
 
 /* ═══ MODALE / TOAST ═════════════════════════════════════ */
 let onYes=null;
