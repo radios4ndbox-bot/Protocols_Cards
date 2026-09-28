@@ -49,8 +49,11 @@ Il canale è in `canale.js`, condiviso con l'app del telefono.
 All'apertura parte la stessa coreografia di ER Oncology Archivist, con le carte
 al posto del marchio: le quattro fasi (basale, arteriosa, venosa, tardiva)
 entrano e si aprono a ventaglio, il ventaglio scivola a sinistra mentre si
-compone «Protocol Cards», entra il sottotitolo, poi il ventaglio vola nel
-marchio della barra e si porta su la pagina. Dura circa tre secondi e mezzo;
+compone «Protocol Cards», entra il sottotitolo; poi le carte si raccolgono in
+una, che si gira e mostra sul dorso il marchio StructuRad, e vola nel marchio
+della barra portandosi su la pagina. Nella barra resta la copia del dorso, su
+cui la carta atterra al pixel (lo verifica `intro.test.js`). Dura circa
+quattro secondi e mezzo;
 si salta con un clic, Esc, Invio o Spazio. Con «riduci movimento» attivo nel
 sistema non parte.
 

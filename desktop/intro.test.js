@@ -30,19 +30,43 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
     .every(i => i.src.startsWith('data:image/jpeg') && i.naturalWidth > 0)));
   ok('nome lettera per lettera', await p.locator('#introScena .intro-glifo').count() === 13);
   ok('barra nascosta durante l\'intro', !(await visibile(p, '.nav button')));
+  ok('dorso con il marchio StructuRad sull\'ultima carta', await p.locator('#introScena .pc-carta:last-child .pc-dorso svg path').count() > 10);
+  /* registro di ogni fotogramma: dove sta la carta in volo e dove il marchio */
+  await p.evaluate(() => { window.__reg = [];
+    const carta = document.querySelector('#introScena .pc-ventaglio').lastElementChild;
+    const logo = document.getElementById('introLogo'), mark = document.querySelector('.top .mark');
+    (function giro() { if (!document.getElementById('introScena')) return;
+      const c = carta.getBoundingClientRect(), m = mark.getBoundingClientRect();
+      window.__reg.push({ volo: logo.classList.contains('in-volo'), atterrato: logo.classList.contains('atterrato'),
+        d: [c.left - m.left, c.top - m.top, c.width - m.width, c.height - m.height] });
+      requestAnimationFrame(giro); })(); });
   await p.waitForTimeout(1800);
   ok('la sequenza è partita', await p.locator('#introPalco.in-scena').count() === 1);
-  await p.waitForTimeout(4200);
+  await p.waitForTimeout(1300);
+  ok('le carte si raccolgono in una', await p.locator('#introScena .pc-ventaglio.raccolto').count() === 1);
+  await p.waitForTimeout(650);
+  ok('la carta si gira sul dorso', await p.locator('#introScena .pc-ventaglio.girato').count() === 1
+     && await p.evaluate(() => getComputedStyle(document.querySelector('#introScena .pc-carta:last-child')).transform !== 'none'));
+  ok('le altre carte non si vedono più', await p.evaluate(() => [...document.querySelectorAll('#introScena .pc-carta:not(:last-child)')]
+     .every(c => getComputedStyle(c).opacity === '0')));
+  await p.waitForTimeout(2600);
+  const reg = await p.evaluate(() => window.__reg);
+  const inVolo = reg.filter(r => r.volo && !r.atterrato), ultimo = inVolo[inVolo.length - 1];
+  const scarto = ultimo ? Math.max(...ultimo.d.map(Math.abs)) : Infinity;
+  ok('la carta atterra esattamente sul marchio', scarto < 0.6, scarto.toFixed(2) + ' px');
   ok('a fine sequenza la scena è tolta', await p.locator('#introScena').count() === 0);
   ok('anche la banda', await p.locator('#introVelo').count() === 0);
-  ok('il ventaglio è atterrato nel marchio', await p.evaluate(() => {
-    const m = document.querySelector('.top .mark'); return m.classList.contains('con-ventaglio') && m.querySelectorAll('.pc-carta').length === 4; }));
+  ok('nel marchio c\'è il dorso della carta', await p.evaluate(() => {
+    const m = document.querySelector('.top .mark'); return m.classList.contains('con-dorso') && !!m.querySelector('.pc-dorso svg'); }));
+  ok('il logo del marchio non esce nero (gradiente rinominato)', await p.evaluate(() => {
+    const g = document.querySelector('.top .mark .pc-dorso [fill^="url(#"]');
+    return !!g && !!document.getElementById(g.getAttribute('fill').slice(5, -1)); }));
   ok('marchio visibile', await visibile(p, '.top .mark'));
   ok('barra di nuovo visibile', await visibile(p, '.nav button') && await visibile(p, '.privacy'));
-  ok('la copia del ventaglio sta nel marchio', await p.evaluate(() => {
+  ok('il dorso riempie il marchio', await p.evaluate(() => {
     const m = document.querySelector('.top .mark').getBoundingClientRect();
-    const v = document.querySelector('.top .mark .pc-ventaglio').getBoundingClientRect();
-    return Math.abs(v.width - m.width) < 1.5 && Math.abs(v.left - m.left) < 1.5; }));
+    const v = document.querySelector('.top .mark .pc-dorso').getBoundingClientRect();
+    return Math.abs(v.width - m.width) < .5 && Math.abs(v.height - m.height) < .5 && Math.abs(v.left - m.left) < .5; }));
   ok('pagina ferma al suo posto', await p.evaluate(() => getComputedStyle(document.querySelector('main')).transform === 'none'));
   await p.close();
 
@@ -50,6 +74,8 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
   p = await apri();
   await p.waitForTimeout(600);
   await p.mouse.click(40, 800);
+  await p.waitForTimeout(50);
+  ok('saltando si vola comunque con la carta girata', await p.locator('#introScena .pc-ventaglio.girato').count() === 1);
   await p.waitForTimeout(1900);
   ok('scena tolta poco dopo il clic', await p.locator('#introScena').count() === 0);
   ok('barra visibile', await visibile(p, '.nav button'));
@@ -68,7 +94,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
   await p.waitForTimeout(100);
   ok('nessuna scena', await p.locator('#introScena').count() === 0);
   ok('barra subito visibile', await visibile(p, '.nav button'));
-  ok('marchio con il ventaglio', await p.locator('.top .mark .pc-carta').count() === 4);
+  ok('marchio con il dorso', await p.locator('.top .mark .pc-dorso').count() === 1);
   await p.close();
 
   console.log('\n────────────────────────────────────────');
