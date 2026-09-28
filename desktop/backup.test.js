@@ -36,8 +36,9 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
     return await (await (await d.getFileHandle(n)).getFile()).text(); } catch (_) { return null; } }, nome);
 
   console.log('── ALL\'INIZIO ──────────────────────────');
-  await p.locator('.nav button[data-area="proto"]').click(); await p.waitForTimeout(300);
-  ok('riquadro del backup nella libreria', await p.locator('#backup').isVisible());
+  ok('nel profilo, non nella libreria', await p.locator('#backup').isHidden());
+  await p.locator('#profiloBtn').click(); await p.waitForTimeout(300);
+  ok('riquadro del backup nelle impostazioni del profilo', await p.locator('#pannelloProfilo #backup').isVisible());
   ok('spento finché non si sceglie una cartella', /spento/.test(await p.locator('#backupStato').textContent()));
   ok('pulsante «Scegli cartella»', (await p.locator('#backupCartella').textContent()) === 'Scegli cartella');
 
@@ -72,7 +73,6 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
 
   console.log('\n── RIAPERTURA DEL TOOL ─────────────────');
   await p.reload(); await p.waitForTimeout(500);
-  await p.locator('.nav button[data-area="proto"]').click(); await p.waitForTimeout(200);
   ok('ricorda la cartella', await p.evaluate(() => Backup.stato()) === 'attivo', await p.evaluate(() => Backup.stato()));
 
   console.log('\n── PC NUOVO: RECUPERO ──────────────────');

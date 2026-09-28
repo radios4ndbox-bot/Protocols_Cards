@@ -4,6 +4,8 @@ const ok=(l,c,x='')=>{console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  → '+x:
 (async()=>{
   const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
   const p=await b.newPage({viewport:{width:412,height:915},reducedMotion:'reduce',deviceScaleFactor:1,hasTouch:true,isMobile:true});
+  /* il primo accesso (nome e cognome) ha il suo test: qui si rimanda */
+  await p.addInitScript(() => { try { localStorage.setItem('pc.v4.profiloRimandato', 'true'); } catch (_) {} });
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.goto('file://'+require('path').resolve(__dirname,'../index.html')+'');
   await p.evaluate(()=>localStorage.clear()); await p.reload(); await p.waitForTimeout(350);

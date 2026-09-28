@@ -419,6 +419,14 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
   background:var(--surface2);font:inherit;font-size:14px;font-weight:600;color:var(--text)}
 .prof-nome:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-s)}
 .prof-az{display:flex;gap:8px;margin-top:11px}
+.prof-tit{display:flex;gap:4px;padding:3px;border-radius:11px;background:var(--surface2);border:1px solid var(--border)}
+.prof-tit button{flex:1;height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;
+  font-weight:700;color:var(--muted);cursor:pointer}
+.prof-tit button.on{background:var(--surface);color:var(--accent-d);box-shadow:var(--sh)}
+.prof-riga{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.prof-arch{margin-top:9px;font-size:10.5px;color:var(--muted);line-height:1.45}
+.prof-arch code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:var(--accent-d);
+  background:var(--accent-s);border-radius:4px;padding:1px 5px}
 .ttl{font-size:10.5px;font-weight:700;color:var(--danger);background:var(--danger-s);
   border-radius:6px;padding:3px 7px;display:inline-block;margin-top:8px}
 .btn-danger{width:100%;height:44px;border-radius:11px;border:1px solid var(--danger);
@@ -819,6 +827,24 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     <h3 id="mTitle"></h3><p id="mBody"></p>
     <div class="modal-a"><button class="mb-no" id="mNo">Annulla</button>
       <button class="mb-yes" id="mYes">Conferma</button></div>
+  </div>
+</div>
+<!-- ══ PRIMO ACCESSO: il profilo si crea una volta, qui ══ -->
+<div class="mask" id="primoAccesso" role="dialog" aria-modal="true" aria-labelledby="paTit">
+  <div class="modal">
+    <h3 id="paTit">Crea il tuo profilo</h3>
+    <p>Il tool PC ti riconosce da qui: con il tuo nome, i tuoi protocolli personali e quelli che impara
+      da te. Tutto resta su questo telefono, in una cartella dell'app.</p>
+    <label class="prof-l" for="paNome" style="margin-top:14px">Nome</label>
+    <input class="prof-nome" id="paNome" type="text" maxlength="40" autocomplete="given-name" placeholder="Pasquale">
+    <label class="prof-l" for="paCognome" style="margin-top:10px">Cognome</label>
+    <input class="prof-nome" id="paCognome" type="text" maxlength="40" autocomplete="family-name" placeholder="Viggiano">
+    <span class="prof-l" style="margin-top:10px">Titolo</span>
+    <div class="prof-tit" id="paTitolo" role="radiogroup" aria-label="Titolo">
+      <button type="button" data-t="Dr.">Dr.</button><button type="button" data-t="Dr.ssa">Dr.ssa</button>
+      <button type="button" data-t="" class="on">Nessuno</button></div>
+    <div class="modal-a"><button class="mb-no" id="paDopo">Più tardi</button>
+      <button class="mb-yes safe" id="paCrea">Crea profilo</button></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1781,24 +1807,73 @@ function ridisegnaDopoImport(){
    con i protocolli appresi qui sul telefono: se il telefono si perde,
    «Importa profilo» lo riporta su quello nuovo.                        */
 let profilo = load('profilo', null);
+/* profili di prima: un solo campo «nome» → nome e cognome */
+if(profilo && profilo.cognome===undefined){
+  const parti = String(profilo.nome || '').trim().split(/\s+/);
+  profilo.nome = parti.shift() || ''; profilo.cognome = parti.join(' '); profilo.titolo = profilo.titolo || '';
+  save('profilo', profilo);
+}
 let pcSess = null;                       // il canale aperto, per mandare il profilo quando cambia
 const RE_PROF = /^pr-[a-z0-9]{6,20}$/;
+const TITOLI = ['Dr.', 'Dr.ssa'];
+
+/* ── la cartella del profilo ──
+   Al primo accesso l'app crea protocol-cards/profilo nella propria
+   memoria privata (OPFS: una cartella vera, ma solo dell'app) e chiede
+   al browser di non svuotarla mai (storage persistente). Ogni salvataggio
+   del profilo ci scrive profilo.json, con anche gli appresi del telefono;
+   se la memoria rapida dell'app si svuota, il profilo si riprende da lì. */
+const Archivio = (() => {
+  let stato = 'da-creare', persistente = false;
+  const cartella = async () => (await (await navigator.storage.getDirectory())
+    .getDirectoryHandle('protocol-cards', { create:true })).getDirectoryHandle('profilo', { create:true });
+  async function prepara(){
+    try{
+      await cartella(); stato = 'cartella';
+      if(navigator.storage.persist) persistente = await navigator.storage.persist();
+    }catch(_){ stato = 'browser'; }      // senza OPFS (es. pagina aperta da file) resta la memoria del browser
+    if(view==='settings') renderProfilo();
+    return stato;
+  }
+  async function scrivi(p){
+    try{
+      const w = await (await (await cartella()).getFileHandle('profilo.json', { create:true })).createWritable();
+      await w.write(JSON.stringify({ ...p, appresiTelefono:learned, salvato:new Date().toISOString() }));
+      await w.close(); stato = 'cartella';
+    }catch(_){ stato = 'browser'; }
+  }
+  async function leggi(){
+    try{ return JSON.parse(await (await (await (await cartella()).getFileHandle('profilo.json')).getFile()).text()); }
+    catch(_){ return null; }
+  }
+  return { prepara, scrivi, leggi, stato:() => stato, persistente:() => persistente };
+})();
+function salvaProfilo(p){ save('profilo', p); Archivio.scrivi(p); }
+
 function mioProfilo(){
   if(!profilo || !RE_PROF.test(profilo.id || '')){
     const A = 'abcdefghijkmnpqrstuvwxyz23456789';
     const caso = window.crypto && crypto.getRandomValues
       ? Array.from(crypto.getRandomValues(new Uint8Array(12)), b => A[b % A.length]).join('')
       : Array.from({length:12}, () => A[Math.floor(Math.random()*A.length)]).join('');
-    profilo = { id:'pr-'+caso, nome:'', personali:[], aggiornato:0 };
+    profilo = { id:'pr-'+caso, nome:'', cognome:'', titolo:'', personali:[], aggiornato:0 };
     save('profilo', profilo);
+    Archivio.prepara().then(() => Archivio.scrivi(profilo));     // la cartella nasce con il profilo
   }
   return profilo;
+}
+/* come il tool PC chiamerà chi usa il telefono: «Dr. Viggiano» */
+function nomeCortese(p){
+  const n = (p.nome || '').trim(), c = (p.cognome || '').trim();
+  if(TITOLI.includes(p.titolo) && (c || n)) return `${p.titolo} ${c || n}`;
+  return [n, c].filter(Boolean).join(' ');
 }
 async function inviaProfilo(){
   if(!pcSess) return;
   const p = mioProfilo();
   try{
-    const pac = await Canale.impacchetta({ id:p.id, nome:p.nome, aggiornato:p.aggiornato, personali:p.personali });
+    const pac = await Canale.impacchetta({ id:p.id, nome:p.nome, cognome:p.cognome, titolo:p.titolo,
+      aggiornato:p.aggiornato, personali:p.personali });
     await Canale.inviaLista(pcSess, 'tel', { ...pac, tipo:'profilo' });
   }catch(_){}                             // riparte al prossimo collegamento
 }
@@ -1807,35 +1882,78 @@ function riceviProfilo(x){
   const p = mioProfilo();
   if(!x || x.id!==p.id || !Array.isArray(x.personali)) return;
   if((+x.aggiornato || 0) <= (p.aggiornato || 0)) return;
-  p.personali = x.personali; p.aggiornato = +x.aggiornato; save('profilo', p);
+  p.personali = x.personali; p.aggiornato = +x.aggiornato; salvaProfilo(p);
   if(view==='settings') renderProfilo();
   toast(`Profilo aggiornato dal PC: ${p.personali.length} protocolli personali`);
 }
+
+/* ── primo accesso: nome, cognome e titolo, una volta ── */
+function primoAccesso(){
+  const p = mioProfilo();
+  if(p.nome || p.cognome || load('profiloRimandato', false)) return;
+  $('paNome').value = ''; $('paCognome').value = '';
+  scegliTitolo($('paTitolo'), '');
+  $('primoAccesso').classList.add('open');
+  setTimeout(() => $('paNome').focus(), 250);
+}
+function scegliTitolo(box, t){
+  box.querySelectorAll('button').forEach(b => { const on = b.dataset.t===t; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+}
+const titoloDi = box => { const b = box.querySelector('button.on'); return b ? b.dataset.t : ''; };
+$('paTitolo').onclick = e => { const b = e.target.closest('button'); if(b) scegliTitolo($('paTitolo'), b.dataset.t); };
+$('paCrea').onclick = () => {
+  const n = $('paNome').value.trim(), c = $('paCognome').value.trim();
+  if(!n || !c){ toast('Servono nome e cognome'); return (n ? $('paCognome') : $('paNome')).focus(); }
+  const p = mioProfilo();
+  p.nome = n.slice(0,40); p.cognome = c.slice(0,40); p.titolo = titoloDi($('paTitolo'));
+  salvaProfilo(p); Archivio.prepara();
+  $('primoAccesso').classList.remove('open');
+  inviaProfilo();
+  toast(`Profilo creato: ${nomeCortese(p)}`);
+};
+$('paDopo').onclick = () => { save('profiloRimandato', true); $('primoAccesso').classList.remove('open'); };
 
 function renderProfilo(){
   const box = $('profBox'); if(!box) return;
   const p = mioProfilo();
   const n = p.personali.length, app = p.personali.filter(x => x.appreso).length, tel = Object.keys(learned).length;
+  const arch = Archivio.stato()==='cartella'
+    ? `Dati del profilo nella cartella dell'app <code>protocol-cards/profilo</code>${Archivio.persistente() ? ', protetta dalla pulizia del browser' : ''}.`
+    : Archivio.stato()==='browser' ? 'Dati del profilo nella memoria del browser.' : '';
   box.innerHTML = `<div class="item">
-      <label class="prof-l" for="profNome">Nome</label>
-      <input class="prof-nome" id="profNome" type="text" maxlength="60" placeholder="es. Mario Rossi" autocomplete="name">
-      <div class="item-s" style="margin-top:9px"><b>${n}</b> protocoll${n===1?'o':'i'} personal${n===1?'e':'i'}${
+      <div class="prof-riga">
+        <div><label class="prof-l" for="profNome">Nome</label>
+          <input class="prof-nome" id="profNome" type="text" maxlength="40" autocomplete="given-name"></div>
+        <div><label class="prof-l" for="profCognome">Cognome</label>
+          <input class="prof-nome" id="profCognome" type="text" maxlength="40" autocomplete="family-name"></div>
+      </div>
+      <span class="prof-l" style="margin-top:10px">Titolo</span>
+      <div class="prof-tit" id="profTitolo" role="radiogroup" aria-label="Titolo">
+        <button type="button" data-t="Dr.">Dr.</button><button type="button" data-t="Dr.ssa">Dr.ssa</button>
+        <button type="button" data-t="">Nessuno</button></div>
+      <div class="item-s" style="margin-top:9px">${nomeCortese(p) ? `Il tool PC ti chiama <b>${esc(nomeCortese(p))}</b>. ` : ''}<b>${n}</b> protocoll${n===1?'o':'i'} personal${n===1?'e':'i'}${
         app ? `, di cui ${app} appres${app===1?'o':'i'} sul PC` : ''} · <b>${tel}</b> appres${tel===1?'o':'i'} qui sul telefono</div>
-      <div class="item-s">Viaggiano con questo telefono: abbinandolo a un PC, di qualsiasi ospedale, i tuoi protocolli personali si caricano lì.</div>
+      <div class="item-s">Viaggiano con questo telefono: accedendo a un PC, di qualsiasi ospedale, i tuoi protocolli personali si caricano lì.</div>
+      ${arch ? `<div class="prof-arch">${arch}</div>` : ''}
       <div class="prof-az"><button class="mini-b" id="profEsporta">Esporta profilo</button>
         <button class="mini-b" id="profImporta">Importa profilo</button></div>
     </div>`;
-  $('profNome').value = p.nome;
-  $('profNome').onchange = e => { p.nome = e.target.value.trim().slice(0,60); save('profilo', p); inviaProfilo(); toast('Nome del profilo salvato'); };
+  $('profNome').value = p.nome || ''; $('profCognome').value = p.cognome || '';
+  scegliTitolo($('profTitolo'), p.titolo || '');
+  const aggiorna = msg => { salvaProfilo(p); inviaProfilo(); renderProfilo(); toast(msg); };
+  $('profNome').onchange = e => { p.nome = e.target.value.trim().slice(0,40); aggiorna('Nome salvato'); };
+  $('profCognome').onchange = e => { p.cognome = e.target.value.trim().slice(0,40); aggiorna('Cognome salvato'); };
+  $('profTitolo').onclick = e => { const b = e.target.closest('button'); if(!b) return; p.titolo = b.dataset.t; aggiorna('Titolo salvato'); };
   $('profEsporta').onclick = esportaProfilo;
   $('profImporta').onclick = () => $('profFile').click();
 }
 
 function esportaProfilo(){
   const p = mioProfilo();
-  const dati = { app:'Protocol Cards', tipo:'profilo', v:1, esportato:new Date().toISOString(),
-    id:p.id, nome:p.nome, aggiornato:p.aggiornato, personali:p.personali, appresiTelefono:learned };
-  const nome = `profilo-protocol-cards-${(p.nome || 'senza-nome').toLowerCase().replace(/[^a-z0-9]+/g,'-')}.json`;
+  const dati = { app:'Protocol Cards', tipo:'profilo', v:2, esportato:new Date().toISOString(),
+    id:p.id, nome:p.nome, cognome:p.cognome, titolo:p.titolo, aggiornato:p.aggiornato, personali:p.personali, appresiTelefono:learned };
+  const chi = [p.nome, p.cognome].filter(Boolean).join(' ') || 'senza-nome';
+  const nome = `profilo-protocol-cards-${chi.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-')}.json`;
   const blob = new Blob([JSON.stringify(dati, null, 1)], { type:'application/json' });
   const file = typeof File === 'function' ? new File([blob], nome, { type:'application/json' }) : null;
   /* sul telefono il foglio di condivisione: Drive, mail, File… */
@@ -1855,19 +1973,36 @@ $('profFile').onchange = async e => {
     j = JSON.parse(await f.text());
     if(j.app!=='Protocol Cards' || j.tipo!=='profilo' || !RE_PROF.test(j.id || '') || !Array.isArray(j.personali)) throw 0;
   }catch(_){ return toast('Non è un profilo di Protocol Cards'); }
+  if(j.cognome===undefined){ const parti = String(j.nome || '').trim().split(/\s+/); j.nome = parti.shift() || ''; j.cognome = parti.join(' '); }
   const app = j.appresiTelefono && typeof j.appresiTelefono==='object' ? j.appresiTelefono : null;
+  const chi = nomeCortese(j) || 'senza nome';
   ask('Importare il profilo?',
-    `«${j.nome || 'senza nome'}»: ${j.personali.length} protocolli personali`
+    `«${chi}»: ${j.personali.length} protocolli personali`
     + (app ? ` e ${Object.keys(app).length} appresi sul telefono` : '') + '. Sostituiscono il profilo di questo telefono.',
     'Importa', () => {
       /* versione nuova: al prossimo collegamento il PC la prende */
-      profilo = { id:j.id, nome:String(j.nome || '').slice(0,60), personali:j.personali, aggiornato:Date.now() };
-      save('profilo', profilo);
+      profilo = { id:j.id, nome:String(j.nome || '').slice(0,40), cognome:String(j.cognome || '').slice(0,40),
+                  titolo:TITOLI.includes(j.titolo) ? j.titolo : '', personali:j.personali, aggiornato:Date.now() };
       if(app){ learned = app; persist(); }
+      salvaProfilo(profilo); Archivio.prepara();
       renderSettings(); renderProfilo(); inviaProfilo();
       toast('Profilo importato');
     }, true);
 };
+
+/* se la memoria rapida dell'app si è svuotata, il profilo torna dalla sua cartella */
+if(!load('profilo', null)){
+  Archivio.leggi().then(x => {
+    if(!x || !RE_PROF.test(x.id || '') || (profilo && (profilo.nome || profilo.personali.length))) return;
+    profilo = { id:x.id, nome:x.nome || '', cognome:x.cognome || '', titolo:TITOLI.includes(x.titolo) ? x.titolo : '',
+                personali:Array.isArray(x.personali) ? x.personali : [], aggiornato:+x.aggiornato || 0 };
+    save('profilo', profilo);
+    if(x.appresiTelefono && !Object.keys(learned).length){ learned = x.appresiTelefono; persist(); }
+    $('primoAccesso').classList.remove('open');
+    if(view==='settings'){ renderSettings(); renderProfilo(); }
+    inviaProfilo();
+  });
+} else Archivio.prepara();
 
 async function avviaPc(){
   if(pcChiudi){ pcChiudi(); pcChiudi = null; }
@@ -1945,8 +2080,8 @@ function renderPc(){
   $('pcN').textContent = pcLink ? (pcStato==='aperto' ? '●' : '○') : '';
   if(!pcLink){
     box.innerHTML = `<div class="item"><div class="item-n">Nessun PC abbinato</div>
-      <div class="item-s">Nel tool PC, al passo «Trasferisci», scegli «Abbina un telefono» e
-      inquadra il codice con la fotocamera: le liste arriveranno da sole.</div></div>`;
+      <div class="item-s">Nel tool PC apri il profilo in alto a destra, scegli «Accedi» e
+      inquadra il codice con la fotocamera: il PC carica il tuo profilo e le liste arriveranno da sole.</div></div>`;
     return;
   }
   const quando = t => t ? new Date(t).toLocaleString('it-IT',
@@ -2019,8 +2154,8 @@ apertura();
 
 /* il dorso a tutto schermo si gira sulla seduta */
 function apertura(){
-  const ap = $('apertura'); if(!ap) return;
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ ap.remove(); return; }
+  const ap = $('apertura'); if(!ap) return primoAccesso();
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ ap.remove(); primoAccesso(); return; }
   const META = 380;                                   // ogni metà del giro
   const fondo = getComputedStyle(document.body).backgroundColor;
   ap.style.background = fondo;                        // dietro la carta, il fondo dell'app
@@ -2035,7 +2170,7 @@ function apertura(){
       ap.remove();
       document.body.classList.add('svela');
       if(view==='board' && sessione) staggerIn(boardNodes());
-      setTimeout(() => { document.body.classList.remove('svela'); document.documentElement.style.background=''; }, META);
+      setTimeout(() => { document.body.classList.remove('svela'); document.documentElement.style.background=''; primoAccesso(); }, META);
     }, META);
   };
   const attesa = setTimeout(gira, 1100);

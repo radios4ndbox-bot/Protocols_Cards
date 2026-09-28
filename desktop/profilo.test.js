@@ -73,6 +73,7 @@ const protocollo = (id, l, kw) => ({ id, l, idr: 1.3, giKg: .5, basale: 'skip', 
   const abbina = async (pc, cTel) => {
     await pc.evaluate(() => { pazienti = [{ accession: '0D1', nomeCompleto: 'X', nascita: '01/01/1950', data: '01/01/2030', ora: '08:00',
       quesito: 'x', esami: [{ descrizione: 'TC TORACE' }], incerto: [], escluso: false }]; vai(3); });
+    if (await pc.locator('#pannelloProfilo').isHidden()) await pc.locator('#profiloBtn').click();   // profilo in alto a destra → «Accedi»
     await pc.locator('#reteAbbina').click();
     await attendi(() => pc.locator('#qrAbb').isVisible());
     const a = await pc.evaluate(() => inAbbinamento);
@@ -95,7 +96,19 @@ const protocollo = (id, l, kw) => ({ id, l, idr: 1.3, giKg: .5, basale: 'skip', 
   ok('la libreria lo dice', /di questo PC/.test(await pcA.locator('#profiloRiga').textContent()));
 
   console.log('\n── ABBINAMENTO: ARRIVA IL PROFILO ──────');
+  ok('in alto a destra: «Accedi»', (await pcA.locator('#profiloBtn').textContent()).trim() === 'Accedi');
   let tel = await abbina(pcA, cTel);
+
+  console.log('\n── PRIMO ACCESSO SUL TELEFONO ──────────');
+  ok('il telefono chiede nome, cognome e titolo', await attendi(() => tel.locator('#primoAccesso.open').isVisible()));
+  await tel.locator('#paCrea').click();
+  ok('senza nome e cognome non si crea', await tel.locator('#primoAccesso.open').isVisible());
+  await tel.locator('#paNome').fill('Pasquale'); await tel.locator('#paCognome').fill('Viggiano');
+  await tel.locator('#paTitolo button[data-t="Dr."]').click();
+  await tel.locator('#paCrea').click();
+  ok('profilo creato', await tel.evaluate(() => { const p = mioProfilo(); return p.nome === 'Pasquale' && p.cognome === 'Viggiano' && p.titolo === 'Dr.'; }));
+  ok('la finestra si chiude', await tel.locator('#primoAccesso.open').count() === 0);
+  ok('cartella del profilo preparata', await tel.evaluate(() => ['cartella', 'browser'].includes(Archivio.stato())), await tel.evaluate(() => Archivio.stato()));
   const idTel = await tel.evaluate(() => mioProfilo().id);
   ok('il telefono ha un profilo', /^pr-[a-z0-9]{12}$/.test(idTel), idTel);
   ok('il PC riceve il profilo del telefono', await attendi(async () => (await pcA.evaluate(() => profilo && profilo.id)) === idTel));
@@ -109,11 +122,29 @@ const protocollo = (id, l, kw) => ({ id, l, idr: 1.3, giKg: .5, basale: 'skip', 
   await pcA.evaluate(p => { libs.personale.protocolli.unshift(p); salvaLibreria('personale'); }, protocollo('p-tep-mio', 'TEP mio', ['tep']));
   ok('nuovo protocollo personale sul telefono', await attendi(async () => (await tel.evaluate(() => mioProfilo().personali.map(p => p.id))).includes('p-tep-mio'), 6000));
 
-  console.log('\n── NOME DEL PROFILO DAL TELEFONO ───────');
+  console.log('\n── IL PC TI CHIAMA PER NOME ────────────');
+  ok('in alto a destra: «Dr. Viggiano»', await attendi(async () => (await pcA.locator('#profiloNome').textContent()).trim() === 'Dr. Viggiano', 6000),
+     (await pcA.locator('#profiloNome').textContent()).trim());
+  ok('iniziali nell\'avatar', (await pcA.locator('#profiloAv').textContent()).trim() === 'PV');
+  ok('la libreria lo dice', /Dr\. Viggiano/.test(await pcA.locator('#profiloRiga').textContent()));
+  ok('«Invia la lista a Dr. Viggiano»', /Dr\. Viggiano/.test(await pcA.locator('#reteInvia').textContent()));
+  if (await pcA.locator('#pannelloProfilo').isHidden()) await pcA.locator('#profiloBtn').click();
+  ok('il pannello saluta per nome', /Dr\. Viggiano/.test(await pcA.locator('#ppChi').textContent()), (await pcA.locator('#ppChi').textContent()).trim());
+  ok('impostazioni nel pannello: backup', await pcA.locator('#pannelloProfilo #backup').isVisible());
+  await pcA.keyboard.press('Escape');
+  ok('Esc chiude il pannello', await pcA.locator('#pannelloProfilo').isHidden());
+
+  console.log('\n── TITOLO DAL TELEFONO ─────────────────');
   await tel.locator('#btnSet').click(); await tel.waitForTimeout(300);
   ok('impostazioni: il tuo profilo', /2 protocolli personali/.test(await tel.locator('#profBox').textContent()), (await tel.locator('#profBox .item-s').first().textContent()).trim());
-  await tel.locator('#profNome').fill('Mario Rossi'); await tel.locator('#profNome').press('Enter'); await tel.locator('#profNome').blur();
-  ok('il PC mostra il nome', await attendi(async () => /Mario Rossi/.test(await pcA.locator('#profiloRiga').textContent()), 6000));
+  ok('«Il tool PC ti chiama Dr. Viggiano»', /ti chiama Dr\. Viggiano/.test(await tel.locator('#profBox').textContent()));
+  await tel.locator('#profTitolo button[data-t="Dr.ssa"]').click();
+  ok('il PC si adegua: «Dr.ssa Viggiano»', await attendi(async () => (await pcA.locator('#profiloNome').textContent()).trim() === 'Dr.ssa Viggiano', 6000),
+     (await pcA.locator('#profiloNome').textContent()).trim());
+  await tel.locator('#profTitolo button[data-t=""]').click();
+  ok('senza titolo: nome e cognome', await attendi(async () => (await pcA.locator('#profiloNome').textContent()).trim() === 'Pasquale Viggiano', 6000));
+  await tel.locator('#profTitolo button[data-t="Dr."]').click();
+  await attendi(async () => (await pcA.locator('#profiloNome').textContent()).trim() === 'Dr. Viggiano', 6000);
 
   console.log('\n── OSPEDALE B: UN PC NUOVO ─────────────');
   const pcB = await apri(cB, PC);
@@ -122,19 +153,21 @@ const protocollo = (id, l, kw) => ({ id, l, idr: 1.3, giKg: .5, basale: 'skip', 
   tel = await abbina(pcB, cTel);
   ok('i miei protocolli arrivano sul PC nuovo', await attendi(async () => (await pcB.evaluate(() => libs.personale.protocolli.map(p => p.id).sort().join())) === 'p-onco-mio,p-tep-mio', 6000),
      await pcB.evaluate(() => libs.personale.protocolli.map(p => p.id).join()));
-  ok('con il mio nome', /Mario Rossi/.test(await pcB.locator('#profiloRiga').textContent()));
+  ok('con il mio nome', (await pcB.locator('#profiloNome').textContent()).trim() === 'Dr. Viggiano');
   ok('nessuna domanda: su questo PC non c\'era nulla', await pcB.locator('.mask.on').count() === 0);
   await pcB.evaluate(() => { libs.personale.protocolli = libs.personale.protocolli.filter(p => p.id !== 'p-tep-mio'); salvaLibreria('personale'); });
   ok('una modifica sul PC nuovo torna al telefono', await attendi(async () => !(await tel.evaluate(() => mioProfilo().personali.map(p => p.id))).includes('p-tep-mio'), 6000));
 
   console.log('\n── PC NUOVO RIAPERTO ───────────────────');
   await pcB.reload(); await pcB.evaluate(() => { Canale.usaRelay(window.__relay); return ascoltaRete(abbinamento); });
-  ok('il profilo resta mentre il telefono è abbinato', await pcB.evaluate(() => profilo && profilo.nome === 'Mario Rossi' && libs.personale.protocolli.length === 1));
+  ok('il profilo resta mentre il telefono è abbinato', await pcB.evaluate(() => profilo && profilo.cognome === 'Viggiano' && libs.personale.protocolli.length === 1));
 
   console.log('\n── SCOLLEGAMENTO ───────────────────────');
   await pcB.evaluate(() => vai(3));
   pcB.once('dialog', d => d.accept());
+  if (await pcB.locator('#pannelloProfilo').isHidden()) await pcB.locator('#profiloBtn').click();
   await pcB.locator('#reteScollega').click();
+  ok('in alto a destra torna «Accedi»', await attendi(async () => (await pcB.locator('#profiloNome').textContent()).trim() === 'Accedi'));
   ok('il profilo lascia il PC', await attendi(async () => await pcB.evaluate(() => !profilo && libs.personale.protocolli.length === 0)));
   ok('nessuna copia rimasta sul PC', await pcB.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('protocol-cards.pc.personali')).length) === 0,
      await pcB.evaluate(() => Object.keys(localStorage).join()));
@@ -145,11 +178,16 @@ const protocollo = (id, l, kw) => ({ id, l, idr: 1.3, giKg: .5, basale: 'skip', 
   await tel.locator('#btnSet').click(); await tel.waitForTimeout(300);
   const [dl] = await Promise.all([tel.waitForEvent('download'), tel.locator('#profEsporta').click()]);
   const esportato = JSON.parse(fs.readFileSync(await dl.path(), 'utf8'));
-  ok('file del profilo', esportato.tipo === 'profilo' && esportato.id === idTel && esportato.nome === 'Mario Rossi', dl.suggestedFilename());
+  ok('file del profilo', esportato.tipo === 'profilo' && esportato.id === idTel && esportato.nome === 'Pasquale' && esportato.cognome === 'Viggiano' && esportato.titolo === 'Dr.', dl.suggestedFilename());
   ok('con i protocolli e gli appresi del telefono', esportato.personali.length === 1 && typeof esportato.appresiTelefono === 'object');
   ok('nessuna chiave di abbinamento nel file', !/pcsync-|"k":/.test(JSON.stringify(esportato)));
   /* telefono nuovo: profilo diverso, poi l'import */
-  await tel.evaluate(() => { localStorage.clear(); }); await tel.reload(); await tel.waitForTimeout(300);
+  await tel.evaluate(async () => { localStorage.clear();
+    try { await (await navigator.storage.getDirectory()).removeEntry('protocol-cards', { recursive: true }); } catch (_) {} });
+  await tel.reload(); await tel.waitForTimeout(300);
+  ok('telefono nuovo: chiede il primo accesso', await attendi(() => tel.locator('#primoAccesso.open').isVisible()));
+  await tel.locator('#paDopo').click();
+  ok('«Più tardi» lo rimanda', await tel.locator('#primoAccesso.open').count() === 0);
   ok('telefono nuovo: profilo vuoto', await tel.evaluate(() => mioProfilo().personali.length === 0 && mioProfilo().id !== undefined));
   await tel.locator('#btnSet').click(); await tel.waitForTimeout(300);
   const fileProf = path.join(__dirname, 'shot-profilo.json');
@@ -157,7 +195,7 @@ const protocollo = (id, l, kw) => ({ id, l, idr: 1.3, giKg: .5, basale: 'skip', 
   await tel.setInputFiles('#profFile', fileProf); await tel.waitForTimeout(300);
   await tel.locator('#mYes').click(); await tel.waitForTimeout(300);
   fs.unlinkSync(fileProf);
-  ok('profilo importato sul telefono nuovo', await tel.evaluate(id => mioProfilo().id === id && mioProfilo().nome === 'Mario Rossi' && mioProfilo().personali.length === 1, idTel));
+  ok('profilo importato sul telefono nuovo', await tel.evaluate(id => mioProfilo().id === id && mioProfilo().cognome === 'Viggiano' && mioProfilo().titolo === 'Dr.' && mioProfilo().personali.length === 1, idTel));
 
   console.log('\n────────────────────────────────────────');
   console.log(errs.length ? 'ERRORI JS: ' + errs.slice(0, 4).join(' | ') : 'errori JS: nessuno');
