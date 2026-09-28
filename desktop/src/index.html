@@ -1,8 +1,14 @@
 <!DOCTYPE html>
+<!--
+  Protocol Cards — a StructuRad product
+  © 2026 StructuRad. All rights reserved. Powered by RadioPako.
+-->
 <html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="StructuRad · RadioPako">
+<meta name="copyright" content="© 2026 StructuRad. All rights reserved. Powered by RadioPako.">
 <title>Protocol Cards — PC</title>
 <style>
 /* ═══════════════════════════════════════════════════════════════════
@@ -578,6 +584,12 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   .plate{box-shadow:none}
 }
 
+/* ═══ COPYRIGHT ══════════════════════════════════════════════════════
+   In basso a destra su ogni pagina, anche durante l'intro: sta sopra la
+   sua scena. Non intercetta clic e non copre nulla di cliccabile.      */
+.copyright{position:fixed;right:16px;bottom:10px;z-index:2100;pointer-events:none;
+  font:500 .7rem/1.2 var(--f-text);color:#A9B3C2;letter-spacing:.01em}
+
 /* ═══ INTRO ══════════════════════════════════════════════════════════
    La coreografia di ER Oncology Archivist, con le carte al posto del
    marchio SD. Quattro atti:
@@ -695,7 +707,8 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .intro-palco.in-scena .intro-glifo{animation:introGlifo var(--t-glifo-dur,340ms) ease-out var(--d,0ms) forwards}
 @keyframes introGlifo{to{opacity:1}}
 
-.intro-sotto{margin-top:46px;font:600 11px/1 var(--f-text);letter-spacing:.24em;text-transform:uppercase;
+/* senza maiuscolo forzato: «StructuRad» si scrive così */
+.intro-sotto{margin-top:46px;font:600 12px/1 var(--f-text);letter-spacing:.14em;
   color:#67758B;opacity:0;transform:translate3d(0,-18px,0) scale(.9);will-change:transform,opacity}
 .intro-palco.in-scena .intro-sotto{
   animation:introSotto var(--t-sotto-dur,600ms) cubic-bezier(.22,1.15,.36,1) var(--t-sotto,1850ms) forwards}
@@ -917,7 +930,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         </svg>
       </div>
     </div>
-    <div class="intro-sotto">Protocols made easy</div>
+    <div class="intro-sotto">a StructuRad product</div>
   </div>
 </div>
 
@@ -1152,6 +1165,8 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
   </div>
 </div>
 <div class="toast" id="toast" role="status"><span id="toastT"></span><button id="toastA"></button></div>
+<!-- su ogni pagina, intro compresa: sta sopra la scena dell'intro -->
+<div class="copyright">© 2026 StructuRad. All rights reserved. Powered by RadioPako.</div>
 
 <script>/* ⟦PDFJS⟧ */</script>
 <script>/* ⟦QRCODE⟧ */</script>
