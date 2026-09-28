@@ -68,7 +68,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
     const g = document.querySelector('.top .mark .pc-dorso [fill^="url(#"]');
     return !!g && !!document.getElementById(g.getAttribute('fill').slice(5, -1)); }));
   ok('marchio visibile', await visibile(p, '.top .mark'));
-  ok('barra di nuovo visibile', await visibile(p, '.nav button') && await visibile(p, '.privacy'));
+  ok('barra di nuovo visibile', await visibile(p, '.nav button') && await visibile(p, '.privacy') && await visibile(p, '.profilo-btn'));
   ok('il dorso riempie il marchio', await p.evaluate(() => {
     const m = document.querySelector('.top .mark').getBoundingClientRect();
     const v = document.querySelector('.top .mark .pc-dorso').getBoundingClientRect();

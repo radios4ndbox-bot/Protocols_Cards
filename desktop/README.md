@@ -26,7 +26,8 @@ reparto e il telefono non si raggiungono direttamente: entrambi si collegano
 in uscita al relay pubblico [ntfy.sh](https://ntfy.sh), come verificato in
 reparto con `sync-test/`.
 
-- **Abbinamento, una volta sola.** «Abbina un telefono» genera argomento del
+- **Accesso, una volta sola per telefono.** Dal profilo in alto a destra,
+  «Accedi» genera argomento del
   relay e chiave AES-GCM a 256 bit e li mostra in un QR che apre l'app del
   telefono. La chiave sta solo nel frammento dell'indirizzo (`#…`), che non
   arriva a nessun server; il telefono la toglie subito dalla barra degli
@@ -50,9 +51,61 @@ reparto con `sync-test/`.
   ancora da fare si aggiornano; quelle già lavorate o nel cestino restano
   come sono.
 
-Il relay vede solo testo cifrato. Il tool contatta la rete solo quando si
-preme «Abbina» o «Invia»: aprirlo e lavorare resta un'operazione senza rete.
+Il relay vede solo testo cifrato. Senza un telefono abbinato il tool contatta la
+rete solo quando si preme «Accedi»: aprirlo e lavorare resta un'operazione senza
+rete. Con un telefono abbinato si mette in ascolto all'apertura, per il profilo.
 Il canale è in `canale.js`, condiviso con l'app del telefono.
+
+## Profilo dell'operatore
+
+I protocolli personali, compresi quelli appresi, sono di chi li usa e non del
+PC: vivono nel **profilo**, sul telefono dell'operatore. Abbinando il telefono a
+un PC qualsiasi, di questo o di un altro ospedale, il profilo arriva al PC e i
+suoi personali diventano quelli del tool; ciò che si crea o si impara sul PC
+torna al telefono dallo stesso canale cifrato delle liste. Vince la versione più
+recente.
+
+- **Sul PC, in alto a destra.** Il pulsante del profilo apre un pannello con
+  l'accesso e le impostazioni. Da scollegati dice «Accedi»: il pulsante omonimo
+  mostra il QR. Quando il profilo arriva, il tool saluta per nome e il pulsante
+  mostra iniziali e nome di cortesia: titolo e cognome («Dr. Viggiano»,
+  «Dr.ssa Viggiano»), oppure nome e cognome se non c'è titolo. Il titolo non si
+  ricava dal nome: lo sceglie l'operatore nel profilo. «Esci» scollega.
+- **Sul telefono, al primo avvio.** Dopo l'apertura una finestra chiede nome,
+  cognome e titolo (Dr., Dr.ssa o nessuno) e crea la cartella del profilo
+  nell'area privata dell'app (`protocol-cards/profilo/profilo.json`, Origin
+  Private File System), chiedendo al browser di proteggerla dalla pulizia
+  automatica. «Più tardi» la rimanda; i dati si cambiano in Impostazioni →
+  «Il tuo profilo», e il PC si aggiorna da solo. Se la memoria del browser
+  viene svuotata, il profilo si ricarica dalla cartella.
+
+- Sul PC resta solo la copia del profilo abbinato. Se si abbina il telefono di un
+  altro operatore, o si scollega, quella copia sparisce dal PC; i protocolli
+  restano sul telefono.
+- I personali creati prima dei profili restano «di questo PC»: al primo
+  abbinamento il tool propone di portarli nel profilo.
+- Sul telefono «Esporta profilo» ne fa un file, con anche i protocolli appresi
+  sul telefono, da salvare dove si vuole (Drive, mail); «Importa profilo» lo
+  riporta su un telefono nuovo.
+- Con un telefono abbinato il tool si mette in ascolto sul relay all'apertura,
+  per ricevere il profilo; senza abbinamento aprirlo resta senza rete.
+
+## Backup della libreria ufficiale
+
+La libreria ufficiale è del reparto e resta sul PC. Nelle impostazioni del
+pannello del profilo (in alto a destra), «Scegli cartella» collega una cartella del computer, anche dentro
+Google Drive o OneDrive per desktop, che ne fanno la copia nel cloud. Il tool ci
+scrive `protocol-cards-backup.json` e lo riscrive da solo a ogni modifica, con
+accanto la versione precedente (`protocol-cards-backup.precedente.json`). Nel
+file ci sono solo i protocolli ufficiali: niente personali (sono nel profilo),
+nessun dato paziente, nessuna chiave di abbinamento.
+
+Su un PC nuovo «Recupera dal backup» rilegge la cartella, mostra cosa contiene e,
+confermando, sostituisce la libreria ufficiale; la cartella resta collegata.
+
+Serve Chrome o Edge (File System Access). Il browser può chiedere di nuovo il
+permesso a ogni apertura: il backup va in pausa e riparte con «Riattiva».
+Chrome offre anche «Consenti a ogni visita», che evita la richiesta.
 
 ## Intro
 
@@ -157,6 +210,10 @@ node ris-parser.test.js                          # fixture sintetica, nessun dat
 node protocolli.test.js                          # riconoscimento identico al prototipo
 RIS_PDF_DIR=/percorso node end-to-end.test.js    # richiede una lista RIS chiamata lista.pdf
 node sincronizzazione.test.js                    # PC → telefono con un relay finto locale
+node profilo.test.js                             # primo accesso, «Dr. Viggiano», profilo fra due PC, relay finto
+node backup.test.js                              # backup della libreria ufficiale in una cartella
+node tendine.test.js                             # menu a tendina del tool
+node intro.test.js                               # intro, salto e «riduci movimento"
 ```
 
 Il test end-to-end apre il file costruito da `file://` e verifica anche che

@@ -104,7 +104,7 @@ select.field{appearance:none;padding-right:34px;cursor:pointer;
 .bar{display:flex;align-items:center;gap:18px;padding:9px 10px 9px 18px;border-radius:99px;
   background:linear-gradient(180deg,rgba(254,254,255,.94) 0%,rgba(244,247,253,.92) 46%,rgba(232,238,250,.9) 46.01%,rgba(222,231,246,.9) 100%);
   backdrop-filter:blur(14px);box-shadow:var(--lift),var(--lip)}
-.brand{display:flex;align-items:center;gap:11px}
+.brand{display:flex;align-items:center;gap:11px;white-space:nowrap}
 .mark{width:32px;height:32px;border-radius:11px;flex:0 0 auto;position:relative;
   background:linear-gradient(155deg,#9BDCC3,var(--jade) 55%,#5FBB9C);
   box-shadow:0 8px 14px -8px rgba(42,122,98,.8),inset 1px 2px 3px rgba(255,255,255,.75),inset -2px -3px 5px rgba(20,80,62,.28)}
@@ -113,7 +113,7 @@ select.field{appearance:none;padding-right:34px;cursor:pointer;
 .brand b{display:block;font-family:var(--f-disp);font-weight:500;font-size:1.12rem;letter-spacing:-.03em;line-height:1.1}
 .brand small{display:block;font-size:.72rem;color:var(--ink-2);line-height:1.2}
 .nav{display:flex;gap:4px;margin-left:18px;padding:4px;border-radius:99px;background:rgba(220,228,243,.6);box-shadow:var(--well-s)}
-.nav button{border:0;background:transparent;cursor:pointer;padding:8px 18px;border-radius:99px;
+.nav button{border:0;background:transparent;cursor:pointer;padding:8px 18px;border-radius:99px;white-space:nowrap;
   font-size:.88rem;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:8px;
   transition:color .2s,background .25s,box-shadow .25s}
 .nav button:hover{color:var(--ink)}
@@ -121,7 +121,27 @@ select.field{appearance:none;padding-right:34px;cursor:pointer;
 .nav .nb{min-width:20px;height:20px;padding:0 6px;border-radius:99px;font-size:.7rem;display:inline-flex;
   align-items:center;justify-content:center;background:var(--sunk);color:var(--ink-2);box-shadow:var(--well-s)}
 .nav button.on .nb{background:var(--jade-s);color:var(--jade-ink)}
-.privacy{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:.76rem;font-weight:600;
+.profilo-btn{display:flex;align-items:center;gap:9px;height:40px;padding:0 16px 0 5px;border:0;border-radius:99px;cursor:pointer;
+  background-image:var(--gloss);box-shadow:var(--lift),var(--lip);font-size:.84rem;font-weight:700;color:var(--ink);white-space:nowrap}
+.profilo-btn:hover{box-shadow:var(--lift-hi),var(--lip)}
+.profilo-btn[aria-expanded="true"]{background-image:var(--gloss-down);box-shadow:var(--sink)}
+.profilo-btn .avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font:700 .74rem/1 var(--f-disp);letter-spacing:.02em;color:#fff;
+  background:radial-gradient(circle at 30% 25%,#9FB3C9,#67758B);box-shadow:inset 0 1px 2px rgba(255,255,255,.4)}
+.profilo-btn .avatar:empty::before{content:"";width:12px;height:12px;border-radius:50%;
+  background:rgba(255,255,255,.85);box-shadow:0 11px 0 -2px rgba(255,255,255,.85);transform:translateY(-3px)}
+.profilo-btn.dentro .avatar{background:linear-gradient(135deg,#4F8BFF,#3FD6C6)}
+.pannello-profilo{position:fixed;z-index:70;top:86px;right:max(20px,calc((100vw - 1320px) / 2));width:min(390px,calc(100vw - 40px));
+  max-height:calc(100vh - 110px);overflow-y:auto;padding:8px 22px;animation:ppApre .2s var(--ease) both}
+@keyframes ppApre{from{opacity:0;transform:translateY(-6px) scale(.98)}}
+.pp-sez{padding:16px 0}
+.pp-sez + .pp-sez{border-top:1px solid var(--line)}
+.pp-sez h4{font-size:1rem;margin:10px 0 10px}
+.pp-chi{margin:12px 0 8px}
+.pp-chi b{display:block;font-family:var(--f-disp);font-weight:400;font-size:1.35rem;letter-spacing:-.02em;line-height:1.2}
+.pp-chi span{display:block;margin-top:5px;font-size:.84rem;color:var(--ink-2);line-height:1.5}
+.pannello-profilo #qrAbb{margin:14px auto 4px}
+.privacy{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:.76rem;font-weight:600;min-width:0;
   color:var(--jade-ink);padding:8px 16px;border-radius:99px;background:var(--jade-s);box-shadow:var(--well-s)}
 .privacy i{width:8px;height:8px;border-radius:50%;background:var(--jade);box-shadow:0 0 0 3px rgba(124,207,176,.35)}
 
@@ -228,7 +248,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .spiega ol{margin:8px 0 8px 18px;padding:0}
 .rete{padding:24px 26px}
 .rete h3{font-size:1.2rem;margin-bottom:8px}
-.rete [hidden]{display:none!important}
+.rete [hidden],.pannello-profilo [hidden],.pannello-profilo[hidden]{display:none!important}
 .rete-stato{font-size:.86rem;color:var(--ink-2);line-height:1.6}
 .rete-stato b{color:var(--ink)}
 .rete-stato.ok{color:var(--jade-ink)}
@@ -265,6 +285,18 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .lib-act .riga-b .btn{flex:1;padding:0 8px}
 .versione{font-size:.72rem;color:var(--ink-2);text-align:center;line-height:1.5}
 .versione code{font-weight:700;color:var(--ink)}
+.profilo-riga{margin:10px 6px 0;font-size:.72rem;line-height:1.45;color:var(--ink-3)}
+.profilo-riga.attivo{color:var(--ink-2)}
+.profilo-riga b{color:var(--jade-ink)}
+.backup{display:flex;flex-direction:column;gap:8px;margin-top:4px;padding:12px;border-radius:var(--r-sm);
+  background:var(--plate-2);box-shadow:var(--well-s)}
+.backup-t{display:flex;gap:8px;align-items:flex-start;font-size:.74rem;line-height:1.45;color:var(--ink-2)}
+.backup-t i{flex:0 0 auto;width:8px;height:8px;margin-top:4px;border-radius:50%;background:var(--ink-3)}
+.backup-t b{color:var(--ink)}
+.backup.attivo .backup-t i{background:var(--jade);box-shadow:0 0 0 3px rgba(124,207,176,.35)}
+.backup.pausa .backup-t i,.backup.errore .backup-t i{background:var(--amber)}
+.backup .riga-b{display:flex;gap:6px}
+.backup .riga-b .btn{flex:1;padding:0 8px;font-size:.72rem}
 .vuoto{padding:24px 10px;text-align:center;font-size:.84rem;color:var(--ink-3)}
 
 .ed{min-width:0}
@@ -318,7 +350,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .fase::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:0 99px 99px 0;background:var(--c)}
 .fase-n{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;
   color:#fff;background:var(--c);box-shadow:inset 1px 2px 3px rgba(255,255,255,.35),inset -2px -3px 5px rgba(0,0,0,.18)}
-.fase select.field{height:38px;font-size:.86rem}
+.fase select.field,.fase .tendina.field{height:38px;font-size:.86rem}
 .rit{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .seg{display:inline-flex;padding:3px;border-radius:99px;background:var(--sunk);box-shadow:var(--well-s)}
 .seg button{border:0;background:transparent;cursor:pointer;padding:6px 13px;border-radius:99px;font-size:.78rem;font-weight:600;color:var(--ink-2);white-space:nowrap}
@@ -552,6 +584,15 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .impatto b{display:block;font-family:var(--f-disp);font-weight:400;font-size:1.5rem}
 .impatto span{font-size:.72rem;color:var(--ink-2);line-height:1.3;display:block}
 
+/* barra stretta: della privacy resta il pallino (il testo nel suggerimento),
+   del profilo l'avatar; sotto i 760px la barra va a capo e il nome torna */
+@media (max-width:1180px){
+  .privacy{font-size:0;gap:0;padding:10px}
+}
+@media (max-width:1000px) and (min-width:761px){
+  .profilo-btn{padding:0 5px}
+  .profilo-btn #profiloNome{display:none}
+}
 @media (max-width:1100px){
   .bgrid{grid-template-columns:1fr}
   .bprev{position:static}
@@ -560,7 +601,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   .tras-griglia{grid-template-columns:1fr}
   .firma{grid-template-columns:1fr}
   .fase{grid-template-columns:34px minmax(0,1fr) auto}
-  .fase select.field{grid-column:2;grid-row:1;max-width:220px}
+  .fase select.field,.fase .tendina.field{grid-column:2;grid-row:1;max-width:220px}
   .fase-ctl{grid-column:3;grid-row:1}
   .fase .rit{grid-column:2/-1;grid-row:2}
   .ed-top .eyebrow{flex:1 1 100%}
@@ -583,6 +624,46 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   body::before,.top,.intro,.passi,.barra,.spiega,.azioni,.rete{display:none!important}
   .plate{box-shadow:none}
 }
+
+/* ═══ MENU A TENDINA ═════════════════════════════════════════════════
+   L'elenco di un <select> nativo è disegnato dal sistema (grigio, senza
+   raggi né ombre) e il CSS non lo raggiunge. Ogni select del tool viene
+   quindi affiancato da un pulsante e da un elenco del tool; il select
+   resta, nascosto, come fonte del valore: riceve la scelta e il suo
+   evento change, così il codice che lo ascolta non cambia.            */
+.tendina-nativa{position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;
+  padding:0!important;opacity:0;pointer-events:none;overflow:hidden}
+button.tendina{display:flex;align-items:center;min-width:0;text-align:left;cursor:pointer;color:var(--ink)}
+button.tendina > span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button.tendina.field{padding-right:36px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+button.tendina.field[aria-expanded="true"]{box-shadow:var(--well),0 0 0 3px rgba(124,207,176,.55)}
+button.tendina.piatta{border:0;background:transparent;font-weight:600;padding:0 16px 0 0;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);
+  background-position:calc(100% - 5px) 55%,calc(100% - 1px) 55%;background-size:4px 4px;background-repeat:no-repeat}
+button.tendina:disabled{opacity:.5;cursor:not-allowed}
+button.tendina:focus-visible{outline:3px solid var(--jade-ink);outline-offset:2px}
+.tendina-lista{position:fixed;z-index:2050;overflow-y:auto;padding:6px;border-radius:var(--r-sm);
+  background:linear-gradient(180deg,#FCFDFF 0%,#F2F6FD 100%);scrollbar-width:thin;
+  box-shadow:0 22px 38px -18px rgba(35,45,60,.42),0 8px 16px -10px rgba(35,45,60,.2),inset 0 1px 0 #fff,0 0 0 1px rgba(35,45,60,.06);
+  animation:tendinaApre .16s var(--ease) both}
+.tendina-lista.sopra{animation-name:tendinaApreSu}
+@keyframes tendinaApre{from{opacity:0;transform:translateY(-4px) scale(.98)}}
+@keyframes tendinaApreSu{from{opacity:0;transform:translateY(4px) scale(.98)}}
+.tendina-gruppo{padding:10px 12px 5px;font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.tendina-voce{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:12px;font-size:.86rem;line-height:1.3;
+  color:var(--ink);cursor:pointer;white-space:nowrap}
+.tendina-voce > span{overflow:hidden;text-overflow:ellipsis}
+.tendina-voce::before{content:"";flex:0 0 auto;width:14px;height:14px}
+.tendina-voce.scelta{color:var(--jade-ink);font-weight:600}
+.tendina-voce.scelta::before{width:5px;height:10px;margin:0 5px 3px 4px;border:solid currentColor;border-width:0 2px 2px 0;
+  transform:rotate(45deg)}
+.tendina-voce.scelta.vuota{color:var(--ink-3);font-weight:500}
+.tendina-voce.scelta.vuota::before{border:0;transform:none;width:14px;height:14px;margin:0}
+.tendina-voce.attiva{background:var(--plate-2);box-shadow:var(--well-s)}
+.tendina-voce.vuota{color:var(--ink-3)}
+.tendina-voce.spenta{opacity:.45;cursor:default}
 
 /* ═══ COPYRIGHT ══════════════════════════════════════════════════════
    In basso a destra su ogni pagina, anche durante l'intro: sta sopra la
@@ -757,7 +838,7 @@ main.sale{animation:paginaSale var(--t-volo,800ms) var(--curva-traino) both;will
 .top.intro-in-corso .mark{opacity:0}
 
 /* durante l'intro il contenuto della barra resta nascosto e poi entra a cascata */
-.top.intro-in-corso .brand > div,.top.intro-in-corso .nav button,.top.intro-in-corso .privacy{opacity:0}
+.top.intro-in-corso .brand > div,.top.intro-in-corso .nav button,.top.intro-in-corso .privacy,.top.intro-in-corso .profilo-btn{opacity:0}
 @keyframes popBarra{from{opacity:0;transform:scale(.8) translateY(-3px)}to{opacity:1;transform:none}}
 .pop-barra{animation:popBarra .46s cubic-bezier(.34,1.35,.64,1) var(--pop-delay,0ms) both}
 @keyframes popSezione{from{opacity:0;transform:translateY(22px) scale(.985)}}
@@ -765,7 +846,7 @@ main.sale{animation:paginaSale var(--t-volo,800ms) var(--curva-traino) both;will
 
 @media (prefers-reduced-motion: reduce){
   #introScena,#introVelo{display:none}
-  .top.intro-in-corso .mark,.top.intro-in-corso .brand > div,.top.intro-in-corso .nav button,.top.intro-in-corso .privacy{opacity:1}
+  .top.intro-in-corso .mark,.top.intro-in-corso .brand > div,.top.intro-in-corso .nav button,.top.intro-in-corso .privacy,.top.intro-in-corso .profilo-btn{opacity:1}
 }
 @media print{#introScena,#introVelo{display:none!important}}
 </style>
@@ -944,9 +1025,40 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
       <button data-area="proto">Protocolli <span class="nb" id="navN"></span></button>
       <button data-area="builder">Protocol builder</button>
     </nav>
-    <div class="privacy" id="privacy"><i></i>Nessun dato paziente lascia questo computer</div>
+    <div class="privacy" id="privacy" title="Nessun dato paziente lascia questo computer"><i></i>Nessun dato paziente lascia questo computer</div>
+    <button class="profilo-btn" id="profiloBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="pannelloProfilo">
+      <span class="avatar" id="profiloAv" aria-hidden="true"></span><span id="profiloNome">Accedi</span>
+    </button>
   </div>
 </header>
+
+<!-- ═══ profilo e impostazioni: si apre dal pulsante in alto a destra ═══ -->
+<div class="plate pannello-profilo" id="pannelloProfilo" role="dialog" aria-label="Profilo e impostazioni" hidden>
+  <section class="pp-sez">
+    <span class="eyebrow">Profilo</span>
+    <div class="pp-chi" id="ppChi"></div>
+    <div class="rete-stato" id="accessoStato"></div>
+    <canvas id="qrAbb" width="240" height="240" hidden></canvas>
+    <div class="nota" id="reteNota" hidden>Il codice contiene la chiave del canale: non fotografarlo
+      e non condividerlo. Serve una volta sola per telefono.</div>
+    <div class="azioni">
+      <button class="btn solid sm" id="reteAbbina">Accedi</button>
+      <button class="btn sm danger" id="reteScollega" hidden>Esci</button>
+    </div>
+  </section>
+  <section class="pp-sez">
+    <span class="eyebrow">Impostazioni</span>
+    <h4>Backup della libreria ufficiale</h4>
+    <!-- backup automatico della libreria ufficiale in una cartella scelta -->
+    <div class="backup" id="backup">
+      <div class="backup-t"><i></i><span id="backupStato">Backup automatico spento</span></div>
+      <div class="riga-b">
+        <button class="btn xs" id="backupCartella">Scegli cartella</button>
+        <button class="btn xs" id="backupRecupera" title="Carica la libreria ufficiale da un backup: per un PC nuovo">Recupera dal backup</button>
+      </div>
+    </div>
+  </section>
+</div>
 
 <main class="shell">
 
@@ -1044,13 +1156,9 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
       <div class="plate rete" id="rete">
         <h3>Invio al telefono</h3>
         <div class="rete-stato" id="reteStato"></div>
-        <canvas id="qrAbb" width="260" height="260" hidden></canvas>
-        <div class="nota" id="reteNota" hidden>Il codice contiene la chiave del canale: non fotografarlo
-          e non condividerlo. Serve una volta sola.</div>
         <div class="azioni">
           <button class="btn solid sm" id="reteInvia" hidden>Invia la lista al telefono</button>
-          <button class="btn sm" id="reteAbbina">Abbina un telefono</button>
-          <button class="btn sm danger" id="reteScollega" hidden>Scollega</button>
+          <button class="btn sm" id="reteAccedi" hidden>Accedi dal profilo</button>
         </div>
       </div>
       <div>
@@ -1069,8 +1177,9 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         <div class="spiega">
           <b>Come si trasferisce</b>
           <ol>
-            <li>La prima volta premi «Abbina un telefono» e inquadra il codice con la
-                fotocamera del telefono: si apre Protocol Cards e si abbina da solo.</li>
+            <li>Accedi dal profilo, in alto a destra: «Accedi» mostra un codice da inquadrare
+                con la fotocamera del telefono. Il tool riconosce il tuo profilo e carica i
+                tuoi protocolli personali.</li>
             <li>Da lì in poi basta «Invia la lista al telefono». La lista passa dal relay
                 cifrata, con una chiave che conoscono solo questo PC e il telefono; se l'app
                 è chiusa la riceve all'apertura, entro 12 ore.</li>
@@ -1099,6 +1208,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         <button role="tab" data-lib="ufficiale">Ufficiali <span id="nUff"></span></button>
         <button role="tab" data-lib="personale">Personali <span id="nPers"></span></button>
       </div>
+      <div class="profilo-riga" id="profiloRiga"></div>
       <label class="cerca">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
         <input class="field" id="libCerca" type="search" placeholder="Cerca per nome o termine…" aria-label="Cerca protocollo">
@@ -4503,20 +4613,22 @@ var qrcode = function() {
 
   /* l'id si può scegliere prima, così una conferma che arriva mentre
      l'ultimo pezzo è ancora in viaggio viene già riconosciuta          */
-  async function inviaLista(sess, da, { corpo, z, id = nuovoId() }, avanzamento = () => {}) {
+  /* tipo: 'lista' per la lista del giorno, 'profilo' per il profilo:
+     stesso trasporto a pezzi, raccolti da due raccoglitori distinti   */
+  async function inviaLista(sess, da, { corpo, z, id = nuovoId(), tipo = 'lista' }, avanzamento = () => {}) {
     const s = somma(corpo), p = pezzi(corpo);
     for (let i = 0; i < p.length; i++) {
-      await invia(sess, da, { tipo: 'lista', id, s, z, i, n: p.length, x: p[i] });
+      await invia(sess, da, { tipo, id, s, z, i, n: p.length, x: p[i] });
       avanzamento(i + 1, p.length);
     }
     return { id, n: p.length };
   }
 
   /* ricompone le liste man mano che arrivano i pezzi, in qualsiasi ordine */
-  function raccoglitore() {
+  function raccoglitore(tipo = 'lista') {
     const aperte = new Map();
     return function aggiungi(m) {
-      if (!m || m.tipo !== 'lista' || typeof m.x !== 'string' || !(m.n > 0) || !(m.i >= 0 && m.i < m.n)) return null;
+      if (!m || m.tipo !== tipo || typeof m.x !== 'string' || !(m.n > 0) || !(m.i >= 0 && m.i < m.n)) return null;
       let l = aperte.get(m.id);
       if (!l) aperte.set(m.id, l = { n: m.n, s: m.s, z: m.z, parti: new Array(m.n) });
       if (l.n !== m.n || l.s !== m.s) return null;
@@ -4527,6 +4639,15 @@ var qrcode = function() {
       if (somma(corpo) !== l.s) throw new Error('lista ricomposta con somma di controllo errata');
       return { id: m.id, corpo, z: l.z };
     };
+  }
+
+  /* da un oggetto al corpo da inviare: JSON compresso, in base64url */
+  async function impacchetta(oggetto) {
+    const dati = new TextEncoder().encode(JSON.stringify(oggetto));
+    if (typeof CompressionStream === 'undefined') return { corpo: b64u.da(dati), z: 'nessuna' };
+    const cs = new CompressionStream('deflate-raw');
+    const w = cs.writable.getWriter(); w.write(dati); w.close();
+    return { corpo: b64u.da(await new Response(cs.readable).arrayBuffer()), z: 'deflate' };
   }
 
   /* dal corpo ricevuto all'oggetto lista */
@@ -4542,7 +4663,7 @@ var qrcode = function() {
 
   root.Canale = {
     get RELAY() { return RELAY; }, usaRelay: u => { RELAY = u; }, PEZZO, nuovoAbbinamento, daFrammento, frammento, valido, apri,
-    cifra, decifra, invia, ascolta, somma, pezzi, nuovoId, inviaLista, raccoglitore, leggiLista,
+    cifra, decifra, invia, ascolta, somma, pezzi, nuovoId, inviaLista, raccoglitore, impacchetta, leggiLista,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -4565,6 +4686,165 @@ let pazienti = [];
 const esc = s => String(s == null ? '' : s)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const it = (n, d = 1) => Number(n).toFixed(d).replace('.', ',');
+
+/* ═══ menu a tendina ═════════════════════════════════════════════════
+   Ogni <select> del tool, anche quelli creati dopo (editor e builder si
+   ridisegnano), riceve un pulsante e un elenco nello stile del tool. Il
+   select resta nascosto e resta la fonte del valore: la scelta gli viene
+   scritta e il suo evento change parte come prima.                    */
+const Tendina = (() => {
+  let aperta = null;                           // { sel, b, lista, voci, att }
+
+  function migliora(sel) {
+    if (sel.dataset.tendina || sel.multiple) return;
+    sel.dataset.tendina = '1';
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tendina ' + (sel.classList.contains('field') ? sel.className : 'piatta');
+    b.style.cssText = sel.style.cssText;
+    b.setAttribute('aria-haspopup', 'listbox');
+    b.setAttribute('aria-expanded', 'false');
+    if (sel.getAttribute('aria-label')) b.setAttribute('aria-label', sel.getAttribute('aria-label'));
+    b.appendChild(document.createElement('span'));
+    sel.after(b);
+    sel.classList.add('tendina-nativa');
+    sel.tabIndex = -1;
+    sel.setAttribute('aria-hidden', 'true');
+    const etichetta = () => {
+      const o = sel.options[sel.selectedIndex];
+      b.firstChild.textContent = o ? o.text : '';
+      b.disabled = sel.disabled;
+    };
+    etichetta();
+    sel.addEventListener('change', etichetta);
+    sel._etichetta = etichetta;
+    b.addEventListener('click', () => (aperta && aperta.sel === sel) ? chiudi() : apri(sel, b));
+    b.addEventListener('keydown', e => {
+      if (aperta && aperta.sel === sel) return;
+      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) { e.preventDefault(); apri(sel, b); }
+    });
+  }
+
+  function apri(sel, b) {
+    chiudi();
+    sel._etichetta();
+    const lista = document.createElement('div');
+    lista.className = 'tendina-lista';
+    lista.setAttribute('role', 'listbox');
+    const voci = [];
+    const voce = o => {
+      const d = document.createElement('div');
+      const i = [...sel.options].indexOf(o);
+      d.className = 'tendina-voce' + (i === sel.selectedIndex ? ' scelta' : '') + (o.value === '' ? ' vuota' : '')
+                  + (o.disabled ? ' spenta' : '');
+      d.setAttribute('role', 'option');
+      d.setAttribute('aria-selected', i === sel.selectedIndex);
+      const t = document.createElement('span'); t.textContent = o.text; d.appendChild(t);
+      d.dataset.i = i;
+      lista.appendChild(d);
+      if (!o.disabled) voci.push(d);
+    };
+    [...sel.children].forEach(c => {
+      if (c.tagName === 'OPTGROUP') {
+        const g = document.createElement('div');
+        g.className = 'tendina-gruppo'; g.textContent = c.label; lista.appendChild(g);
+        [...c.children].forEach(o => { if (!o.hidden) voce(o); });
+      } else if (!c.hidden) voce(c);
+    });
+    document.body.appendChild(lista);
+    posiziona(b, lista);
+    b.setAttribute('aria-expanded', 'true');
+    aperta = { sel, b, lista, voci, att: -1 };
+    evidenzia(Math.max(0, voci.findIndex(v => +v.dataset.i === sel.selectedIndex)));
+    lista.addEventListener('mousedown', e => e.preventDefault());      // il fuoco resta al pulsante
+    lista.addEventListener('click', e => { const v = e.target.closest('.tendina-voce'); if (v && !v.classList.contains('spenta')) scegli(+v.dataset.i); });
+    lista.addEventListener('mousemove', e => { const v = e.target.closest('.tendina-voce'); if (v) evidenzia(voci.indexOf(v), false); });
+  }
+
+  /* sotto il pulsante se c'è posto, altrimenti sopra; mai fuori schermo */
+  function posiziona(b, lista) {
+    const r = b.getBoundingClientRect(), m = 12, gap = 6;
+    const sotto = innerHeight - r.bottom - m - gap, sopra = r.top - m - gap;
+    const suSopra = sotto < 220 && sopra > sotto;
+    const alta = Math.min(340, suSopra ? sopra : sotto);
+    lista.style.maxHeight = alta + 'px';
+    lista.style.minWidth = r.width + 'px';
+    lista.style.maxWidth = Math.max(r.width, Math.min(560, innerWidth - 2 * m)) + 'px';
+    const larga = lista.offsetWidth;
+    lista.style.left = Math.max(m, Math.min(r.left, innerWidth - m - larga)) + 'px';
+    if (suSopra) { lista.classList.add('sopra'); lista.style.top = Math.max(m, r.top - gap - Math.min(alta, lista.offsetHeight)) + 'px'; }
+    else lista.style.top = (r.bottom + gap) + 'px';
+  }
+
+  function evidenzia(k, scorri = true) {
+    if (!aperta || k < 0 || k >= aperta.voci.length) return;
+    if (aperta.voci[aperta.att]) aperta.voci[aperta.att].classList.remove('attiva');
+    aperta.att = k;
+    aperta.voci[k].classList.add('attiva');
+    if (scorri) aperta.voci[k].scrollIntoView({ block: 'nearest' });
+  }
+
+  function scegli(i) {
+    const { sel, b } = aperta;
+    chiudi();
+    b.focus();
+    if (sel.selectedIndex === i) return;
+    sel.selectedIndex = i;
+    sel.dispatchEvent(new Event('input', { bubbles: true }));
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function chiudi() {
+    if (!aperta) return;
+    aperta.lista.remove();
+    aperta.b.setAttribute('aria-expanded', 'false');
+    aperta = null;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (!aperta) return;
+    const n = aperta.voci.length;
+    if (e.key === 'ArrowDown') { e.preventDefault(); evidenzia(Math.min(n - 1, aperta.att + 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); evidenzia(Math.max(0, aperta.att - 1)); }
+    else if (e.key === 'Home') { e.preventDefault(); evidenzia(0); }
+    else if (e.key === 'End') { e.preventDefault(); evidenzia(n - 1); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (aperta.voci[aperta.att]) scegli(+aperta.voci[aperta.att].dataset.i); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); const b = aperta.b; chiudi(); b.focus(); }
+    else if (e.key === 'Tab') chiudi();
+    else if (e.key.length === 1) {                 // lettera: la prima voce che inizia così
+      const l = e.key.toLowerCase(), da = aperta.att + 1;
+      const k = [...aperta.voci.slice(da), ...aperta.voci.slice(0, da)]
+        .findIndex(v => v.textContent.trim().toLowerCase().startsWith(l));
+      if (k >= 0) evidenzia((da + k) % n);
+    }
+  }, true);
+  document.addEventListener('mousedown', e => {
+    if (aperta && !aperta.lista.contains(e.target) && !aperta.b.contains(e.target)) chiudi();
+  }, true);
+  addEventListener('resize', chiudi);
+  /* se la pagina scorre l'elenco segue il pulsante, come quello nativo;
+     si chiude solo quando il pulsante esce dallo schermo              */
+  addEventListener('scroll', e => {
+    if (!aperta || aperta.lista.contains(e.target)) return;
+    const r = aperta.b.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return chiudi();
+    aperta.lista.classList.remove('sopra');
+    posiziona(aperta.b, aperta.lista);
+  }, true);
+
+  /* i select che esistono ora e quelli che arriveranno */
+  document.querySelectorAll('select').forEach(migliora);
+  new MutationObserver(ms => {
+    for (const m of ms) for (const n of m.addedNodes) {
+      if (n.nodeType !== 1) continue;
+      if (n.tagName === 'SELECT') migliora(n);
+      else if (n.querySelectorAll) n.querySelectorAll('select').forEach(migliora);
+    }
+    if (aperta && !aperta.b.isConnected) chiudi();     // il suo pulsante è stato ridisegnato
+  }).observe(document.body, { childList: true, subtree: true });
+
+  return { migliora, chiudi };
+})();
 
 /* ═══ sezioni ════════════════════════════════════════════════════════ */
 let area = 'lista';
@@ -5006,9 +5286,11 @@ $('scaricaJson').onclick = () => {
 };
 
 /* ═══ invio via rete ═════════════════════════════════════════════════
-   Canale cifrato verso il telefono attraverso il relay (canale.js). Il
-   relay si contatta solo su richiesta, con «Abbina» o «Invia»: aprire
-   il tool resta un'operazione senza rete.
+   Canale cifrato verso il telefono attraverso il relay (canale.js). Senza
+   un telefono abbinato il relay si contatta solo su richiesta, con
+   «Abbina»: aprire il tool resta un'operazione senza rete. Con un
+   telefono abbinato il PC si mette in ascolto all'apertura, per il
+   profilo dell'operatore (vedi PROFILO).
 
    L'abbinamento { t, k } si salva solo quando il telefono conferma di
    averlo letto dal QR; da lì vale finché non si scollega.            */
@@ -5017,7 +5299,6 @@ const APP_TEL = 'https://radios4ndbox-bot.github.io/Protocols_Cards/prototype/in
 let abbinamento = leggiAbbinamento();
 let inAbbinamento = null;            // { t, k } mostrato nel QR, non ancora confermato
 let reteChiudi = null, reteSess = null, reteInvio = null;
-disegnaRete();
 
 function leggiAbbinamento() {
   try {
@@ -5031,23 +5312,71 @@ function scriviAbbinamento(a) {
 }
 
 function reteStato(html, tono = '') { const e = $('reteStato'); e.className = 'rete-stato ' + tono; e.innerHTML = html; }
+function accessoStato(html, tono = '') { const e = $('accessoStato'); e.className = 'rete-stato ' + tono; e.innerHTML = html; }
+
+/* ── come il tool chiama chi ha fatto l'accesso ──
+   Il titolo lo sceglie l'operatore nel suo profilo (Dr., Dr.ssa o
+   nessuno): dal nome non si può sapere, e non si indovina.
+   «Pasquale Viggiano» con Dr. diventa «Dr. Viggiano».                  */
+const TITOLI = ['Dr.', 'Dr.ssa'];
+function nomeCortese(p) {
+  if (!p) return '';
+  const n = (p.nome || '').trim(), c = (p.cognome || '').trim();
+  if (p.titolo && TITOLI.includes(p.titolo) && (c || n)) return `${p.titolo} ${c || n}`;
+  return [n, c].filter(Boolean).join(' ') || 'profilo senza nome';
+}
+const iniziali = p => (((p.nome || '').trim()[0] || '') + ((p.cognome || '').trim()[0] || '')).toUpperCase();
+const saluto = () => { const h = new Date().getHours(); return h < 13 ? 'Buongiorno' : h < 18 ? 'Buon pomeriggio' : 'Buonasera'; };
+
+/* ── pannello del profilo, dal pulsante in alto a destra ── */
+function apriProfilo(apri = $('pannelloProfilo').hidden) {
+  $('pannelloProfilo').hidden = !apri;
+  $('profiloBtn').setAttribute('aria-expanded', apri);
+  if (apri) disegnaAccesso();
+}
+function disegnaAccesso() {
+  const p = profilo, a = abbinamento, dentro = !!(a && p);
+  $('profiloBtn').classList.toggle('dentro', dentro);
+  $('profiloAv').textContent = dentro ? iniziali(p) : '';
+  $('profiloNome').textContent = dentro ? nomeCortese(p) : a ? 'Telefono collegato' : 'Accedi';
+  $('profiloBtn').title = 'Profilo e impostazioni: ' + $('profiloNome').textContent;
+  const n = libs.personale.protocolli.length, app = libs.personale.protocolli.filter(x => x.appreso).length;
+  $('ppChi').innerHTML = dentro
+    ? `<b>${saluto()}, ${esc(nomeCortese(p))}</b><span>${n} protocoll${n === 1 ? 'o' : 'i'} personal${n === 1 ? 'e' : 'i'}`
+      + (app ? `, di cui ${app} appres${app === 1 ? 'o' : 'i'}` : '') + ` · dal telefono ${esc(a.dispositivo || '')}</span>`
+    : a ? '<b>Telefono collegato</b><span>In attesa del profilo dal telefono…</span>'
+        : '<b>Accedi con il tuo telefono</b><span>Inquadra il codice: il tool riconosce il tuo profilo, carica i tuoi protocolli personali e ci salva quelli nuovi.</span>';
+}
+$('profiloBtn').onclick = e => { e.stopPropagation(); apriProfilo(); };
+document.addEventListener('mousedown', e => {
+  if ($('pannelloProfilo').hidden || inAbbinamento) return;          // durante l'accesso il QR resta
+  if (!$('pannelloProfilo').contains(e.target) && !$('profiloBtn').contains(e.target)
+      && !e.target.closest('.mask, .tendina-lista')) apriProfilo(false);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('pannelloProfilo').hidden && !inAbbinamento) apriProfilo(false); });
 const erroreRete = e => e instanceof TypeError ? 'relay non raggiungibile, controlla la rete' : e.message;
 
 function disegnaRete() {
   const a = abbinamento;
-  $('privacy').lastChild.textContent = a ? 'I dati paziente escono solo cifrati, verso il telefono abbinato'
+  $('privacy').lastChild.textContent = a ? 'Dati paziente solo cifrati, verso il tuo telefono'
                                          : 'Nessun dato paziente lascia questo computer';
+  $('privacy').title = $('privacy').lastChild.textContent;
   $('reteInvia').hidden = !a;
+  $('reteAccedi').hidden = !!a;
+  $('reteInvia').textContent = a && profilo ? `Invia la lista a ${nomeCortese(profilo)}` : 'Invia la lista al telefono';
   $('reteScollega').hidden = !a && !inAbbinamento;
-  $('reteScollega').textContent = inAbbinamento ? 'Annulla' : 'Scollega';
-  $('reteAbbina').textContent = a ? 'Abbina un altro telefono' : 'Abbina un telefono';
+  $('reteScollega').textContent = inAbbinamento ? 'Annulla' : 'Esci';
+  $('reteAbbina').textContent = a ? 'Accedi con un altro telefono' : 'Accedi';
+  $('reteAbbina').classList.toggle('solid', !a);
   $('reteAbbina').hidden = !!inAbbinamento;
   $('qrAbb').hidden = $('reteNota').hidden = !inAbbinamento;
-  if (inAbbinamento || reteInvio) return;          // lo stato lo scrivono loro
-  reteStato(a
-    ? `Telefono abbinato: <b>${esc(a.dispositivo || 'telefono')}</b>. La lista verificata parte con un clic.`
-    : 'Nessun telefono abbinato. Abbinalo una volta inquadrando un codice, poi le liste partono con un clic.');
+  disegnaAccesso();
+  if (inAbbinamento) return;                       // lo stato dell'accesso lo scrive l'abbinamento
+  if (!reteInvio) reteStato(a
+    ? `Collegato al telefono di <b>${esc(profilo ? nomeCortese(profilo) : a.dispositivo || 'telefono')}</b>. La lista verificata parte con un clic.`
+    : 'Per inviare la lista accedi con il tuo telefono, dal profilo in alto a destra.');
 }
+$('reteAccedi').onclick = e => { e.stopPropagation(); apriProfilo(true); };
 
 function fermaAscolto() { if (reteChiudi) reteChiudi(); reteChiudi = reteSess = null; }
 
@@ -5059,7 +5388,7 @@ async function ascoltaRete(a, suAperto) {
     stato: s => {
       if (sess !== reteSess) return;
       if (s === 'aperto' && suAperto) suAperto();
-      if (s === 'riconnessione' && inAbbinamento) reteStato('Relay non raggiungibile, riprovo…', 'ko');
+      if (s === 'riconnessione' && inAbbinamento) accessoStato('Relay non raggiungibile, riprovo…', 'ko');
     },
     messaggio: m => { if (sess === reteSess) messaggioRete(a, m); },
   });
@@ -5067,11 +5396,12 @@ async function ascoltaRete(a, suAperto) {
 }
 
 function messaggioRete(a, m) {
+  if (m.tipo === 'profilo') return Profilo.messaggio(m);
   if (m.tipo === 'ciao' && inAbbinamento && inAbbinamento.t === a.t) {
     inAbbinamento = null;
     scriviAbbinamento({ t: a.t, k: a.k, dispositivo: String(m.dispositivo || 'telefono').slice(0, 60), quando: Date.now() });
     disegnaRete();
-    reteStato(`Abbinato a <b>${esc(abbinamento.dispositivo)}</b>. Ora la lista parte con «Invia la lista al telefono».`, 'ok');
+    accessoStato(`Telefono collegato (<b>${esc(abbinamento.dispositivo)}</b>): arriva il profilo…`, 'ok');
   }
   if (m.tipo === 'ricevuta' && reteInvio && m.rif === reteInvio.id && m.passata) {
     reteInvio = null;
@@ -5086,30 +5416,36 @@ function messaggioRete(a, m) {
 }
 
 $('reteAbbina').onclick = async () => {
-  if (abbinamento && !confirm('Il telefono abbinato ora non riceverà più le liste. Abbinarne un altro?')) return;
+  if (abbinamento && !confirm(`Accedere con un altro telefono? ${profilo ? nomeCortese(profilo) : 'Il profilo attuale'} esce da questo PC; i suoi protocolli restano sul suo telefono.`)) return;
   reteInvio = null;
   try {
     const a = await Canale.nuovoAbbinamento();
     inAbbinamento = a;
     disegnaRete();
     $('qrAbb').hidden = true;                      // si mostra solo a canale aperto
-    reteStato('Collegamento al relay…');
+    accessoStato('Collegamento al relay…');
     await ascoltaRete(a, () => {
       if (inAbbinamento !== a) return;
       disegnaQR($('qrAbb'), APP_TEL + Canale.frammento(a));
       $('qrAbb').hidden = false;
-      reteStato('Inquadra il codice con la fotocamera del telefono: si apre Protocol Cards e si abbina da solo.');
+      accessoStato('Inquadra il codice con la fotocamera del telefono: si apre Protocol Cards e fa l\'accesso da solo.');
     });
   } catch (e) {
     inAbbinamento = null; fermaAscolto(); disegnaRete();
-    reteStato('Abbinamento non riuscito: ' + esc(erroreRete(e)), 'ko');
+    accessoStato('Accesso non riuscito: ' + esc(erroreRete(e)), 'ko');
   }
 };
 
 $('reteScollega').onclick = () => {
-  if (inAbbinamento) { inAbbinamento = null; fermaAscolto(); disegnaRete(); return; }
-  if (!confirm('Scollegare il telefono? Per inviare di nuovo servirà un nuovo abbinamento.')) return;
-  scriviAbbinamento(null); inAbbinamento = reteInvio = null; fermaAscolto(); disegnaRete();
+  if (inAbbinamento) { inAbbinamento = null; fermaAscolto(); accessoStato(''); disegnaRete(); return; }
+  if (!confirm(`Uscire? ${profilo ? nomeCortese(profilo) : 'Il profilo'} esce da questo PC: i protocolli personali `
+    + 'restano sul telefono e spariscono da qui. Per rientrare servirà un nuovo accesso.')) return;
+  /* prima di andarsene il profilo manda al telefono l'ultima versione */
+  Profilo.invia().finally(() => {
+    Profilo.dimentica();
+    scriviAbbinamento(null); inAbbinamento = reteInvio = null; fermaAscolto();
+    accessoStato('Sei uscito. I tuoi protocolli sono sul telefono.', 'ok'); disegnaRete();
+  });
 };
 
 $('reteInvia').onclick = async () => {
@@ -5160,9 +5496,31 @@ function disegnaQR(canvas, testo) {
    cura. Ogni modifica si salva subito; la firma identifica la versione
    che verrà sincronizzata sul telefono.
    ═══════════════════════════════════════════════════════════════════ */
+/* ═══ PROFILO ════════════════════════════════════════════════════════
+   I protocolli personali sono di chi li usa, non del PC: vivono nel
+   profilo che sta sul telefono dell'operatore. Abbinando il telefono a
+   un PC qualsiasi, di questo o di un altro ospedale, il profilo arriva
+   e i suoi personali diventano quelli del tool; ciò che si crea o si
+   impara sul PC torna al telefono, cifrato, dallo stesso canale delle
+   liste. Vince la versione più recente.
+
+   Sul PC resta la copia del solo profilo abbinato, sotto una chiave sua:
+   se si abbina il telefono di un altro operatore, o si scollega, la copia
+   sparisce dal PC. Senza profilo valgono i personali «di questo PC», che
+   al primo abbinamento si possono portare nel proprio profilo.
+   La libreria ufficiale è del reparto e resta sul PC.                  */
+const CH_PROFILO = 'protocol-cards.pc.profilo';
+const CH_LOCALI  = 'protocol-cards.pc.personali';        // personali senza profilo
+const RE_PROFILO = /^pr-[a-z0-9]{6,20}$/;
+let profilo = (() => {
+  try { const p = JSON.parse(localStorage.getItem(CH_PROFILO) || 'null'); return p && RE_PROFILO.test(p.id) ? p : null; }
+  catch (_) { return null; }
+})();
+const chiavePersonali = () => profilo ? CH_LOCALI + '.' + profilo.id : CH_LOCALI;
+
 /* due librerie con la stessa forma: gli ufficiali (SIRM, curati a mano)
-   e i personali (creati dal reparto o appresi dalle scelte in verifica) */
-const CHIAVI = { ufficiale: 'protocol-cards.pc.libreria', personale: 'protocol-cards.pc.personali' };
+   e i personali (del profilo abbinato, o di questo PC se non c'è)      */
+const CHIAVI = { ufficiale: 'protocol-cards.pc.libreria', get personale() { return chiavePersonali(); } };
 const NUOVA  = { ufficiale: PR.nuovaLibreria, personale: PR.nuovaLibreriaPersonale };
 
 /* mezzi di contrasto per l'anteprima dei volumi: sul telefono la scelta
@@ -5215,16 +5573,133 @@ function ripristinaPersonale(copia) {
   salvaLibreria('personale'); aggiornaNav();
 }
 
-function salvaLibreria(nome = tab) {
-  libs[nome].modificata = Date.now();
+/* dalTelefono: i personali appena arrivati con il profilo. Conservano
+   l'istante della loro versione e non si rimandano indietro.          */
+function salvaLibreria(nome = tab, dalTelefono = null) {
+  libs[nome].modificata = dalTelefono ? dalTelefono.quando : Date.now();
   try { localStorage.setItem(CHIAVI[nome], JSON.stringify(libs[nome])); }
   catch (e) { toast('Impossibile salvare la libreria in questo browser'); }
+  if (nome === 'ufficiale') Backup.pianifica();          // il backup in cartella è della libreria ufficiale
+  else if (!dalTelefono) Profilo.pianifica();            // i personali tornano al telefono
 }
 function aggiornaNav() {
   $('navN').textContent = libs.ufficiale.protocolli.length + libs.personale.protocolli.length;
   $('nUff').textContent = libs.ufficiale.protocolli.length;
   $('nPers').textContent = libs.personale.protocolli.length;
+  disegnaProfilo();
 }
+function disegnaProfilo() {
+  const r = $('profiloRiga'); if (!r) return;
+  r.classList.toggle('attivo', !!profilo);
+  r.innerHTML = profilo
+    ? `Personali di <b>${esc(nomeCortese(profilo))}</b>, dal suo telefono.`
+    : 'Personali di questo PC. Accedi dal profilo, in alto a destra, per usare i tuoi da qualsiasi computer.';
+  disegnaAccesso();
+}
+
+const Profilo = (() => {
+  let timer = null, adozioneChiesta = false;
+  const raccogli = Canale.raccoglitore('profilo');
+  const visti = new Set();
+
+  function scrivi(p) {
+    profilo = p;
+    try { p ? localStorage.setItem(CH_PROFILO, JSON.stringify(p)) : localStorage.removeItem(CH_PROFILO); } catch (_) {}
+  }
+  /* mette in uso una libreria personale e ridisegna ciò che ne dipende */
+  function usa(l, dalTelefono) {
+    sostituisciLibreria(l, 'personale');
+    salvaLibreria('personale', dalTelefono);
+    aggiornaNav(); disegnaLibreria();
+    if (area === 'proto') disegnaEditor();
+    if (pazienti.length) aggiornaColonnaProtocolli();
+  }
+  const personaliDi = p => {
+    const l = adattaId(PR.leggiLibreria(JSON.stringify({ protocolli: p.personali })), 'personale');
+    l.base = 'personale';
+    return l;
+  };
+
+  /* un pezzo di profilo dal telefono; a profilo completo, lo si applica */
+  function messaggio(m) {
+    let r;
+    try { r = raccogli(m); } catch (_) { return; }
+    if (!r || visti.has(r.id)) return;
+    visti.add(r.id);
+    Canale.leggiLista(r).then(ricevi).catch(() => toast('Profilo dal telefono non leggibile'));
+  }
+
+  function ricevi(p) {
+    if (!p || !RE_PROFILO.test(p.id || '') || !Array.isArray(p.personali)) return;
+    let arrivata;
+    try { arrivata = personaliDi(p); } catch (_) { return toast('Profilo dal telefono non leggibile'); }
+    const quando = +p.aggiornato || 0;
+    const chi = { id: p.id, nome: String(p.nome || '').trim().slice(0, 40), cognome: String(p.cognome || '').trim().slice(0, 40),
+                  titolo: TITOLI.includes(p.titolo) ? p.titolo : '' };
+    if (profilo && profilo.id !== p.id) dimentica();     // un altro operatore: il profilo di prima resta sul suo telefono
+    const nuovo = !profilo;
+    scrivi(chi);
+    /* la copia sul PC di questo profilo, se c'è già; altrimenti vuota */
+    const copia = nuovo ? caricaLibreria('personale') : libs.personale;
+    if (quando >= (copia.modificata || 0)) usa(arrivata, { quando });
+    else { usa(copia, { quando: copia.modificata }); pianifica(); }   // sul PC è più recente: torna al telefono
+    if (nuovo) { toast(`${saluto()}, ${nomeCortese(chi)}: ${libs.personale.protocolli.length} protocolli personali caricati`); accessoStato(''); }
+    disegnaRete();
+    proponiAdozione();
+  }
+
+  /* i personali creati prima dei profili, rimasti «di questo PC»: al primo
+     profilo abbinato si propone di portarli con sé                      */
+  function proponiAdozione() {
+    if (adozioneChiesta || !profilo) return;
+    let locali;
+    try { const t = localStorage.getItem(CH_LOCALI); locali = t ? PR.leggiLibreria(t) : null; } catch (_) { locali = null; }
+    if (!locali || !locali.protocolli.length) return;
+    adozioneChiesta = true;
+    const n = locali.protocolli.length, appresi = locali.protocolli.filter(x => x.appreso).length;
+    chiedi(`Portare i protocolli di questo PC nel profilo di ${nomeCortese(profilo)}?`,
+      `Su questo PC ci sono ${n} protocoll${n === 1 ? 'o' : 'i'} personal${n === 1 ? 'e' : 'i'} senza profilo`
+      + (appresi ? `, di cui ${appresi} appres${appresi === 1 ? 'o' : 'i'}` : '')
+      + '. Entrano nel profilo e da lì viaggiano con il telefono; su questo PC non restano senza profilo.', 'Porta nel profilo', () => {
+        const ids = new Set(libs.personale.protocolli.map(x => x.id));
+        const unita = { ...libs.personale, protocolli: [...libs.personale.protocolli, ...locali.protocolli.filter(x => !ids.has(x.id))] };
+        usa(unita, null);                                 // versione nuova: parte verso il telefono
+        try { localStorage.removeItem(CH_LOCALI); } catch (_) {}
+        toast(`${n} protocoll${n === 1 ? 'o portato' : 'i portati'} nel profilo`);
+      });
+  }
+
+  /* i personali tornano al telefono poco dopo l'ultima modifica */
+  function pianifica() {
+    if (!profilo || !abbinamento) return;
+    clearTimeout(timer); timer = setTimeout(invia, 1500);
+  }
+  async function invia() {
+    clearTimeout(timer); timer = null;
+    if (!profilo || !abbinamento) return false;
+    try {
+      const sess = reteSess && reteSess.argomento === abbinamento.t ? reteSess : await ascoltaRete(abbinamento);
+      const pac = await Canale.impacchetta({ id: profilo.id, nome: profilo.nome, cognome: profilo.cognome, titolo: profilo.titolo,
+        aggiornato: libs.personale.modificata || 0,
+        personali: libs.personale.protocolli.map(PR.canonico) });
+      await Canale.inviaLista(sess, 'pc', { ...pac, tipo: 'profilo' });
+      return true;
+    } catch (_) { return false; }                        // riprova alla prossima modifica o al prossimo collegamento
+  }
+
+  /* il profilo lascia questo PC: la sua copia si cancella, restano i
+     personali «di questo PC»                                          */
+  function dimentica() {
+    try { localStorage.removeItem(chiavePersonali()); } catch (_) {}
+    scrivi(null);
+    sostituisciLibreria(caricaLibreria('personale'), 'personale');
+    aggiornaNav(); disegnaLibreria(); disegnaRete();
+    if (area === 'proto') disegnaEditor();
+    if (pazienti.length) aggiornaColonnaProtocolli();
+  }
+
+  return { messaggio, ricevi, pianifica, invia, dimentica };
+})();
 const sel = () => lib.protocolli.find(p => p.id === selId);
 const conMdc = p => p.fasi.some(f => PR.FASI[f.fase].mdc);
 const data = ms => new Date(ms).toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'numeric' });
@@ -5750,13 +6225,167 @@ $('libReset').onclick = () => {
     uff ? 'Ripristina' : 'Svuota', () => {
       const vecchia = libs[nome];
       sostituisciLibreria(NUOVA[nome](), nome);
-      try { localStorage.removeItem(CHIAVI[nome]); } catch (_) {}
+      if (uff) { try { localStorage.removeItem(CHIAVI[nome]); } catch (_) {} Backup.pianifica(); }
+      else salvaLibreria('personale');               // vuota ma recente: il profilo sul telefono si svuota
       disegnaEditor(); disegnaLibreria(); aggiornaColonnaProtocolli();
       toast(uff ? 'Libreria ripristinata' : 'Libreria personale svuotata', 'Annulla', () => {
         sostituisciLibreria(vecchia, nome); salvaLibreria(nome); disegnaEditor(); disegnaLibreria(); aggiornaColonnaProtocolli();
       });
     });
 };
+
+/* ═══ backup automatico della libreria ufficiale ═════════════════════
+   Una cartella scelta una volta (anche dentro Google Drive o OneDrive:
+   la copia nel cloud la fa il loro programma) riceve un file con la
+   libreria ufficiale come l'ha modificata il reparto. I personali no:
+   sono dell'operatore e viaggiano nel suo profilo, sul telefono.
+   Si riscrive da solo a ogni modifica; la versione precedente resta
+   accanto, un passo indietro. Su un PC nuovo «Recupera dal backup»
+   rilegge la cartella e la tiene per i salvataggi successivi.
+
+   La cartella è un handle del File System Access (Chrome, Edge),
+   conservato in IndexedDB. Chrome può chiedere di nuovo il permesso a
+   ogni apertura del tool: allora il backup va in pausa finché non lo si
+   riattiva con un clic. Nel file non c'è nessun dato paziente e nessuna
+   chiave di abbinamento: solo protocolli.                              */
+const Backup = (() => {
+  const FILE = 'protocol-cards-backup.json', PREC = 'protocol-cards-backup.precedente.json';
+  const supportato = 'showDirectoryPicker' in window && 'indexedDB' in window;
+  let cartella = null, stato = supportato ? 'spento' : 'non-supportato', ultimo = 0, timer = null, errore = '';
+
+  /* IndexedDB minimo: una chiave, un valore */
+  const db = () => new Promise((ok, ko) => {
+    const r = indexedDB.open('protocol-cards', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error);
+  });
+  const leggiKv = async k => { const d = await db(); return new Promise(ok => {
+    const q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => ok(q.result); q.onerror = () => ok(undefined); }); };
+  const scriviKv = async (k, v) => { const d = await db(); return new Promise(ok => {
+    const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = ok; t.onerror = ok; }); };
+
+  function contenuto() {
+    return JSON.stringify({
+      app: 'Protocol Cards', tipo: 'backup', v: 2, salvato: new Date().toISOString(),
+      firma: PR.firma(libs.ufficiale.protocolli),
+      ufficiale: { ...libs.ufficiale, protocolli: libs.ufficiale.protocolli.map(PR.canonico) },
+    }, null, 1);
+  }
+  const testoDi = async (dir, nome) => (await (await dir.getFileHandle(nome)).getFile()).text();
+  async function scriviFile(dir, nome, testo) {
+    const w = await (await dir.getFileHandle(nome, { create: true })).createWritable();
+    await w.write(testo); await w.close();
+  }
+
+  async function scrivi() {
+    clearTimeout(timer); timer = null;
+    if (stato !== 'attivo' || !cartella) return;
+    try {
+      const nuovo = contenuto();
+      let vecchio = null;
+      try { vecchio = await testoDi(cartella, FILE); } catch (_) {}
+      if (vecchio) await scriviFile(cartella, PREC, vecchio);
+      await scriviFile(cartella, FILE, nuovo);
+      ultimo = Date.now(); errore = '';
+    } catch (e) {
+      if (e.name === 'NotAllowedError' || e.name === 'SecurityError') stato = 'pausa';
+      else { stato = 'errore'; errore = e.message; }
+    }
+    disegna();
+  }
+  /* le modifiche arrivano a raffiche (ogni tasto nell'editor): una
+     scrittura sola, poco dopo l'ultima                                */
+  function pianifica() {
+    if (stato !== 'attivo') return;
+    clearTimeout(timer); timer = setTimeout(scrivi, 800);
+  }
+
+  async function collega(dir) {
+    cartella = dir; stato = 'attivo';
+    await scriviKv('cartellaBackup', dir);
+    await scrivi();
+  }
+
+  async function scegli() {
+    if (stato === 'pausa' && cartella) return riattiva();
+    try {
+      const dir = await showDirectoryPicker({ id: 'protocol-cards-backup', mode: 'readwrite', startIn: cartella || 'documents' });
+      await collega(dir);
+      toast(`Backup attivo in «${dir.name}»`);
+    } catch (e) { if (e.name !== 'AbortError') toast('Cartella non disponibile: ' + e.message); }
+  }
+  async function riattiva() {
+    try {
+      if (await cartella.requestPermission({ mode: 'readwrite' }) === 'granted') { stato = 'attivo'; await scrivi(); }
+    } catch (_) {}
+    disegna();
+  }
+
+  /* dal backup di una cartella alla libreria ufficiale di questo PC */
+  async function recupera(dir) {
+    if (!dir) {
+      try { dir = await showDirectoryPicker({ id: 'protocol-cards-backup', mode: 'readwrite', startIn: cartella || 'documents' }); }
+      catch (e) { if (e.name !== 'AbortError') toast('Cartella non disponibile: ' + e.message); return; }
+    }
+    let j, uff;
+    try {
+      j = JSON.parse(await testoDi(dir, FILE));
+      if (j.app !== 'Protocol Cards' || j.tipo !== 'backup' || !j.ufficiale) throw new Error('non è un backup di Protocol Cards');
+      uff = adattaId(PR.leggiLibreria(JSON.stringify(j.ufficiale)), 'ufficiale');
+      uff.base = j.ufficiale.base || uff.base; if (j.ufficiale.rev) uff.rev = j.ufficiale.rev;
+    } catch (e) {
+      return chiedi('Backup non leggibile', e.name === 'NotFoundError'
+        ? `Nella cartella «${dir.name}» non c'è un backup di Protocol Cards (${FILE}).`
+        : `«${dir.name}»: ${e.message}. La libreria di questo PC non è stata toccata.`, null);
+    }
+    const quando = j.salvato ? new Date(j.salvato).toLocaleString('it-IT', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+    chiedi('Recuperare la libreria ufficiale dal backup?',
+      `Backup del ${quando}: ${uff.protocolli.length} protocolli ufficiali. Sostituiranno quelli di questo PC, e `
+      + `«${dir.name}» resterà la cartella del backup. I protocolli personali non sono nel backup: arrivano dal profilo sul telefono.`,
+      'Recupera', async () => {
+        const vecchia = libs.ufficiale;
+        cartella = dir; stato = 'attivo';
+        await scriviKv('cartellaBackup', dir);
+        sostituisciLibreria(uff, 'ufficiale'); salvaLibreria('ufficiale');
+        disegnaEditor(); disegnaLibreria(); aggiornaNav(); if (pazienti.length) aggiornaColonnaProtocolli();
+        toast('Libreria ufficiale recuperata dal backup', 'Annulla', () => {
+          sostituisciLibreria(vecchia, 'ufficiale'); salvaLibreria('ufficiale');
+          disegnaEditor(); disegnaLibreria(); aggiornaNav();
+        });
+      });
+  }
+
+  function disegna() {
+    const box = $('backup'), t = $('backupStato'), bc = $('backupCartella'), br = $('backupRecupera');
+    box.className = 'backup ' + stato;
+    const nome = cartella ? (cartella.name ? `«<b>${esc(cartella.name)}</b>»` : 'nella cartella scelta') : '';
+    const ora = ultimo ? new Date(ultimo).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : '';
+    t.innerHTML = {
+      'non-supportato': 'Il backup automatico richiede Chrome o Edge. Qui puoi usare «Esporta».',
+      spento: 'Backup della libreria ufficiale spento. Scegli una cartella, anche dentro Google Drive: ci terrà una copia sempre aggiornata.',
+      attivo: `Backup ${nome.startsWith('«') ? 'in ' + nome : nome}` + (ora ? ` · aggiornato alle ${ora}` : ''),
+      pausa: `Backup ${nome.startsWith('«') ? 'in ' + nome : nome} in pausa: il browser chiede di nuovo il permesso.`,
+      errore: `Backup ${nome.startsWith('«') ? 'in ' + nome : nome} non riuscito: ${esc(errore)}`,
+    }[stato];
+    bc.hidden = br.hidden = stato === 'non-supportato';
+    bc.textContent = stato === 'pausa' ? 'Riattiva' : stato === 'spento' ? 'Scegli cartella' : 'Cambia cartella';
+  }
+
+  /* all'apertura: la cartella di prima, se il permesso c'è ancora */
+  async function avvia() {
+    disegna();
+    if (!supportato) return;
+    try {
+      cartella = await leggiKv('cartellaBackup') || null;
+      if (cartella) stato = await cartella.queryPermission({ mode: 'readwrite' }) === 'granted' ? 'attivo' : 'pausa';
+    } catch (_) { cartella = null; stato = 'spento'; }
+    disegna();
+  }
+
+  $('backupCartella').onclick = scegli;
+  $('backupRecupera').onclick = () => recupera();
+  return { avvia, pianifica, scrivi, collega, recupera, stato: () => stato, FILE, PREC };
+})();
 
 /* ═══════════════════════════════════════════════════════════════════
    PROTOCOL BUILDER
@@ -6135,6 +6764,11 @@ function toast(msg, azione, cb) {
 
 aggiornaNav();
 aggiornaConteggi();
+disegnaRete();
+Backup.avvia();
+/* con un telefono abbinato il PC si rimette in ascolto: il profilo può
+   arrivare, o essere più vecchio di quello sul PC e riceverlo           */
+if (abbinamento) ascoltaRete(abbinamento).catch(() => {});
 if (revisione.stato === 'aggiornata') {
   salvaLibreria('ufficiale');
   toast('Libreria ufficiale aggiornata: riconosce più quesiti reali');
@@ -6334,7 +6968,7 @@ if (revisione.stato === 'aggiornata') {
 
   function popBarra() {
     const el = [document.querySelector('.brand > div'), ...document.querySelectorAll('.nav button'),
-                document.querySelector('.privacy')].filter(Boolean);
+                document.querySelector('.privacy'), document.querySelector('.profilo-btn')].filter(Boolean);
     el.forEach((e, i) => { e.style.setProperty('--pop-delay', ms(i * BARRA_PASSO)); e.classList.add('pop-barra'); });
     setTimeout(() => el.forEach(e => { e.classList.remove('pop-barra'); e.style.removeProperty('--pop-delay'); }),
       el.length * BARRA_PASSO + 560);

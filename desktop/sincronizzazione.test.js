@@ -73,6 +73,8 @@ function paziente(i, data = OGGI.dmy) {
   const verso = { pc: [], tel: [] };
   for (const [n, c] of [['pc', cPc], ['tel', cTel]]) {
     await c.addInitScript(r => { window.__relay = r; }, RELAY);
+    /* il primo accesso sul telefono ha il suo test (profilo.test.js) */
+    if (n === 'tel') await c.addInitScript(() => { try { localStorage.setItem('pc.v4.profiloRimandato', 'true'); } catch (_) {} });
     /* all'avvio il telefono abbinato ascolta subito ntfy.sh, prima che il
        test lo sposti sul relay finto: quelle richieste si bloccano qui   */
     await c.route('https://ntfy.sh/**', r => r.abort());
@@ -93,11 +95,14 @@ function paziente(i, data = OGGI.dmy) {
   await pc.evaluate(lista => { pazienti = lista; vai(3); }, [1, 2, 3].map(i => paziente(i)));
   await pc.waitForTimeout(500);
   ok('passo 3 con pannello di rete', await pc.locator('#rete').isVisible());
-  ok('nessun abbinamento all\'inizio', (await pc.locator('#reteStato').textContent()).includes('Nessun telefono'));
+  ok('nessun abbinamento all\'inizio', (await pc.locator('#reteStato').textContent()).includes('accedi con il tuo telefono'));
+  ok('in alto a destra: «Accedi»', (await pc.locator('#profiloBtn').textContent()).trim() === 'Accedi');
   ok('«Invia» nascosto senza abbinamento', await pc.locator('#reteInvia').isHidden());
   ok('nessuna richiesta di rete finché non si chiede', verso.pc.length === 0, verso.pc.join(', ') || 'nessuna');
 
   console.log('\n── ABBINAMENTO ─────────────────────────');
+  await pc.locator('#reteAccedi').click();
+  ok('«Accedi dal profilo» apre il pannello del profilo', await pc.locator('#pannelloProfilo').isVisible());
   await pc.locator('#reteAbbina').click();
   ok('QR di abbinamento mostrato a canale aperto', await attendi(() => pc.locator('#qrAbb').isVisible()));
   ok('«Annulla» durante l\'abbinamento', (await pc.locator('#reteScollega').textContent()) === 'Annulla');
@@ -112,8 +117,9 @@ function paziente(i, data = OGGI.dmy) {
   ok('telefono abbinato', await tel.evaluate(() => pcLink && pcLink.t) === abb.t);
   ok('schede di esempio tolte all\'abbinamento', await tel.evaluate(() => state.length === 0 && !state.some(p => ESEMPIO.has(p.id))),
      await tel.evaluate(() => state.length) + ' schede');
-  ok('PC riceve la conferma', await attendi(async () => (await pc.locator('#reteStato').textContent()).includes('Abbinato a')),
-     (await pc.locator('#reteStato').textContent()).trim());
+  ok('PC riceve la conferma', await attendi(async () => (await pc.locator('#accessoStato').textContent()).includes('Telefono collegato')
+       || (await pc.locator('#profiloNome').textContent()).trim() !== 'Accedi'),
+     (await pc.locator('#accessoStato').textContent()).trim());
   const salvato = await pc.evaluate(() => JSON.parse(localStorage.getItem('protocol-cards.pc.abbinamento')));
   ok('abbinamento salvato sul PC dopo la conferma', salvato && salvato.t === abb.t && /Chrome/.test(salvato.dispositivo), salvato && salvato.dispositivo);
   ok('QR di abbinamento nascosto', await pc.locator('#qrAbb').isHidden());
@@ -230,6 +236,7 @@ function paziente(i, data = OGGI.dmy) {
   ok('scollegato: torna «Ripristina i dati di esempio»', await tornaEsempio());
   ok('impostazioni: nessun PC', (await tel.locator('#pcBox').textContent()).includes('Nessun PC abbinato'));
   pc.once('dialog', d => d.accept());
+  if (await pc.locator('#pannelloProfilo').isHidden()) await pc.locator('#profiloBtn').click();
   await pc.locator('#reteScollega').click(); await pc.waitForTimeout(200);
   ok('PC scollegato', await pc.evaluate(() => localStorage.getItem('protocol-cards.pc.abbinamento')) === null);
   ok('«Invia» di nuovo nascosto', await pc.locator('#reteInvia').isHidden());

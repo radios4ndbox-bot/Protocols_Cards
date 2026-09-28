@@ -3,6 +3,8 @@ let fail=0; const ok=(l,c,x='')=>{console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x
 (async()=>{
   const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
   const p=await b.newPage({viewport:{width:412,height:915},reducedMotion:'reduce',hasTouch:true,isMobile:true});
+  /* il primo accesso (nome e cognome) ha il suo test: qui si rimanda */
+  await p.addInitScript(() => { try { localStorage.setItem('pc.v4.profiloRimandato', 'true'); } catch (_) {} });
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   let iniettato=false;
   await p.exposeFunction('segnalaIniezione',()=>{iniettato=true;});

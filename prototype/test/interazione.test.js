@@ -14,6 +14,8 @@ const ok = (etichetta, cond, extra = '') => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const p = await b.newPage({ viewport: { width: 412, height: 915 },
                               deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+  /* il primo accesso (nome e cognome) ha il suo test: qui si rimanda */
+  await p.addInitScript(() => { try { localStorage.setItem('pc.v4.profiloRimandato', 'true'); } catch (_) {} });
   const errori = [];
   p.on('pageerror', e => errori.push(e.message));
   p.on('console', m => { if (m.type() === 'error') errori.push('console: ' + m.text().slice(0, 120)); });
