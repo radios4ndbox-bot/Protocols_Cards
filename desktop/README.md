@@ -102,6 +102,43 @@ recente.
 - Con un telefono abbinato il tool si mette in ascolto sul relay all'apertura,
   per ricevere il profilo; senza abbinamento aprirlo resta senza rete.
 
+## Backup del profilo su Google Drive
+
+Sul telefono, in Impostazioni → «Backup su Google Drive», «Collega Google Drive»
+fa accedere l'operatore al proprio account Google e da lì il profilo si copia da
+solo nella cartella nascosta riservata all'app (`appDataFolder`, permesso
+`drive.appdata`): Protocol Cards vede solo quel file, e il file non compare fra i
+documenti del Drive. Nel file vanno nome, titolo, protocolli personali e appresi,
+questi ultimi senza il testo del quesito; mai dati dei pazienti né la chiave di
+abbinamento. Il token di Google resta solo in memoria.
+
+- **Automatico mentre l'accesso vale.** Google concede l'accesso per un'ora e il
+  browser apre la sua finestra solo dopo un tocco. Finché vale, ogni modifica al
+  profilo va su Drive dopo pochi secondi; dopo, il backup resta in sospeso: un
+  pallino sulle impostazioni e «Aggiorna backup» lo rifanno con un tocco (di
+  solito la finestra di Google si chiude da sola). Il pallino compare anche se
+  l'ultima copia ha più di un giorno.
+- **Telefono nuovo.** Al primo accesso «Hai già un profilo? Recuperalo da Google
+  Drive»; oppure «Recupera da Drive» nelle impostazioni.
+- **Scollega** revoca l'accesso; la copia su Drive resta.
+
+Per attivarlo serve un ID client OAuth di Google, da mettere in
+`DRIVE_CLIENT_ID` in `prototype/index.html`. Finché è vuoto l'app non contatta
+Google e la sezione dice che il backup non è ancora attivo.
+
+1. [console.cloud.google.com](https://console.cloud.google.com): nuovo progetto,
+   per esempio «Protocol Cards».
+2. API e servizi → Libreria → **Google Drive API** → Abilita.
+3. Schermata di consenso OAuth (Google Auth Platform): tipo *Esterno*, nome
+   dell'app, email di assistenza; fra gli ambiti
+   `.../auth/drive.appdata`. Finché l'app è *in test* possono accedere solo gli
+   account aggiunti come utenti di test (fino a 100).
+4. Credenziali → Crea credenziali → **ID client OAuth** → *Applicazione web*;
+   origini JavaScript autorizzate: `https://radios4ndbox-bot.github.io`.
+5. L'ID client (`….apps.googleusercontent.com`) va in `DRIVE_CLIENT_ID`. Non è
+   un segreto: identifica l'app, e Google accetta richieste solo dalle origini
+   autorizzate.
+
 ## Backup della libreria ufficiale
 
 La libreria ufficiale è del reparto e resta sul PC. Nelle impostazioni del
