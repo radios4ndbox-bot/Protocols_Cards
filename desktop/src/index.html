@@ -124,6 +124,17 @@ select.field{appearance:none;padding-right:34px;cursor:pointer;
 .profilo-btn{display:flex;align-items:center;gap:9px;height:40px;padding:0 16px 0 5px;border:0;border-radius:99px;cursor:pointer;
   background-image:var(--gloss);box-shadow:var(--lift),var(--lip);font-size:.84rem;font-weight:700;color:var(--ink);white-space:nowrap}
 .profilo-btn:hover{box-shadow:var(--lift-hi),var(--lip)}
+/* sincronizza: il pallino dice che sul PC ci sono modifiche che il telefono non ha */
+.sync-btn{position:relative;display:flex;align-items:center;gap:7px;height:40px;padding:0 15px 0 12px;border:0;border-radius:99px;cursor:pointer;
+  background-image:var(--gloss);box-shadow:var(--lift),var(--lip);font-size:.8rem;font-weight:700;color:var(--ink-2);white-space:nowrap}
+.sync-btn[hidden]{display:none}
+.sync-btn:hover{box-shadow:var(--lift-hi),var(--lip);color:var(--ink)}
+.sync-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sync-btn.da-inviare{color:var(--jade-ink)}
+.sync-btn.da-inviare::after{content:"";position:absolute;top:6px;left:24px;width:8px;height:8px;border-radius:50%;
+  background:var(--coral,#E0473E);box-shadow:0 0 0 2px #fff}
+.sync-btn.in-corso svg{animation:giraSync 1s linear infinite}
+@keyframes giraSync{to{transform:rotate(360deg)}}
 .profilo-btn[aria-expanded="true"]{background-image:var(--gloss-down);box-shadow:var(--sink)}
 .profilo-btn .avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font:700 .74rem/1 var(--f-disp);letter-spacing:.02em;color:#fff;
@@ -151,6 +162,7 @@ main{padding:30px 0 60px}
 .intro{display:flex;align-items:flex-end;gap:24px;margin:10px 4px 26px;flex-wrap:wrap}
 .intro h2{font-size:clamp(1.8rem,3vw,2.5rem);margin-top:10px}
 .intro > div:first-child{flex:1 1 520px;min-width:0}
+.indietro-lib{display:table;margin-bottom:14px}
 .intro .lede{color:var(--ink-2);max-width:78ch;margin-top:8px}
 
 /* ═══ LISTA DEL GIORNO ═══════════════════════════════════════════ */
@@ -235,19 +247,16 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .pchip .dots i{width:6px;height:6px;border-radius:50%}
 .pchip.nessuno{background:transparent;box-shadow:none;color:var(--ink-3);cursor:default;font-weight:500}
 
-.tras-griglia{display:grid;grid-template-columns:minmax(320px,480px) 1fr;gap:26px;align-items:start}
-.riepilogo{padding:24px 26px}
-.riepilogo h3{font-size:1.2rem;margin-bottom:12px}
 .riga{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.88rem}
 .riga:last-of-type{border-bottom:0}
 .riga span:first-child{color:var(--ink-2)}
 .riga b{font-variant-numeric:tabular-nums}
 .azioni{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
-.spiega{margin-top:20px;padding:0 6px;font-size:.84rem;color:var(--ink-2);line-height:1.65}
-.spiega b{color:var(--ink)}
-.spiega ol{margin:8px 0 8px 18px;padding:0}
-.rete{padding:24px 26px}
-.rete h3{font-size:1.2rem;margin-bottom:8px}
+.rete{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:14px 16px 14px 24px;margin:0 0 14px}
+.rete .rete-stato{flex:1 1 320px;min-width:0}
+.rete-az{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nota-riga{margin:0 4px 14px;font-size:.8rem;color:var(--ink-2);line-height:1.55}
+.nota-riga b{color:var(--ink)}
 .rete [hidden],.pannello-profilo [hidden],.pannello-profilo[hidden]{display:none!important}
 .rete-stato{font-size:.86rem;color:var(--ink-2);line-height:1.6}
 .rete-stato b{color:var(--ink)}
@@ -588,6 +597,8 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
    del profilo l'avatar; sotto i 760px la barra va a capo e il nome torna */
 @media (max-width:1180px){
   .privacy{font-size:0;gap:0;padding:10px}
+  .sync-btn{padding:0 11px}
+  .sync-btn span{display:none}
 }
 @media (max-width:1000px) and (min-width:761px){
   .profilo-btn{padding:0 5px}
@@ -598,7 +609,6 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   .bprev{position:static}
   .pgrid{grid-template-columns:300px minmax(0,1fr);gap:20px}
   .cards{grid-template-columns:1fr}
-  .tras-griglia{grid-template-columns:1fr}
   .firma{grid-template-columns:1fr}
   .fase{grid-template-columns:34px minmax(0,1fr) auto}
   .fase select.field,.fase .tendina.field{grid-column:2;grid-row:1;max-width:220px}
@@ -621,7 +631,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
   .mdc-row,.prova{grid-template-columns:1fr}
 }
 @media print{
-  body::before,.top,.intro,.passi,.barra,.spiega,.azioni,.rete{display:none!important}
+  body::before,.top,.intro,.passi,.barra .btn,.azioni,.rete,.nota-riga{display:none!important}
   .plate{box-shadow:none}
 }
 
@@ -668,8 +678,10 @@ button.tendina:focus-visible{outline:3px solid var(--jade-ink);outline-offset:2p
 /* ═══ COPYRIGHT ══════════════════════════════════════════════════════
    In basso a destra su ogni pagina, anche durante l'intro: sta sopra la
    sua scena. Non intercetta clic e non copre nulla di cliccabile.      */
-.copyright{position:fixed;right:16px;bottom:10px;z-index:2100;pointer-events:none;
+.copyright{max-width:1320px;margin:0 auto;padding:4px 20px 14px;text-align:right;pointer-events:none;
   font:500 .7rem/1.2 var(--f-text);color:#A9B3C2;letter-spacing:.01em}
+/* in fondo alla pagina, non sopra i contenuti; durante l'intro sta sopra la scena */
+body:has(.top.intro-in-corso) .copyright{position:fixed;right:16px;bottom:10px;z-index:2100;padding:0;margin:0}
 
 /* ═══ INTRO ══════════════════════════════════════════════════════════
    La coreografia di ER Oncology Archivist, con le carte al posto del
@@ -838,7 +850,7 @@ main.sale{animation:paginaSale var(--t-volo,800ms) var(--curva-traino) both;will
 .top.intro-in-corso .mark{opacity:0}
 
 /* durante l'intro il contenuto della barra resta nascosto e poi entra a cascata */
-.top.intro-in-corso .brand > div,.top.intro-in-corso .nav button,.top.intro-in-corso .privacy,.top.intro-in-corso .profilo-btn{opacity:0}
+.top.intro-in-corso .brand > div,.top.intro-in-corso .nav button,.top.intro-in-corso .privacy,.top.intro-in-corso .sync-btn,.top.intro-in-corso .profilo-btn{opacity:0}
 @keyframes popBarra{from{opacity:0;transform:scale(.8) translateY(-3px)}to{opacity:1;transform:none}}
 .pop-barra{animation:popBarra .46s cubic-bezier(.34,1.35,.64,1) var(--pop-delay,0ms) both}
 @keyframes popSezione{from{opacity:0;transform:translateY(22px) scale(.985)}}
@@ -846,7 +858,7 @@ main.sale{animation:paginaSale var(--t-volo,800ms) var(--curva-traino) both;will
 
 @media (prefers-reduced-motion: reduce){
   #introScena,#introVelo{display:none}
-  .top.intro-in-corso .mark,.top.intro-in-corso .brand > div,.top.intro-in-corso .nav button,.top.intro-in-corso .privacy,.top.intro-in-corso .profilo-btn{opacity:1}
+  .top.intro-in-corso .mark,.top.intro-in-corso .brand > div,.top.intro-in-corso .nav button,.top.intro-in-corso .privacy,.top.intro-in-corso .sync-btn,.top.intro-in-corso .profilo-btn{opacity:1}
 }
 @media print{#introScena,#introVelo{display:none!important}}
 </style>
@@ -1023,9 +1035,9 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     <nav class="nav" aria-label="Sezioni">
       <button class="on" data-area="lista">Lista del giorno</button>
       <button data-area="proto">Protocolli <span class="nb" id="navN"></span></button>
-      <button data-area="builder">Protocol builder</button>
     </nav>
     <div class="privacy" id="privacy" title="Nessun dato paziente lascia questo computer"><i></i>Nessun dato paziente lascia questo computer</div>
+    <button class="sync-btn" id="syncBtn" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16m0 4v-4h-4"/></svg><span id="syncT">Sincronizza</span></button>
     <button class="profilo-btn" id="profiloBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="pannelloProfilo">
       <span class="avatar" id="profiloAv" aria-hidden="true"></span><span id="profiloNome">Accedi</span>
     </button>
@@ -1067,13 +1079,12 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
   <div class="intro">
     <div>
       <span class="eyebrow">Lista del giorno</span>
-      <h2>Importa, verifica, trasferisci.</h2>
+      <h2>Importa, verifica, invia.</h2>
     </div>
     <span class="sp"></span>
     <div class="passi">
       <div class="passo on" data-p="1"><i>1</i> Carica il PDF</div>
-      <div class="passo" data-p="2"><i>2</i> Verifica e correggi</div>
-      <div class="passo" data-p="3"><i>3</i> Trasferisci sul telefono</div>
+      <div class="passo" data-p="2"><i>2</i> Verifica e invia</div>
     </div>
   </div>
 
@@ -1106,28 +1117,30 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
 
   <!-- ═══ 2 ═══ -->
   <section class="vista" id="v2">
+    <!-- di che seduta e di che giorno è la lista, poi i conteggi -->
     <div class="barra">
-      <h2>Verifica dei dati estratti</h2>
+      <div class="riassunto">
+        <span class="chip seduta" id="chipSeduta"></span>
+        <span class="chip giorno" id="chipGiorno"></span>
+        <span class="conta" id="conta"></span>
+        <span class="chip ok" id="chipOk"></span>
+        <span class="chip warn" id="chipWarn" style="display:none"></span>
+        <span class="chip proto" id="chipProto"></span>
+      </div>
       <span class="sp"></span>
       <button class="btn sm" id="indietro1">← Cambia file</button>
-      <button class="btn solid sm" id="avanti">Trasferisci →</button>
     </div>
-    <!-- di che seduta e di che giorno è la lista, poi i conteggi -->
-    <div class="riassunto">
-      <span class="chip seduta" id="chipSeduta"></span>
-      <span class="chip giorno" id="chipGiorno"></span>
-      <span class="conta" id="conta"></span>
-      <span class="chip ok" id="chipOk"></span>
-      <span class="chip warn" id="chipWarn" style="display:none"></span>
-      <span class="chip proto" id="chipProto"></span>
+    <!-- invio al telefono: accanto alla lista che si sta verificando -->
+    <div class="plate rete" id="rete">
+      <div class="rete-stato" id="reteStato"></div>
+      <div class="rete-az">
+        <button class="btn xs" id="scaricaJson" title="La lista in un file, per trasferirla senza rete">Scarica file</button>
+        <button class="btn sm" id="reteAccedi" hidden>Accedi per inviare</button>
+        <button class="btn solid sm" id="reteInvia" hidden>Invia la lista al telefono</button>
+      </div>
     </div>
-    <div class="nota" style="margin:0 0 18px">
-      Le righe evidenziate sono quelle su cui il parser <b>non è sicuro</b>: controllale.
-      Ogni campo è modificabile — questo è l'ultimo posto comodo per correggere, sul
-      telefono è più scomodo. Per ogni paziente la colonna <b>Protocollo</b> propone un'opzione
-      <b>ufficiale</b> e una <b>personale</b> riconosciute dal quesito: fai clic per scegliere quella da usare. Il telefono
-      le riceve entrambe, così si può cambiare idea anche in reparto.
-    </div>
+    <p class="nota-riga">Le righe evidenziate sono da controllare: ogni campo è modificabile. Nella colonna
+      <b>Protocollo</b> scegli fra l'opzione ufficiale e la personale: il telefono riceve la scelta.</p>
     <div class="tabwrap">
     <table class="tab">
       <thead><tr>
@@ -1145,49 +1158,6 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     </div>
   </section>
 
-  <!-- ═══ 3 ═══ -->
-  <section class="vista" id="v3">
-    <div class="barra">
-      <h2>Trasferimento sul telefono</h2>
-      <span class="sp"></span>
-      <button class="btn sm" id="indietro2">← Torna alla verifica</button>
-    </div>
-    <div class="tras-griglia">
-      <div class="plate rete" id="rete">
-        <h3>Invio al telefono</h3>
-        <div class="rete-stato" id="reteStato"></div>
-        <div class="azioni">
-          <button class="btn solid sm" id="reteInvia" hidden>Invia la lista al telefono</button>
-          <button class="btn sm" id="reteAccedi" hidden>Accedi dal profilo</button>
-        </div>
-      </div>
-      <div>
-        <div class="plate riepilogo">
-          <h3>Contenuto dell'invio</h3>
-          <div class="riga"><span>Giornata</span><b id="rGiorno">—</b></div>
-          <div class="riga"><span>Seduta</span><b id="rSeduta">—</b></div>
-          <div class="riga"><span>Pazienti</span><b id="rPaz">—</b></div>
-          <div class="riga"><span>Esami</span><b id="rEsami">—</b></div>
-          <div class="riga"><span>Dati grezzi</span><b id="rGrezzi">—</b></div>
-          <div class="riga"><span>Dopo compressione</span><b id="rComp">—</b></div>
-          <div class="azioni">
-            <button class="btn sm" id="scaricaJson">Scarica come file JSON</button>
-          </div>
-        </div>
-        <div class="spiega">
-          <b>Come si trasferisce</b>
-          <ol>
-            <li>Accedi dal profilo, in alto a destra: «Accedi» mostra un codice da inquadrare
-                con la fotocamera del telefono. Il tool riconosce il tuo profilo e carica i
-                tuoi protocolli personali.</li>
-            <li>Da lì in poi basta «Invia la lista al telefono». La lista passa dal relay
-                cifrata, con una chiave che conoscono solo questo PC e il telefono; se l'app
-                è chiusa la riceve all'apertura, entro 12 ore.</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-  </section>
 </section>
 
 <!-- ═══════════════════════════ PROTOCOLLI ═══════════════════════════ -->
@@ -1198,8 +1168,10 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
       <h2>Come si acquisisce, per ogni quesito.</h2>
       <p class="lede">Qui si decide cosa suggerirà il telefono: fasi, zone, mezzo di contrasto
         e i termini del quesito che fanno riconoscere il protocollo. I <b>personali</b> hanno la
-        precedenza sugli ufficiali, e si arricchiscono da soli con le scelte fatte in verifica.</p>
+        precedenza sugli ufficiali, e si arricchiscono da soli con le scelte fatte in verifica.
+        Con <b>Sincronizza</b>, in alto, il telefono riceve questa libreria.</p>
     </div>
+    <button class="btn solid sm" id="vaiBuilder" title="Crea un protocollo personale partendo da richieste reali">+ Insegna un protocollo</button>
   </div>
 
   <div class="pgrid">
@@ -1234,6 +1206,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
 <section class="area" id="aBuilder">
   <div class="intro">
     <div>
+      <button class="btn xs indietro-lib" id="bIndietro">← Libreria protocolli</button>
       <span class="eyebrow">Protocol builder</span>
       <h2>Insegna al tool un tuo protocollo.</h2>
       <p class="lede">Parti da richieste reali: il builder ne ricava i termini che faranno riconoscere il protocollo,
@@ -1468,7 +1441,8 @@ const Tendina = (() => {
 let area = 'lista';
 function mostraArea(a) {
   area = a;
-  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('on', b.dataset.area === a));
+  /* il builder fa parte dei protocolli: in barra resta acceso «Protocolli» */
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('on', b.dataset.area === (a === 'builder' ? 'proto' : a)));
   $('aLista').classList.toggle('on', a === 'lista');
   $('aProto').classList.toggle('on', a === 'proto');
   $('aBuilder').classList.toggle('on', a === 'builder');
@@ -1476,7 +1450,6 @@ function mostraArea(a) {
   else if (a === 'builder') disegnaBuilder();
   else {
     if (pazienti.length) aggiornaColonnaProtocolli();
-    if ($('v3').classList.contains('on')) preparaTrasferimento();
   }
   window.scrollTo({ top: 0 });
 }
@@ -1544,7 +1517,8 @@ async function leggi(file) {
 
 /* ═══ navigazione ════════════════════════════════════════════════════ */
 function vai(n) {
-  [1,2,3].forEach(i => $('v'+i).classList.toggle('on', i===n));
+  n = Math.min(n, 2);                              // la verifica è anche l'invio
+  [1,2].forEach(i => $('v'+i).classList.toggle('on', i===n));
   document.querySelectorAll('.passo').forEach(p => {
     const k = +p.dataset.p;
     p.classList.toggle('on', k===n);
@@ -1552,12 +1526,9 @@ function vai(n) {
   });
   /* le textarea si misurano solo quando la vista è visibile: da nascoste
      scrollHeight vale 0 e resterebbero alte una riga                     */
-  if (n === 2) { document.querySelectorAll('#righe textarea.cel').forEach(cresci); disegnaSeduta(); }
-  if (n === 3) preparaTrasferimento();
+  if (n === 2) { document.querySelectorAll('#righe textarea.cel').forEach(cresci); disegnaSeduta(); disegnaRete(); }
 }
 $('indietro1').onclick = () => { $('file').value=''; $('filePS').value=''; vai(1); };
-$('indietro2').onclick = () => vai(2);
-$('avanti').onclick    = () => vai(3);
 
 /* ═══ passo 2 · tabella modificabile ═════════════════════════════════ */
 function cresci(t){ t.style.height='auto'; t.style.height = t.scrollHeight+'px'; }
@@ -1600,7 +1571,7 @@ function cellaProtocollo(td, p, i) {
       <span class="op-k">${tipo === 'ufficiale' ? 'Ufficiale' : 'Personale'}${tipo === 'personale' && o.appreso ? ` · appreso ×${pers.appreso.volte}` : ''}</span>
       <span class="op-n">${pr ? esc(pr.l) : vuoto}</span>${pr ? tagFasi(pr, true) : ''}</button>`;
   td.innerHTML = `<div class="opz">${opz('ufficiale', uff, 'nessuno riconosciuto')}${opz('personale', pers, 'nessuno — insegnalo ›')}</div>
-    <div class="op-f"><button class="insegna" data-insegna="${i}" title="Apri il builder con questo caso e il protocollo in uso">★ Insegna</button>
+    <div class="op-f">${pers ? `<button class="insegna" data-insegna="${i}" title="Apri il builder con questo caso e il protocollo in uso">★ Insegna</button>` : ''}
       <button class="link" data-scegli="${i}">Altro protocollo…</button>${
       p.scelta === null ? '<span class="ptag">nessuno · si imposta sul telefono</span>' : ''}</div>`;
 }
@@ -1792,13 +1763,13 @@ function aggiornaConteggi() {
   $('chipOk').textContent = `${a.length - conSeg} verificati`;
   $('chipWarn').style.display = conSeg ? 'inline-block' : 'none';
   $('chipWarn').textContent = `${conSeg} da controllare`;
-  $('avanti').disabled = a.length === 0;
+  $('reteInvia').disabled = a.length === 0;
   const n = { ufficiale: 0, personale: 0, nessuno: 0 };
   a.forEach(p => { n[protocolloDi(p).usa || 'nessuno']++; });
   $('chipProto').innerHTML = a.length ? `<b>${n.personale}</b> personali · <b>${n.ufficiale}</b> ufficiali${n.nessuno ? ` · <b>${n.nessuno}</b> da impostare` : ''}` : '';
 }
 
-/* ═══ passo 3 · payload e invio ══════════════════════════════════════ */
+/* ═══ payload e invio ════════════════════════════════════════════════ */
 
 /* Formato compatto: chiavi di una lettera e liste posizionali. Il telefono
    conosce lo schema, quindi i nomi dei campi non vanno trasmessi.        */
@@ -1832,10 +1803,15 @@ function disegnaSeduta() {
   cg.title = g.passata ? 'Il telefono non tiene le giornate passate: la lista verrebbe scartata.'
            : g.diverse ? 'Non tutti i pazienti sono dello stesso giorno: vale quello più frequente.'
            : g.mancante ? 'Nessuna data d\'esame nel PDF: il telefono userà la data di oggi.' : '';
-  $('rSeduta').textContent = nomeSeduta();
-  $('rGiorno').textContent = g.d ? g.d + (g.passata ? ' (passata)' : '') : 'oggi (non riconosciuta)';
 }
 
+/* il protocollo scelto in verifica: id, oppure '-' se si è scelto di
+   impostarlo sul telefono. Il telefono lo usa se lo conosce (vedi
+   «Sincronizza»), altrimenti lo riconosce da sé.                      */
+function protocolloInviato(p) {
+  const { pr } = protocolloDi(p);
+  return pr ? pr.id : p.scelta === null ? '-' : '';
+}
 function payload() {
   const a = attivi();
   return {
@@ -1845,6 +1821,7 @@ function payload() {
     p: a.map(p => [
       p.accession, p.nomeCompleto, p.nascita, p.ora, p.quesito,
       p.esami.map(e => e.descrizione).join(' | '),
+      protocolloInviato(p),
     ]),
   };
 }
@@ -1876,19 +1853,6 @@ async function listaCompressa() {
   const json = JSON.stringify(payload());
   const { dati, metodo } = await comprimi(json);
   return { json, corpo: base64url(dati), metodo };
-}
-
-async function preparaTrasferimento() {
-  const a = attivi();
-  disegnaSeduta();
-  const { json, corpo, metodo } = await listaCompressa();
-  $('rPaz').textContent    = a.length;
-  $('rEsami').textContent  = a.reduce((s,p)=>s+p.esami.length,0);
-  $('rGrezzi').textContent = (json.length/1024).toFixed(1).replace('.',',') + ' KB';
-  $('rComp').textContent   = (corpo.length/1024).toFixed(1).replace('.',',') + ' KB'
-                           + (metodo==='deflate' && corpo.length < json.length
-                              ? ` (−${Math.round(100-corpo.length/json.length*100)}%)` : '');
-  disegnaRete();
 }
 
 function scarica(nome, oggetto) {
@@ -1943,6 +1907,9 @@ function nomeCortese(p) {
   if (p.titolo && TITOLI.includes(p.titolo) && (c || n)) return `${p.titolo} ${c || n}`;
   return [n, c].filter(Boolean).join(' ') || 'profilo senza nome';
 }
+const conNome = p => !!(p && ((p.nome || '').trim() || (p.cognome || '').trim()));
+/* «il telefono di Dr. Viggiano», o «il tuo telefono» se il profilo non ha ancora un nome */
+const telefonoDi = () => conNome(profilo) ? `il telefono di ${nomeCortese(profilo)}` : 'il tuo telefono';
 const iniziali = p => (((p.nome || '').trim()[0] || '') + ((p.cognome || '').trim()[0] || '')).toUpperCase();
 const saluto = () => { const h = new Date().getHours(); return h < 13 ? 'Buongiorno' : h < 18 ? 'Buon pomeriggio' : 'Buonasera'; };
 
@@ -1981,7 +1948,8 @@ function disegnaRete() {
   $('privacy').title = $('privacy').lastChild.textContent;
   $('reteInvia').hidden = !a;
   $('reteAccedi').hidden = !!a;
-  $('reteInvia').textContent = a && profilo ? `Invia la lista a ${nomeCortese(profilo)}` : 'Invia la lista al telefono';
+  if (!reteInvio) $('reteInvia').disabled = !attivi().length;
+  $('reteInvia').textContent = a && conNome(profilo) ? `Invia la lista a ${nomeCortese(profilo)}` : 'Invia la lista al telefono';
   $('reteScollega').hidden = !a && !inAbbinamento;
   $('reteScollega').textContent = inAbbinamento ? 'Annulla' : 'Esci';
   $('reteAbbina').textContent = a ? 'Accedi con un altro telefono' : 'Accedi';
@@ -1989,10 +1957,11 @@ function disegnaRete() {
   $('reteAbbina').hidden = !!inAbbinamento;
   $('qrAbb').hidden = $('reteNota').hidden = !inAbbinamento;
   disegnaAccesso();
+  Sync.disegna();
   if (inAbbinamento) return;                       // lo stato dell'accesso lo scrive l'abbinamento
   if (!reteInvio) reteStato(a
-    ? `Collegato al telefono di <b>${esc(profilo ? nomeCortese(profilo) : a.dispositivo || 'telefono')}</b>. La lista verificata parte con un clic.`
-    : 'Per inviare la lista accedi con il tuo telefono, dal profilo in alto a destra.');
+    ? `Collegato al telefono di <b>${esc(conNome(profilo) ? nomeCortese(profilo) : a.dispositivo || 'telefono')}</b>: verifica la lista e inviala.`
+    : 'Per inviare la lista al telefono accedi con il tuo profilo: un QR, una volta sola.');
 }
 $('reteAccedi').onclick = e => { e.stopPropagation(); apriProfilo(true); };
 
@@ -2015,6 +1984,8 @@ async function ascoltaRete(a, suAperto) {
 
 function messaggioRete(a, m) {
   if (m.tipo === 'profilo') return Profilo.messaggio(m);
+  if (m.tipo === 'libreria-ok') return Sync.conferma(m);
+  if (m.tipo === 'sync') return Sync.invia();            // chiesta dal telefono
   if (m.tipo === 'ciao' && inAbbinamento && inAbbinamento.t === a.t) {
     inAbbinamento = null;
     scriviAbbinamento({ t: a.t, k: a.k, dispositivo: String(m.dispositivo || 'telefono').slice(0, 60), quando: Date.now() });
@@ -2073,6 +2044,8 @@ $('reteInvia').onclick = async () => {
   b.disabled = true;
   try {
     const sess = reteSess && reteSess.argomento === a.t ? reteSess : await ascoltaRete(a);
+    /* il telefono deve conoscere i protocolli scelti: prima la libreria */
+    if (Sync.daInviare()) await Sync.invia(true);
     const { corpo, metodo } = await listaCompressa();
     const invio = reteInvio = { id: Canale.nuovoId() };
     reteStato('Invio in corso…');
@@ -2199,6 +2172,7 @@ function salvaLibreria(nome = tab, dalTelefono = null) {
   catch (e) { toast('Impossibile salvare la libreria in questo browser'); }
   if (nome === 'ufficiale') Backup.pianifica();          // il backup in cartella è della libreria ufficiale
   else if (!dalTelefono) Profilo.pianifica();            // i personali tornano al telefono
+  Sync.disegna();
 }
 function aggiornaNav() {
   $('navN').textContent = libs.ufficiale.protocolli.length + libs.personale.protocolli.length;
@@ -2261,7 +2235,9 @@ const Profilo = (() => {
     const copia = nuovo ? caricaLibreria('personale') : libs.personale;
     if (quando >= (copia.modificata || 0)) usa(arrivata, { quando });
     else { usa(copia, { quando: copia.modificata }); pianifica(); }   // sul PC è più recente: torna al telefono
-    if (nuovo) { toast(`${saluto()}, ${nomeCortese(chi)}: ${libs.personale.protocolli.length} protocolli personali caricati`); accessoStato(''); }
+    /* accesso fatto: il pannello si chiude e si torna al lavoro */
+    if (nuovo) { toast(`${saluto()}${conNome(chi) ? ', ' + nomeCortese(chi) : ''}: ${libs.personale.protocolli.length} protocolli personali caricati`);
+                 accessoStato(''); apriProfilo(false); }
     disegnaRete();
     proponiAdozione();
   }
@@ -2318,6 +2294,65 @@ const Profilo = (() => {
 
   return { messaggio, ricevi, pianifica, invia, dimentica };
 })();
+/* ═══ SINCRONIZZAZIONE ═══════════════════════════════════════════════
+   «Sincronizza» porta al telefono collegato la libreria ufficiale di
+   questo PC e il profilo con i personali: il telefono riconosce e
+   propone esattamente ciò che si è deciso qui. Il pallino sul tasto
+   segnala modifiche che il telefono non ha ancora; l'invio di una
+   lista le manda da solo, prima della lista.                          */
+const CH_SYNC = 'protocol-cards.pc.sincronizzato';
+const Sync = (() => {
+  let inCorso = false, attesa = null;
+  const firmaOra = () => PR.firma(libs.ufficiale.protocolli) + '|' + PR.firma(libs.personale.protocolli);
+  function ultimo() {
+    try { const u = JSON.parse(localStorage.getItem(CH_SYNC) || 'null');
+          return u && abbinamento && u.t === abbinamento.t ? u : null; } catch (_) { return null; }
+  }
+  const daInviare = () => !!(abbinamento && profilo) && (ultimo() || {}).firma !== firmaOra();
+
+  function disegna() {
+    const b = $('syncBtn'); if (!b) return;
+    b.hidden = !(abbinamento && profilo);
+    if (b.hidden) return;
+    const u = ultimo(), da = daInviare();
+    b.classList.toggle('in-corso', inCorso);
+    b.classList.toggle('da-inviare', da && !inCorso);
+    $('syncT').textContent = inCorso ? 'Sincronizzo…' : 'Sincronizza';
+    b.title = inCorso ? 'Invio dei protocolli al telefono…'
+      : da ? `Ci sono modifiche ai protocolli che ${telefonoDi()} non ha: clic per inviarle`
+      : `${telefonoDi().replace(/^i/, 'I')} ha gli stessi protocolli di questo PC` + (u ? ` (dal ${new Date(u.quando).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })})` : '');
+  }
+
+  /* libreria ufficiale e profilo, sullo stesso canale cifrato delle liste */
+  async function invia(silenzioso = false) {
+    if (!abbinamento || !profilo || inCorso) return;
+    inCorso = true; disegna();
+    try {
+      const sess = reteSess && reteSess.argomento === abbinamento.t ? reteSess : await ascoltaRete(abbinamento);
+      const f = PR.firma(libs.ufficiale.protocolli);
+      const pac = await Canale.impacchetta({ protocolli: libs.ufficiale.protocolli.map(PR.canonico), firma: f,
+                                             modificata: libs.ufficiale.modificata || 0 });
+      attesa = { firma: firmaOra(), silenzioso };
+      await Canale.inviaLista(sess, 'pc', { ...pac, tipo: 'libreria' });
+      await Profilo.invia();
+      if (!silenzioso && attesa) toast(`Protocolli inviati a ${telefonoDi()}: in attesa di conferma`);
+    } catch (e) {
+      attesa = null;
+      if (!silenzioso) toast('Sincronizzazione non riuscita: ' + erroreRete(e));
+    } finally { inCorso = false; disegna(); }
+  }
+
+  /* il telefono conferma di averla messa in uso */
+  function conferma(m) {
+    if (!attesa || !abbinamento) return;
+    try { localStorage.setItem(CH_SYNC, JSON.stringify({ t: abbinamento.t, firma: attesa.firma, quando: Date.now() })); } catch (_) {}
+    if (!attesa.silenzioso) toast(`Protocolli aggiornati su ${telefonoDi()}: ${Number(m.ufficiali) || 0} ufficiali, ${Number(m.personali) || 0} personali`);
+    attesa = null; disegna();
+  }
+  return { invia, conferma, disegna, daInviare };
+})();
+$('syncBtn').onclick = () => Sync.invia();
+
 const sel = () => lib.protocolli.find(p => p.id === selId);
 const conMdc = p => p.fasi.some(f => PR.FASI[f.fase].mdc);
 const data = ms => new Date(ms).toLocaleDateString('it-IT', { day:'numeric', month:'short', year:'numeric' });
@@ -2799,6 +2834,8 @@ function sostituisciLibreria(nuova, nome) {
   if (tab === nome) { lib = nuova; selId = primoId(nome); prova.per = null; }
 }
 
+$('vaiBuilder').onclick = () => { if (!bozza) nuovaBozza(); mostraArea('builder'); };
+$('bIndietro').onclick = () => mostraArea('proto');
 $('libNuovo').onclick = () => {
   if (tab === 'personale') { nuovaBozza(); return mostraArea('builder'); }
   const L = lib.protocolli, base = tab === 'ufficiale' ? 'Nuovo protocollo' : 'Nuovo protocollo personale';
@@ -3586,7 +3623,7 @@ if (revisione.stato === 'aggiornata') {
 
   function popBarra() {
     const el = [document.querySelector('.brand > div'), ...document.querySelectorAll('.nav button'),
-                document.querySelector('.privacy'), document.querySelector('.profilo-btn')].filter(Boolean);
+                document.querySelector('.privacy'), document.querySelector('.sync-btn'), document.querySelector('.profilo-btn')].filter(Boolean);
     el.forEach((e, i) => { e.style.setProperty('--pop-delay', ms(i * BARRA_PASSO)); e.classList.add('pop-barra'); });
     setTimeout(() => el.forEach(e => { e.classList.remove('pop-barra'); e.style.removeProperty('--pop-delay'); }),
       el.length * BARRA_PASSO + 560);

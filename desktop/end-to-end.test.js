@@ -54,25 +54,17 @@ const ok = (l,c,x='') => { console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  →
   await primo.locator('.togli').click(); await p.waitForTimeout(250);
   ok('reinclusa', (await p.locator('#conta').textContent()).startsWith('14 pazienti'));
 
-  console.log('\n── PASSO 3: INVIO ──────────────────────');
-  await p.locator('#avanti').click();
-  await p.waitForTimeout(900);
-  ok('vista trasferimento', await p.locator('#v3.on').count()===1);
-  ok('giornata', (await p.locator('#rGiorno').textContent()).startsWith('21/09/2026'),
-     await p.locator('#rGiorno').textContent());
-  ok('pazienti', (await p.locator('#rPaz').textContent())==='14');
-  ok('esami', (await p.locator('#rEsami').textContent())==='29');
-  const comp = await p.locator('#rComp').textContent();
-  ok('compressione applicata', /−\d+%/.test(comp), comp);
+  console.log('\n── INVIO, NELLA VERIFICA ───────────────');
+  ok('invio accanto alla verifica', await p.locator('#v2.on #rete').isVisible());
+  ok('senza accesso: «Accedi per inviare»', await p.locator('#reteAccedi').isVisible() && await p.locator('#reteInvia').isHidden());
   ok('nessun QR della lista: si invia via rete', await p.locator('#qr').count()===0);
-  ok('abbinamento proposto', await p.locator('#reteAbbina').isVisible());
 
   console.log('\n── PAYLOAD ─────────────────────────────');
   const pl = await p.evaluate(()=>payload());
   ok('versione formato', pl.v===1);
   ok('data giornata', pl.d==='21/09/2026');
   ok('14 pazienti nel payload', pl.p.length===14);
-  ok('6 campi per paziente', pl.p.every(r=>r.length===6));
+  ok('7 campi per paziente, l\'ultimo è il protocollo', pl.p.every(r=>r.length===7 && typeof r[6]==='string'));
   ok('accession presente', pl.p.every(r=>/^0D\d{8}$/.test(r[0])));
   ok('nascita presente', pl.p.every(r=>/^\d{2}\/\d{2}\/\d{4}$/.test(r[2])));
   ok('orario presente', pl.p.every(r=>/^\d{2}:\d{2}$/.test(r[3])));
