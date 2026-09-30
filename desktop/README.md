@@ -19,6 +19,12 @@ incorporati. Va copiato su una chiavetta e aperto in Chrome. Importare e
 verificare **non richiede rete**, e il PDF non lascia il computer; la rete
 serve solo per abbinare il telefono e inviare la lista.
 
+## Info
+
+Le pagine del tool non hanno didascalie: le spiegazioni (privacy e dati del PDF,
+lista del giorno, protocolli, builder, profilo e backup) stanno nella sezione
+**Info** del pannello del profilo, in alto a destra.
+
 ## Invio al telefono via rete
 
 I passi sono due: si carica il PDF, poi si verifica la lista e la si invia dalla

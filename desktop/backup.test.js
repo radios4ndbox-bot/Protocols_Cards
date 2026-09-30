@@ -39,7 +39,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
   ok('nel profilo, non nella libreria', await p.locator('#backup').isHidden());
   await p.locator('#profiloBtn').click(); await p.waitForTimeout(300);
   ok('riquadro del backup nelle impostazioni del profilo', await p.locator('#pannelloProfilo #backup').isVisible());
-  ok('spento finché non si sceglie una cartella', /spento/.test(await p.locator('#backupStato').textContent()));
+  ok('spento finché non si sceglie una cartella', /spento/i.test(await p.locator('#backupStato').textContent()));
   ok('pulsante «Scegli cartella»', (await p.locator('#backupCartella').textContent()) === 'Scegli cartella');
 
   console.log('\n── CARTELLA SCELTA ─────────────────────');
