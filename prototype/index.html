@@ -96,6 +96,14 @@ button,input,select,textarea{font-family:inherit}
 .h2{font-size:18px;font-weight:750;letter-spacing:-.3px;margin-bottom:4px}
 .p{font-size:12px;color:var(--muted);line-height:1.55}
 .blk{margin-top:22px}
+.info details{border-top:1px solid var(--border)}
+.info details:last-child{border-bottom:1px solid var(--border)}
+.info summary{cursor:pointer;padding:12px 2px;font-size:13px;font-weight:700;color:var(--text);list-style:none;
+  display:flex;align-items:center;justify-content:space-between}
+.info summary::-webkit-details-marker{display:none}
+.info summary::after{content:"+";font-weight:500;color:var(--muted)}
+.info details[open] summary::after{content:"−"}
+.info p{margin:0 2px 12px;font-size:12px;line-height:1.55;color:var(--muted)}
 
 /* ═══ APERTURA ════════════════════════════════════════
    All'avvio il dorso della carta, con il marchio StructuRad, riempie lo
@@ -684,14 +692,8 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
 <!-- ══ IMPOSTAZIONI ══ -->
 <main class="view hidden" id="settings">
   <div class="h2">Impostazioni</div>
-  <p class="p">Protocolli appresi dall'uso e gestione dei dati.</p>
   <div class="blk">
     <div class="sec-t">Protocolli appresi <span class="sp"></span><span id="learnN"></span></div>
-    <p class="p" style="margin-bottom:11px">
-      Quando imposti un protocollo a mano, viene registrato sotto una firma calcolata
-      da esame e quesito. Alla firma successiva identica te lo ripropone.
-      Nessuna stima: stessa firma, stesso suggerimento.
-    </p>
     <div id="learnList"></div>
     <button class="btn-danger" id="btnClearLearn" style="display:none">Cancella tutti i protocolli appresi</button>
   </div>
@@ -712,12 +714,35 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     <div class="sec-t">Dati</div>
     <button class="btn-ghost" id="btnReset">Ripristina i dati di esempio</button>
   </div>
+  <!-- le spiegazioni stanno qui, non sparse nelle impostazioni -->
+  <div class="blk info" id="info">
+    <div class="sec-t">Info</div>
+    <details><summary>Protocolli appresi</summary>
+      <p>Quando imposti un protocollo a mano, viene registrato sotto una firma calcolata da esame e quesito.
+        Alla firma successiva identica te lo ripropone. Nessuna stima: stessa firma, stesso suggerimento.</p></details>
+    <details><summary>Il tuo profilo</summary>
+      <p>Nome, titolo, protocolli personali e appresi viaggiano con questo telefono: accedendo a un PC, di
+        qualsiasi ospedale, i tuoi protocolli si caricano lì, e ciò che crei sul PC torna qui. Il tool PC ti
+        chiama con il titolo e il cognome che scegli.</p></details>
+    <details><summary>Collegamento al PC</summary>
+      <p>Nel tool PC apri il profilo in alto a destra, scegli «Accedi» e inquadra il codice con la
+        fotocamera: il PC carica il tuo profilo e da lì le liste arrivano da sole. Con «Sincronizza» ricevi i
+        protocolli del PC; finché non ne arrivano, il telefono usa la libreria SIRM 2022.</p>
+      <p>Lista e protocolli viaggiano cifrati, con una chiave che conoscono solo il PC e questo telefono. Il
+        telefono tiene solo la giornata di oggi e quelle a venire.</p></details>
+    <details><summary>Backup su Google Drive</summary>
+      <p>Il profilo si copia da solo in una cartella nascosta del tuo Drive, riservata all'app: non compare fra
+        i tuoi file. Niente dati dei pazienti, e degli appresi non va il testo del quesito. L'accesso a Google
+        vale un'ora: dopo, il pallino sulle impostazioni ricorda di aggiornare il backup con un tocco. Su un
+        telefono nuovo il profilo si recupera al primo accesso.</p></details>
+    <details><summary>Cestino</summary>
+      <p>Le schede nel cestino vengono eliminate definitivamente 24 ore dopo la chiusura della giornata.</p></details>
+  </div>
 </main>
 
 <!-- ══ CESTINO ══ -->
 <main class="view hidden" id="trash">
   <div class="h2">Cestino</div>
-  <p class="p">Le schede vengono eliminate definitivamente 24 ore dopo la chiusura della giornata.</p>
   <div class="blk" id="trashList"></div>
   <button class="btn-danger" id="btnEmptyTrash" style="display:none">Svuota il cestino adesso</button>
 </main>
@@ -843,8 +868,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
 <div class="mask" id="primoAccesso" role="dialog" aria-modal="true" aria-labelledby="paTit">
   <div class="modal">
     <h3 id="paTit">Crea il tuo profilo</h3>
-    <p>Il tool PC ti riconosce da qui: con il tuo nome, i tuoi protocolli personali e quelli che impara
-      da te. Tutto resta su questo telefono, in una cartella dell'app.</p>
+    <p>Il tool PC ti riconoscerà con questo nome.</p>
     <label class="prof-l" for="paNome" style="margin-top:14px">Nome</label>
     <input class="prof-nome" id="paNome" type="text" maxlength="40" autocomplete="given-name" placeholder="Pasquale">
     <label class="prof-l" for="paCognome" style="margin-top:10px">Cognome</label>
@@ -1991,7 +2015,6 @@ function renderProfilo(){
         <button type="button" data-t="">Nessuno</button></div>
       <div class="item-s" style="margin-top:9px">${nomeCortese(p) ? `Il tool PC ti chiama <b>${esc(nomeCortese(p))}</b>. ` : ''}<b>${n}</b> protocoll${n===1?'o':'i'} personal${n===1?'e':'i'}${
         app ? `, di cui ${app} appres${app===1?'o':'i'} sul PC` : ''} · <b>${tel}</b> appres${tel===1?'o':'i'} qui sul telefono</div>
-      <div class="item-s">Viaggiano con questo telefono: accedendo a un PC, di qualsiasi ospedale, i tuoi protocolli personali si caricano lì.</div>
       ${arch ? `<div class="prof-arch">${arch}</div>` : ''}
       <div class="prof-az"><button class="mini-b" id="profEsporta">Esporta profilo</button>
         <button class="mini-b" id="profImporta">Importa profilo</button></div>
@@ -2237,8 +2260,6 @@ const Drive = (() => {
     }
     if(!st){
       box.innerHTML = `<div class="item"><div class="item-n">Nessun backup</div>
-        <div class="item-s">Collega il tuo Google Drive: il profilo si copia da solo in una cartella nascosta
-        riservata all'app, e su un telefono nuovo lo recuperi con un tocco. Niente dati dei pazienti.</div>
         <div class="prof-az"><button class="mini-b" id="drvCollega">Collega Google Drive</button>
           <button class="mini-b" id="drvRecupera">Recupera da Drive</button></div></div>`;
       $('drvCollega').onclick = collega; $('drvRecupera').onclick = recupera;
@@ -2389,9 +2410,7 @@ function renderPc(){
   $('btnReset').textContent = pcLink ? 'Svuota tutte le schede' : 'Ripristina i dati di esempio';
   $('pcN').textContent = pcLink ? (pcStato==='aperto' ? '●' : '○') : '';
   if(!pcLink){
-    box.innerHTML = `<div class="item"><div class="item-n">Nessun PC abbinato</div>
-      <div class="item-s">Nel tool PC apri il profilo in alto a destra, scegli «Accedi» e
-      inquadra il codice con la fotocamera: il PC carica il tuo profilo e le liste arriveranno da sole.</div></div>`;
+    box.innerHTML = `<div class="item"><div class="item-n">Nessun PC abbinato</div></div>`;
     return;
   }
   const quando = t => t ? new Date(t).toLocaleString('it-IT',
