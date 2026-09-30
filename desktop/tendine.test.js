@@ -61,7 +61,7 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
   console.log('\n── BUILDER: GRUPPI E LISTA ─────────────');
   await p.evaluate(() => { pazienti = [{ accession: '0D1', nomeCompleto: 'PROVA', nascita: '01/01/1950', data: '28/09/2026', ora: '08:15',
     quesito: 'sospetta embolia polmonare', esami: [{ descrizione: 'TC TORACE' }], incerto: [], escluso: false }]; });
-  await p.locator('.nav button[data-area="builder"]').click(); await p.waitForTimeout(400);
+  await p.locator('.nav button[data-area="proto"]').click(); await p.locator('#vaiBuilder').click(); await p.waitForTimeout(400);
   const parti = p.locator('button.tendina[aria-label="Protocollo di partenza"]');
   await parti.click(); await p.waitForTimeout(250);
   ok('i gruppi del select diventano intestazioni', (await p.locator('.tendina-gruppo').allTextContents()).includes('Ufficiali'));

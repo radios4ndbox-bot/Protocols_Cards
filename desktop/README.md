@@ -21,7 +21,8 @@ serve solo per abbinare il telefono e inviare la lista.
 
 ## Invio al telefono via rete
 
-Al passo 3 la lista parte via rete. Il PC del
+I passi sono due: si carica il PDF, poi si verifica la lista e la si invia dalla
+stessa pagina, con il tasto in cima alla tabella. Il PC del
 reparto e il telefono non si raggiungono direttamente: entrambi si collegano
 in uscita al relay pubblico [ntfy.sh](https://ntfy.sh), come verificato in
 reparto con `sync-test/`.
@@ -36,6 +37,17 @@ reparto con `sync-test/`.
   a pezzi sotto i 4 KB (oltre, ntfy.sh la trasformerebbe in allegato). Il
   telefono la ricompone, la importa nel calendario e manda la ricevuta.
   Se l'app è chiusa la riceve all'apertura: il relay conserva i messaggi 12 ore.
+  Ogni paziente porta il protocollo scelto in verifica (l'id, oppure `-` per
+  «nessuno, si imposta sul telefono»): il telefono lo usa se lo conosce,
+  altrimenti lo riconosce da sé.
+- **Sincronizza.** Il tasto in alto, accanto al profilo, porta al telefono la
+  libreria ufficiale di questo PC e il profilo con i personali: il telefono
+  riconosce e propone gli stessi protocolli del PC, comprese le fasi
+  urografica e tardiva per surrene. Un pallino rosso segnala modifiche che il
+  telefono non ha ancora; il telefono conferma e il pallino si spegne. Inviare
+  una lista le manda da sole, prima della lista. Dal telefono, in Impostazioni,
+  «Sincronizza con il PC» chiede al PC (se è aperto) di rimandare tutto; finché
+  non arriva nulla il telefono usa la libreria SIRM 2022 incorporata.
 - **Seduta.** Elettiva o pronto soccorso si sceglie importando: al passo 1 ci
   sono due ingressi, «Importa TC elettiva» e «Importa pronto soccorso». La
   seduta viaggia con la lista. Il telefono non sceglie: all'apertura il dorso della carta
@@ -182,6 +194,8 @@ entrambe per poter cambiare idea anche in reparto.
 
 ## Protocol builder
 
+Sta dentro **Protocolli**: si apre con «+ Insegna un protocollo», dalla scheda
+dei personali o dalla colonna Protocollo della verifica, per un caso preciso.
 Insegna al tool un protocollo personale partendo da richieste d'esempio: ne
 ricava i termini del quesito e la regione dell'esame, mostra se gli esempi
 verrebbero riconosciuti e quanti pazienti della lista caricata passerebbero

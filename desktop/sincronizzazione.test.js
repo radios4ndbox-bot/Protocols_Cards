@@ -94,8 +94,8 @@ function paziente(i, data = OGGI.dmy) {
   await usaRelay(pc);
   await pc.evaluate(lista => { pazienti = lista; vai(3); }, [1, 2, 3].map(i => paziente(i)));
   await pc.waitForTimeout(500);
-  ok('passo 3 con pannello di rete', await pc.locator('#rete').isVisible());
-  ok('nessun abbinamento all\'inizio', (await pc.locator('#reteStato').textContent()).includes('accedi con il tuo telefono'));
+  ok('invio accanto alla verifica', await pc.locator('#rete').isVisible());
+  ok('nessun abbinamento all\'inizio', (await pc.locator('#reteStato').textContent()).includes('accedi con il tuo profilo'));
   ok('in alto a destra: «Accedi»', (await pc.locator('#profiloBtn').textContent()).trim() === 'Accedi');
   ok('«Invia» nascosto senza abbinamento', await pc.locator('#reteInvia').isHidden());
   ok('nessuna richiesta di rete finché non si chiede', verso.pc.length === 0, verso.pc.join(', ') || 'nessuna');
@@ -144,13 +144,14 @@ function paziente(i, data = OGGI.dmy) {
 
   console.log('\n── INVIO CON L\'APP CHIUSA ─────────────');
   await tel.evaluate(() => { state.find(p => p.id === '0D26090001').stato = 'done'; persist(); });
-  await tel.close();
+  /* app chiusa: si esce dalla pagina. Chiudere la pagina e riaprirne subito
+     un'altra, con file://, a volte perde il localStorage appena scritto  */
+  await tel.goto('about:blank');
   await pc.evaluate(lista => { pazienti = lista; vai(3); }, [1, 2, 3, 4].map(i => paziente(i)).map((p, i) => (i === 1 ? { ...p, ora: '13:05' } : p)));
   await pc.waitForTimeout(300);
   await pc.locator('#reteInvia').click();
   ok('PC in attesa di conferma', await attendi(async () => (await pc.locator('#reteStato').textContent()).includes('In attesa di conferma')));
-  tel = await apri(cTel, TEL);
-  await usaRelay(tel);
+  await tel.goto(TEL); await tel.evaluate(() => Canale.usaRelay(window.__relay));
   await tel.evaluate(() => avviaPc());
   ok('all\'apertura il telefono riceve la lista arretrata', await attendi(async () => (await pc.locator('#reteStato').textContent()).includes('Ricevuta dal telefono')),
      (await pc.locator('#reteStato').textContent()).trim());
@@ -181,8 +182,6 @@ function paziente(i, data = OGGI.dmy) {
   await pc.evaluate(lista => { seduta = 'emergenza'; pazienti = lista; vai(2); }, [paziente(900), paziente(901)]);
   await pc.waitForTimeout(200);
   ok('verifica: seduta di pronto soccorso', (await pc.locator('#chipSeduta').textContent()) === 'Pronto soccorso');
-  await pc.evaluate(() => vai(3)); await pc.waitForTimeout(300);
-  ok('riepilogo: pronto soccorso', (await pc.locator('#rSeduta').textContent()) === 'Pronto soccorso');
   ok('la seduta viaggia con la lista', await pc.evaluate(() => payload().m) === 'emergenza');
   await pc.locator('#reteInvia').click();
   ok('ricevuta', await attendi(async () => /Ricevuta dal telefono: 2 nuove/.test(await pc.locator('#reteStato').textContent())),
@@ -224,6 +223,37 @@ function paziente(i, data = OGGI.dmy) {
   await fetch(`${RELAY}/${abb.t}`, { method: 'POST', body: 'testo qualsiasi' });
   await tel.waitForTimeout(500);
   ok('ignorati senza errori', (await tel.evaluate(() => state.length)) === n0);
+
+  console.log('\n── SINCRONIZZA ─────────────────────────');
+  ok('tasto «Sincronizza» con il telefono collegato', await attendi(() => pc.locator('#syncBtn').isVisible()));
+  const primo = await pc.evaluate(() => libs.ufficiale.protocolli[0].id);
+  await pc.evaluate(() => { libs.ufficiale.protocolli[0].idr = 1.9; salvaLibreria('ufficiale'); });
+  ok('una modifica accende il pallino', await pc.locator('#syncBtn.da-inviare').count() === 1);
+  ok('prima: il telefono non la conosce', await tel.evaluate(id => PROTOCOLS[id].idr, primo) !== 1.9);
+  await pc.locator('#syncBtn').click();
+  ok('il telefono riceve la libreria del PC', await attendi(async () => (await tel.evaluate(id => PROTOCOLS[id] && PROTOCOLS[id].idr, primo)) === 1.9),
+     String(await tel.evaluate(id => PROTOCOLS[id] && PROTOCOLS[id].idr, primo)));
+  ok('e la conserva', await tel.evaluate(() => JSON.parse(localStorage.getItem('pc.v4.libreriaPC')).protocolli.length) === await pc.evaluate(() => libs.ufficiale.protocolli.length));
+  ok('conferma: pallino spento', await attendi(async () => await pc.locator('#syncBtn.da-inviare').count() === 0));
+  /* un protocollo con fasi che prima il telefono non aveva */
+  await pc.evaluate(() => { libs.ufficiale.protocolli.push({ id: 'uro-surr', l: 'Uro e surrene', idr: 1.2, giKg: .5, basale: 'req',
+    kw: ['incidentaloma'], ex: [], nota: '', fasi: [{ fase: 'basale', zone: ['ADs'] }, { fase: 'venosa', zone: ['ADc'], delay: '70' },
+      { fase: 'urografica', zone: ['ADc'], delay: '600' }, { fase: 'surrene', zone: ['ADs'], delay: '900' }] }); salvaLibreria('ufficiale'); });
+  await tel.locator('#btnSet').click(); await tel.waitForTimeout(300);
+  ok('telefono: stato della libreria nelle impostazioni', /protocolli dal PC/.test(await tel.locator('#pcBox').textContent()));
+  await tel.locator('#pcSync').click();                    // dal telefono: il PC rimanda tutto
+  ok('«Sincronizza con il PC» dal telefono', await attendi(() => tel.evaluate(() => !!PROTOCOLS['uro-surr'])));
+  ok('urografica e surrene riconosciute sul telefono', await tel.evaluate(() => matchProtocol('TC ADDOME', 'incidentaloma surrenalico')) === 'uro-surr');
+  await tel.locator('#btnSet').click(); await tel.waitForTimeout(200);     // torna alle schede
+  /* il protocollo scelto in verifica viaggia con la lista */
+  await pc.evaluate(lista => { pazienti = lista; pazienti[0].scelta = null; pazienti[1].usa = 'ufficiale'; vai(2); },
+    [paziente(700), paziente(701), paziente(702)]);
+  const scelte = await pc.evaluate(() => payload().p.map(r => r[6]));
+  ok('nella lista: «-» per nessuno, altrimenti l\'id', scelte[0] === '-' && scelte.slice(1).every(x => x && x !== '-'), scelte.join());
+  await pc.locator('#reteInvia').click();
+  ok('ricevuta', await attendi(async () => /Ricevuta dal telefono: 3 nuove/.test(await pc.locator('#reteStato').textContent())));
+  const arrivate = await tel.evaluate(() => ['0D26090700', '0D26090701', '0D26090702'].map(id => (state.find(p => p.id === id) || {}).proto));
+  ok('sul telefono la stessa scelta del PC', arrivate[0] == null && arrivate[1] === scelte[1] && arrivate[2] === scelte[2], arrivate.join());
 
   console.log('\n── SCOLLEGAMENTO ───────────────────────');
   await tel.locator('#btnSet').click(); await tel.waitForTimeout(300);

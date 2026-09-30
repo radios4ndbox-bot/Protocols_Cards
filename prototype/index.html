@@ -771,6 +771,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
             <option value="">Seleziona…</option><option value="basale">Basale</option>
             <option value="arteriosa">Arteriosa</option><option value="venosa">Venosa</option>
             <option value="tardiva">Eq. tardiva</option>
+            <option value="urografica">Urografica</option><option value="surrene">Tardiva surrene</option>
           </select>
         </div>
         <div class="fld">
@@ -872,10 +873,31 @@ const AGENTS = [
    libreria, stessi termini e stesso riconoscimento. Una lista arrivata
    dal PC viene riconosciuta qui esattamente come sul PC.              */
 const PR = Protocolli;
-const PROTOCOLS = Object.fromEntries(PR.SIRM_2022
-  .filter(p => p.fasi.every(f => ['basale','arteriosa','venosa','tardiva'].includes(f.fase)))
-  .map(({id, ...v}) => [id, v]));
 const LEXICON = PR.LEXICON;
+
+/* Quali protocolli usa il telefono:
+     · ufficiali: quelli del PC, arrivati con «Sincronizza»; finché non
+       ne arriva nessuno, la libreria SIRM 2022 incorporata
+     · personali: quelli del profilo (vedi PROFILO), che vengono prima
+   PROTOCOLS è l'indice per id. Un protocollo tolto dal PC resta finché
+   una scheda lo usa, così la scheda non perde il suo riferimento.     */
+let libreriaPC = null;                         // { protocolli, firma, modificata, ricevuta }: da PERSISTENZA
+let UFF = [], PERS = [], PROTOCOLS = {};
+const faseNota = f => f && Object.prototype.hasOwnProperty.call(PH, f.fase);
+function costruisciProtocolli(){
+  const valido = p => p && p.id && Array.isArray(p.fasi) && p.fasi.every(faseNota);
+  UFF  = ((libreriaPC && libreriaPC.protocolli) || PR.SIRM_2022).filter(valido);
+  /* all'avvio profilo e schede non sono ancora dichiarati: si legge la memoria */
+  let prof = null, schede = [];
+  try{ prof = profilo; schede = state; }catch(_){}
+  PERS = ((prof || load('profilo', null) || {}).personali || []).filter(valido)
+           .map(p => ({ ...p, personale:true }));
+  const prima = PROTOCOLS, nuovi = {};
+  [...PERS, ...UFF].forEach(({id, ...v}) => { if(!nuovi[id]) nuovi[id] = v; });
+  (schede || []).forEach(c => { if(c.proto && !nuovi[c.proto] && prima[c.proto]) nuovi[c.proto] = prima[c.proto]; });
+  PROTOCOLS = nuovi;
+  if(typeof riempiProto === 'function') riempiProto();
+}
 
 const ZONES = {
   basale:   [['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
@@ -899,7 +921,10 @@ const PH = {
   arteriosa:{ l:'Arteriosa',   c:'#2f6fed', mdc:true,  delay:'B-T' },
   venosa:   { l:'Venosa',      c:'#1d54c4', mdc:true,  delay:'70' },
   tardiva:  { l:'Eq. tardiva', c:'#c2601a', mdc:true,  delay:'300' },
+  urografica:{ l:'Urografica', c:'#b08a00', mdc:true,  delay:'600' },
+  surrene:  { l:'Tardiva surrene', c:'#8E1B3A', mdc:true, delay:'900' },
 };
+ZONES.urografica = PR.ZONE.urografica; ZONES.surrene = PR.ZONE.surrene;
 
 /* ═══ UTIL ═══════════════════════════════════════════════ */
 const $  = id => document.getElementById(id);
@@ -930,7 +955,9 @@ function eta(s){
    pesati per parola, regione dell'esame che esclude, a parità il primo
    in elenco) e in più legge le sigle dei quesiti reali: npl, k, sec…  */
 const normText = s => PR.normText(s);
-const matchProtocol = (esame, quesito) => PR.riconosci(PR.SIRM_2022, esame, quesito).id;
+/* come sul PC: prima il personale appreso per questo caso, poi i
+   personali riconosciuti dai termini, poi gli ufficiali               */
+const matchProtocol = (esame, quesito) => PR.suggerisci(UFF, PERS, esame, quesito).id;
 const regionOf = esame => PR.regionOf(esame);
 const ZONE_L = {};
 Object.values(ZONES).forEach(l => l.forEach(([c,lab]) => ZONE_L[c] = lab));
@@ -972,6 +999,10 @@ const K = 'pc.v4';
 const load = (k,f) => { try{ const v=localStorage.getItem(K+'.'+k);
   return v ? JSON.parse(v) : f; }catch(_){ return f; } };
 const save = (k,v) => { try{ localStorage.setItem(K+'.'+k, JSON.stringify(v)); }catch(_){} };
+
+/* la libreria arrivata dal PC, prima di ricostruire le schede */
+libreriaPC = load('libreriaPC', null);
+costruisciProtocolli();
 
 const SEED = [
   ['0D24001','ROSSI MARIO','1954-03-12',0,'08:30',78,'TC TORACE CON E SENZA MDC','Sospetta embolia polmonare','elettiva'],
@@ -1036,10 +1067,21 @@ function impostaSessione(s){
 
 AGENTS.forEach(a => { const o=document.createElement('option');
   o.value=a.id; o.textContent=`${a.l} — ${it(a.c,2)} gI/ml`; $('ddAgent').appendChild(o); });
-{ const o=document.createElement('option'); o.value=''; o.textContent='Nessuno — costruisco a mano';
-  $('ddProto').appendChild(o); }
-Object.entries(PROTOCOLS).forEach(([k,v]) => { const o=document.createElement('option');
-  o.value=k; o.textContent=v.l; $('ddProto').appendChild(o); });
+/* l'elenco dei protocolli: personali e ufficiali, rifatto a ogni sincronizzazione */
+function riempiProto(){
+  const dd = $('ddProto'); if(!dd) return;
+  const era = dd.value;
+  dd.innerHTML = '<option value="">Nessuno — costruisco a mano</option>';
+  [['Personali', PERS], ['Ufficiali', UFF]].forEach(([nome, L]) => {
+    if(!L.length) return;
+    const g = document.createElement('optgroup'); g.label = nome;
+    L.forEach(p => { if(PROTOCOLS[p.id] && !g.querySelector(`option[value="${CSS.escape(p.id)}"]`)){
+      const o = document.createElement('option'); o.value = p.id; o.textContent = p.l; g.appendChild(o); } });
+    dd.appendChild(g);
+  });
+  if(era && PROTOCOLS[era]) dd.value = era;
+}
+riempiProto();
 
 /* ═══ CESTINO ════════════════════════════════════════════ */
 function purge(){
@@ -1366,7 +1408,7 @@ function options(){
   if(pr) out.push({ k:'sirm', nome:pr.l,
     why:`quesito «${kw.length?kw[0]:(cur.quesito||'').slice(0,28)}» · `
        + pr.fasi.map(f=>PH[f.fase].l).join(' + '),
-    tag:'sirm', tagT:'SIRM', fasi:pr.fasi, idr:pr.idr, giKg:pr.giKg });
+    tag:'sirm', tagT:pr.personale ? 'PERSONALE' : 'UFFICIALE', fasi:pr.fasi, idr:pr.idr, giKg:pr.giKg });
   return out;
 }
 function renderOpts(){
@@ -1405,7 +1447,7 @@ $('applyBtn').onclick = () => {
   } else {
     const k=$('ddProto').value;
     if(!k){ cur.fasi=[]; renderRows(); syncHint(); toast('Fasi azzerate'); return; }
-    const pr=PROTOCOLS[k]; src={fasi:pr.fasi,idr:pr.idr,giKg:pr.giKg}; cur.proto=k;
+    const pr=PROTOCOLS[k]; if(!pr) return; src={fasi:pr.fasi,idr:pr.idr,giKg:pr.giKg}; cur.proto=k;
   }
   /* un protocollo appreso porta gia' le zone scelte per questa firma:
      rimapparle vanificherebbe la scelta dell'operatore.                */
@@ -1743,7 +1785,7 @@ let pcStato = 'spento', pcChiudi = null;
 const salvaPc = () => { save('pc', pcLink); save('pcRicevute', pcRicevute); };
 
 /* la lista del PC: { v:1, d:'gg/mm/aaaa', p:[[accession, nome, nascita,
-   ora, quesito, esami]] }. Una scheda già lavorata resta com'è; una
+   ora, quesito, esami, protocollo]] }; il protocollo può mancare. Una scheda già lavorata resta com'è; una
    ancora da fare si aggiorna; una messa nel cestino non torna.        */
 function togliEsempio(){
   const n = state.length + trash.length;
@@ -1764,9 +1806,12 @@ function importaLista(pl){
   const r = { nuove:0, aggiornate:0, invariate:0, data };
   pl.p.forEach(row => {
     if(!Array.isArray(row)) return;
-    const [id,nome,nascita,ora,quesito,esame] = row.map(x => String(x==null ? '' : x).trim());
+    const [id,nome,nascita,ora,quesito,esame,scelto] = row.map(x => String(x==null ? '' : x).trim());
     if(!id || cestino.has(id)) return;
-    const proto = matchProtocol(esame, quesito), pr = proto ? PROTOCOLS[proto] : null;
+    /* il protocollo scelto in verifica sul PC, se il telefono lo conosce;
+       '-' vuol dire «nessuno, si imposta qui»; senza, lo riconosce da sé */
+    const proto = scelto==='-' ? null : scelto && PROTOCOLS[scelto] ? scelto : matchProtocol(esame, quesito);
+    const pr = proto ? PROTOCOLS[proto] : null;
     const campi = { nome, nascita:isoDa(nascita), data, modo,
                     ora:/^\d{2}:\d{2}$/.test(ora) ? ora : '08:00', esame, quesito };
     const ex = state.find(p => p.id===id);
@@ -1848,7 +1893,7 @@ const Archivio = (() => {
   }
   return { prepara, scrivi, leggi, stato:() => stato, persistente:() => persistente };
 })();
-function salvaProfilo(p){ save('profilo', p); Archivio.scrivi(p); }
+function salvaProfilo(p){ save('profilo', p); Archivio.scrivi(p); costruisciProtocolli(); }
 
 function mioProfilo(){
   if(!profilo || !RE_PROF.test(profilo.id || '')){
@@ -1996,7 +2041,7 @@ if(!load('profilo', null)){
     if(!x || !RE_PROF.test(x.id || '') || (profilo && (profilo.nome || profilo.personali.length))) return;
     profilo = { id:x.id, nome:x.nome || '', cognome:x.cognome || '', titolo:TITOLI.includes(x.titolo) ? x.titolo : '',
                 personali:Array.isArray(x.personali) ? x.personali : [], aggiornato:+x.aggiornato || 0 };
-    save('profilo', profilo);
+    save('profilo', profilo); costruisciProtocolli();
     if(x.appresiTelefono && !Object.keys(learned).length){ learned = x.appresiTelefono; persist(); }
     $('primoAccesso').classList.remove('open');
     if(view==='settings'){ renderSettings(); renderProfilo(); }
@@ -2013,6 +2058,7 @@ async function avviaPc(){
   try{ sess = await Canale.apri(pcLink); }catch(_){ pcStato = 'errore'; return renderPc(); }
   const link = pcLink, aggiungi = Canale.raccoglitore();
   const aggiungiProfilo = Canale.raccoglitore('profilo'), profiliVisti = new Set();
+  const aggiungiLibreria = Canale.raccoglitore('libreria'), librerieViste = new Set();
   pcStato = 'connessione'; renderPc();
   pcChiudi = Canale.ascolta(sess, 'tel', {
     stato: async s => {
@@ -2039,6 +2085,17 @@ async function avviaPc(){
         try{ riceviProfilo(await Canale.leggiLista(r)); }catch(_){}
         return;
       }
+      if(m.tipo==='libreria'){
+        let r;
+        try{ r = aggiungiLibreria(m); }catch(_){ return; }
+        if(!r || librerieViste.has(r.id)) return;
+        librerieViste.add(r.id);
+        let x; try{ x = await Canale.leggiLista(r); }catch(_){ return; }
+        const n = riceviLibreria(x);
+        if(n != null) Canale.invia(sess, 'tel', { tipo:'libreria-ok', firma:x.firma, ufficiali:n,
+          personali:PERS.length }).catch(()=>{});
+        return;
+      }
       let lista;
       try{ lista = aggiungi(m); }
       catch(_){ return toast('Lista dal PC incompleta: rinviala dal PC'); }
@@ -2060,6 +2117,26 @@ async function avviaPc(){
         nuove:r.nuove, aggiornate:r.aggiornate, invariate:r.invariate }).catch(()=>{});
     },
   });
+}
+
+/* la libreria ufficiale del PC, da «Sincronizza»: sostituisce quella
+   incorporata. I personali arrivano con il profilo.                    */
+function riceviLibreria(x){
+  if(!x || !Array.isArray(x.protocolli) || !x.protocolli.length) return null;
+  const nuova = libreriaPC ? libreriaPC.firma !== x.firma : true;
+  libreriaPC = { protocolli:x.protocolli, firma:String(x.firma || ''), modificata:+x.modificata || 0, ricevuta:Date.now() };
+  save('libreriaPC', libreriaPC);
+  costruisciProtocolli();
+  if(view==='settings') renderPc();
+  toast(nuova ? `Protocolli aggiornati dal PC: ${UFF.length} ufficiali, ${PERS.length} personali`
+              : 'Protocolli già aggiornati');
+  return UFF.length;
+}
+/* dal telefono si può chiedere al PC di rimandare tutto: libreria e profilo */
+async function sincronizzaPc(){
+  if(!pcSess){ toast('PC non raggiungibile: il tool deve essere aperto'); return; }
+  try{ await Canale.invia(pcSess, 'tel', { tipo:'sync' }); inviaProfilo(); toast('Richiesta inviata al PC'); }
+  catch(_){ toast('Rete assente: riprova'); }
 }
 
 /* nome del dispositivo per il PC: solo sistema e browser, niente di più */
@@ -2090,7 +2167,12 @@ function renderPc(){
       <div class="item-n">PC del reparto · ${esc(PC_STATO[pcStato] || '—')}</div>
       <div class="item-s">abbinato il ${esc(quando(pcLink.quando))}
         · ultima lista ${esc(quando(pcLink.ultima))}</div>
-    </div><button class="mini-b" id="pcOff">Scollega</button></div></div>`;
+      <div class="item-s">${libreriaPC
+        ? `protocolli dal PC: <b>${UFF.length}</b> ufficiali, <b>${PERS.length}</b> personali · aggiornati il ${esc(quando(libreriaPC.ricevuta))}`
+        : `protocolli: libreria SIRM 2022 incorporata, <b>${PERS.length}</b> personali`}</div>
+    </div><button class="mini-b" id="pcOff">Scollega</button></div>
+    <div class="prof-az"><button class="mini-b" id="pcSync">Sincronizza con il PC</button></div></div>`;
+  $('pcSync').onclick = sincronizzaPc;
   $('pcOff').onclick = () => ask('Scollega dal PC',
     'Le liste inviate dal PC non arriveranno più. Le schede già ricevute restano.',
     'Scollega', () => { pcLink = null; pcRicevute = []; salvaPc(); avviaPc(); toast('PC scollegato'); });

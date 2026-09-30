@@ -73,9 +73,10 @@ const ok = (l, c, x = '') => { console.log((c ? '  ok  ' : '  FAIL') + ' │ ' +
     const m = document.querySelector('.top .mark').getBoundingClientRect();
     const v = document.querySelector('.top .mark .pc-dorso').getBoundingClientRect();
     return Math.abs(v.width - m.width) < .5 && Math.abs(v.height - m.height) < .5 && Math.abs(v.left - m.left) < .5; }));
-  ok('copyright in basso a destra dopo l\'intro', await p.evaluate(() => {
-    const r = document.querySelector('.copyright').getBoundingClientRect();
-    return r.right > innerWidth - 40 && r.bottom > innerHeight - 30; }));
+  ok('copyright a destra, in fondo alla pagina: non copre i contenuti', await p.evaluate(() => {
+    const e = document.querySelector('.copyright'), r = e.getBoundingClientRect();
+    return getComputedStyle(e).position !== 'fixed' && r.right > innerWidth - 40
+      && r.top >= document.querySelector('main').getBoundingClientRect().bottom - 1; }));
   ok('pagina ferma al suo posto', await p.evaluate(() => getComputedStyle(document.querySelector('main')).transform === 'none'));
   await p.close();
 

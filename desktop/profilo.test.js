@@ -149,7 +149,7 @@ const protocollo = (id, l, kw) => ({ id, l, idr: 1.3, giKg: .5, basale: 'skip', 
   console.log('\n── OSPEDALE B: UN PC NUOVO ─────────────');
   const pcB = await apri(cB, PC);
   ok('PC nuovo: nessun personale', await pcB.evaluate(() => libs.personale.protocolli.length) === 0);
-  await tel.close();
+  await tel.goto('about:blank');                      // app chiusa (vedi sincronizzazione.test.js)
   tel = await abbina(pcB, cTel);
   ok('i miei protocolli arrivano sul PC nuovo', await attendi(async () => (await pcB.evaluate(() => libs.personale.protocolli.map(p => p.id).sort().join())) === 'p-onco-mio,p-tep-mio', 6000),
      await pcB.evaluate(() => libs.personale.protocolli.map(p => p.id).join()));
