@@ -2068,10 +2068,10 @@ $('profFile').onchange = async e => {
    Nel file: nome, titolo, personali, appresi senza il testo del quesito.
    Mai dati dei pazienti, mai la chiave di abbinamento.
 
-   L'accesso a Google vale un'ora e si chiede con un tocco (il browser
-   apre la finestra di Google solo dopo un gesto). Finché vale, ogni
-   modifica al profilo va su Drive da sola; dopo, il backup resta in
-   sospeso: pallino sulle impostazioni e «Aggiorna backup» con un tocco.
+   L'accesso a Google vale un'ora: l'app passa dalla pagina di Google e
+   torna. Finché vale, ogni modifica al profilo va su Drive da sola; dopo,
+   il backup resta in sospeso: pallino sulle impostazioni e «Aggiorna
+   backup», che ripassa da Google (di solito senza chiedere nulla).
    Su un telefono nuovo, al primo accesso, «Recuperalo da Google Drive». */
 const DRIVE_CLIENT_ID = '709205755015-ivqd4id8i4t50r4v1a6n9u08vn92v35c.apps.googleusercontent.com';     // ID client OAuth «Applicazione web» del progetto Google Cloud
 const Drive = (() => {
@@ -2080,7 +2080,7 @@ const Drive = (() => {
   const API = 'https://www.googleapis.com';
   const GIORNO = 24*60*60*1000;
   let st = load('drive', null);            // { fileId, email, ultimo, sospeso }
-  let token = null, scade = 0, client = null, attesa = null, timer = null, caricando = null;
+  let token = null, scade = 0, timer = null;
   /* Google accetta l'ID solo dall'origine autorizzata nel progetto: da una
      copia locale il backup resta spento. I test lo impostano a mano.   */
   const ORIGINE = 'https://radios4ndbox-bot.github.io';
@@ -2090,36 +2090,41 @@ const Drive = (() => {
   const valido = () => !!token && Date.now() < scade - 60000;
   const salva = () => { save('drive', st); badge(); };
 
-  /* la libreria di Google si carica solo se il backup è configurato */
-  function libreria(){
-    if(window.google && google.accounts && google.accounts.oauth2) return Promise.resolve();
-    if(caricando) return caricando;
-    return caricando = new Promise((ok, ko) => {
-      const sc = document.createElement('script');
-      sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true;
-      sc.onload = () => ok(); sc.onerror = () => { caricando = null; ko(new Error('Google non raggiungibile')); };
-      document.head.appendChild(sc);
-    });
-  }
-  function prepara(){
-    if(!configurato() || client) return;
-    libreria().then(() => {
-      client = google.accounts.oauth2.initTokenClient({ client_id:idClient(), scope:SCOPE,
-        callback: r => {
-          const a = attesa; attesa = null;
-          if(!a) return;
-          if(r && r.access_token){ token = r.access_token; scade = Date.now() + (+r.expires_in || 3600)*1000; a.ok(); }
-          else a.ko(new Error(r && r.error ? 'accesso negato' : 'accesso non riuscito'));
-        },
-        error_callback: e => { const a = attesa; attesa = null; if(a) a.ko(new Error(e && e.type==='popup_closed' ? 'finestra chiusa' : 'accesso non riuscito')); },
-      });
-    }).catch(() => {});
-  }
-  /* va chiamata dentro un tocco: apre la finestra di Google se serve */
-  function accedi(){
+  /* Accesso a Google con andata e ritorno nella stessa scheda: l'app va
+     alla pagina di Google, che la riapre con l'accesso nel frammento
+     dell'indirizzo (#access_token=…). Niente finestre a comparsa, che sui
+     telefoni diventano schede e non sempre tornano all'app. Cosa fare al
+     ritorno (collegare, recuperare, aggiornare) resta nella sessione,
+     con un codice casuale che Google restituisce e che si confronta.   */
+  const RITORNO = K + '.driveRitorno';
+  const indirizzo = () => location.origin + location.pathname.replace(/\/$/, '/index.html');
+  function accedi(azione){
     if(valido()) return Promise.resolve();
-    if(!client){ prepara(); return Promise.reject(new Error('Google non ancora pronto: riprova fra un attimo')); }
-    return new Promise((ok, ko) => { attesa = { ok, ko }; client.requestAccessToken({ prompt: st ? '' : 'consent' }); });
+    const stato = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+    try{ sessionStorage.setItem(RITORNO, JSON.stringify({ stato, azione, quando:Date.now() })); }catch(_){}
+    const q = new URLSearchParams({ client_id:idClient(), redirect_uri:indirizzo(), response_type:'token',
+      scope:SCOPE, include_granted_scopes:'true', state:stato });
+    if(st && st.email) q.set('login_hint', st.email);          // stesso account: niente scelta
+    location.assign('https://accounts.google.com/o/oauth2/v2/auth?' + q);
+    return new Promise(() => {});                               // la pagina se ne va
+  }
+  const ERRORI = {
+    access_denied: 'accesso negato. L\'account è fra gli utenti di test del progetto?',
+    invalid_client: 'ID client non valido',
+    redirect_uri_mismatch: 'indirizzo di ritorno non autorizzato nel progetto Google',
+    origin_mismatch: 'origine non autorizzata nel progetto Google',
+  };
+  /* al ritorno da Google: l'accesso dal frammento, poi l'azione rimasta in sospeso */
+  function ritorno(){
+    const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+    if(!h.has('state') || !(h.has('access_token') || h.has('error'))) return null;
+    history.replaceState(null, '', location.pathname + location.search);   // il token non resta nell'indirizzo
+    let r = null;
+    try{ r = JSON.parse(sessionStorage.getItem(RITORNO) || 'null'); sessionStorage.removeItem(RITORNO); }catch(_){}
+    if(!r || r.stato !== h.get('state')) return { errore:'risposta di Google non riconosciuta: riprova' };
+    if(h.has('error')) return { errore:ERRORI[h.get('error')] || 'accesso non riuscito (' + h.get('error') + ')' };
+    token = h.get('access_token'); scade = Date.now() + (+h.get('expires_in') || 3600)*1000;
+    return { azione:r.azione };
   }
   async function api(percorso, opz = {}){
     const r = await fetch(API + percorso, { ...opz, headers:{ Authorization:'Bearer ' + token, ...(opz.headers || {}) } });
@@ -2174,7 +2179,7 @@ const Drive = (() => {
      si propone di recuperarlo; altrimenti parte subito la copia        */
   async function collega(){
     try{
-      await accedi();
+      await accedi('collega');
       const f = await trova();
       st = { ...(st || {}), fileId:f ? f.id : null, email:await email() }; salva();
       const p = mioProfilo();
@@ -2183,7 +2188,7 @@ const Drive = (() => {
         if(profiloValido(j)){ recuperaDa(j); return; }
       }
       await scrivi(); toast('Backup su Google Drive attivo');
-    }catch(e){ toast('Google Drive: ' + e.message); }
+    }catch(e){ toast('Google Drive: ' + e.message, 5000); }
     disegna();
   }
   function recuperaDa(j){
@@ -2197,24 +2202,25 @@ const Drive = (() => {
   }
   async function recupera(){
     try{
-      await accedi();
+      await accedi('recupera');
       const f = await trova();
       if(!st){ st = { fileId:f ? f.id : null, email:await email() }; salva(); }
       if(!f) return toast('Su questo account Google non c\'è un profilo di Protocol Cards');
       const j = await leggi(f.id);
       if(!profiloValido(j)) return toast('Il file su Drive non è un profilo leggibile');
       recuperaDa(j);
-    }catch(e){ toast('Google Drive: ' + e.message); }
+    }catch(e){ toast('Google Drive: ' + e.message, 5000); }
   }
   async function aggiorna(){
-    try{ await accedi(); await scrivi(); toast('Backup aggiornato su Google Drive'); }
-    catch(e){ toast('Google Drive: ' + e.message); }
+    try{ await accedi('aggiorna'); await scrivi(); toast('Backup aggiornato su Google Drive'); }
+    catch(e){ toast('Google Drive: ' + e.message, 5000); }
     disegna();
   }
   function scollega(){
     ask('Scollegare Google Drive?', 'Il telefono smette di copiare il profilo su Drive. La copia già salvata resta nel tuo Drive e si può recuperare collegandolo di nuovo.',
       'Scollega', () => {
-        try{ if(token && window.google) google.accounts.oauth2.revoke(token, () => {}); }catch(_){}
+        if(token) fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(token),
+                        { method:'POST', mode:'no-cors' }).catch(() => {});
         token = null; st = null; save('drive', null); badge(); disegna(); toast('Google Drive scollegato');
       });
   }
@@ -2229,7 +2235,6 @@ const Drive = (() => {
         (${ORIGINE.replace('https://', '')}). Intanto «Esporta profilo» salva una copia a mano.</div></div>`;
       return;
     }
-    prepara();
     if(!st){
       box.innerHTML = `<div class="item"><div class="item-n">Nessun backup</div>
         <div class="item-s">Collega il tuo Google Drive: il profilo si copia da solo in una cartella nascosta
@@ -2250,12 +2255,15 @@ const Drive = (() => {
     $('drvAggiorna').onclick = aggiorna; $('drvRecupera').onclick = recupera; $('drvOff').onclick = scollega;
   }
 
-  /* Google si contatta solo se serve: backup attivo, o profilo ancora da
-     creare (al primo accesso si può recuperare da Drive)              */
-  { const p = load('profilo', null);
-    if(configurato() && (st || !p || (!p.nome && !p.cognome))) prepara(); }
   badge();
-  return { pianifica, disegna, recupera, prepara, configurato };
+  /* di ritorno da Google si riprende da dove si era */
+  const r = configurato() ? ritorno() : null;
+  if(r && r.errore) setTimeout(() => { show('settings'); toast('Google Drive: ' + r.errore, 6000); }, 400);
+  else if(r) setTimeout(() => {
+    if(r.azione !== 'recupera') show('settings');             // si era partiti dalle impostazioni
+    ({ collega, recupera, aggiorna })[r.azione]?.();
+  }, 300);
+  return { pianifica, disegna, recupera, configurato };
 })();
 $('paDrive').onclick = () => Drive.recupera();
 Drive.disegna();
@@ -2443,8 +2451,8 @@ $('mask').onclick = e => { if(e.target===$('mask')) $('mask').classList.remove('
 $('mYes').onclick = () => { $('mask').classList.remove('open'); if(onYes) onYes(); onYes=null; };
 
 let tt;
-function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show');
-  clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),1700); }
+function toast(m, ms=1700){ const t=$('toast'); t.textContent=m; t.classList.add('show');
+  clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),ms); }
 
 document.addEventListener('keydown', e => {
   if(e.key!=='Escape') return;

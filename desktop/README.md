@@ -112,12 +112,15 @@ documenti del Drive. Nel file vanno nome, titolo, protocolli personali e appresi
 questi ultimi senza il testo del quesito; mai dati dei pazienti né la chiave di
 abbinamento. Il token di Google resta solo in memoria.
 
-- **Automatico mentre l'accesso vale.** Google concede l'accesso per un'ora e il
-  browser apre la sua finestra solo dopo un tocco. Finché vale, ogni modifica al
-  profilo va su Drive dopo pochi secondi; dopo, il backup resta in sospeso: un
-  pallino sulle impostazioni e «Aggiorna backup» lo rifanno con un tocco (di
-  solito la finestra di Google si chiude da sola). Il pallino compare anche se
-  l'ultima copia ha più di un giorno.
+- **Accesso con andata e ritorno.** L'app passa dalla pagina di Google nella
+  stessa scheda e Google la riapre con l'accesso nel frammento dell'indirizzo,
+  che l'app toglie subito. Niente finestre a comparsa: sui telefoni diventano
+  schede e non sempre tornano all'app.
+- **Automatico mentre l'accesso vale.** Google concede l'accesso per un'ora.
+  Finché vale, ogni modifica al profilo va su Drive dopo pochi secondi; dopo, il
+  backup resta in sospeso: un pallino sulle impostazioni e «Aggiorna backup», che
+  ripassa da Google con lo stesso account, di solito senza chiedere nulla. Il
+  pallino compare anche se l'ultima copia ha più di un giorno.
 - **Telefono nuovo.** Al primo accesso «Hai già un profilo? Recuperalo da Google
   Drive»; oppure «Recupera da Drive» nelle impostazioni.
 - **Scollega** revoca l'accesso; la copia su Drive resta.
@@ -136,7 +139,9 @@ e l'app non contatta Google. Per ricrearlo:
    `.../auth/drive.appdata`. Finché l'app è *in test* possono accedere solo gli
    account aggiunti come utenti di test (fino a 100).
 4. Credenziali → Crea credenziali → **ID client OAuth** → *Applicazione web*;
-   origini JavaScript autorizzate: `https://radios4ndbox-bot.github.io`.
+   origini JavaScript autorizzate: `https://radios4ndbox-bot.github.io`;
+   URI di reindirizzamento autorizzati:
+   `https://radios4ndbox-bot.github.io/Protocols_Cards/prototype/index.html`.
 5. L'ID client (`….apps.googleusercontent.com`) va in `DRIVE_CLIENT_ID`. Non è
    un segreto: identifica l'app, e Google accetta richieste solo dalle origini
    autorizzate.
