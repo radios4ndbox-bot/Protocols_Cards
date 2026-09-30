@@ -148,6 +148,15 @@ select.field{appearance:none;padding-right:34px;cursor:pointer;
 .pp-sez{padding:16px 0}
 .pp-sez + .pp-sez{border-top:1px solid var(--line)}
 .pp-sez h4{font-size:1rem;margin:10px 0 10px}
+.info details{border-top:1px solid var(--line)}
+.info details:first-of-type{margin-top:10px}
+.info summary{cursor:pointer;padding:10px 2px;font-size:.84rem;font-weight:700;color:var(--ink);list-style:none;
+  display:flex;align-items:center;justify-content:space-between}
+.info summary::-webkit-details-marker{display:none}
+.info summary::after{content:"+";font-weight:500;color:var(--ink-3)}
+.info details[open] summary::after{content:"−"}
+.info p{margin:0 2px 10px;font-size:.78rem;line-height:1.55;color:var(--ink-2)}
+.info p b{color:var(--ink)}
 .pp-chi{margin:12px 0 8px}
 .pp-chi b{display:block;font-family:var(--f-disp);font-weight:400;font-size:1.35rem;letter-spacing:-.02em;line-height:1.2}
 .pp-chi span{display:block;margin-top:5px;font-size:.84rem;color:var(--ink-2);line-height:1.5}
@@ -348,6 +357,7 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .t-coral{background:linear-gradient(155deg,#FDF0EC,var(--coral-s))}.t-coral svg{stroke:var(--coral-ink)}
 .t-amber{background:linear-gradient(155deg,#FEF7EA,var(--amber-s))}.t-amber svg{stroke:var(--amber-ink)}
 .card-d{font-size:.82rem;color:var(--ink-2);margin-bottom:18px}
+.card-d:empty{display:none}
 .lbl{display:block;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin:18px 0 8px}
 .lbl:first-child{margin-top:0}
 .lbl em{font-style:normal;font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink-3)}
@@ -1070,6 +1080,51 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
       </div>
     </div>
   </section>
+  <!-- le spiegazioni stanno qui, non sparse nelle pagine -->
+  <section class="pp-sez info" id="info">
+    <span class="eyebrow">Info</span>
+    <details><summary>Privacy e dati del PDF</summary>
+      <p><b>Il PDF non viene caricato da nessuna parte.</b> Viene letto qui, dentro il browser: il file resta
+        sul computer e nulla viene inviato in rete. La lista dei pazienti non viene conservata: chiudendo la
+        pagina non ne resta traccia. Il tool ricorda soltanto la libreria dei protocolli, che non contiene dati
+        personali.</p>
+      <p>Verso il telefono la lista viaggia cifrata, con una chiave che conoscono solo questo PC e il telefono:
+        il relay che la trasporta vede solo testo illeggibile e la conserva al massimo 12 ore.</p></details>
+    <details><summary>Lista del giorno</summary>
+      <p>Il formato letto è la «Lista esami da eseguire» del RIS di Desio. Si importa da uno dei due ingressi,
+        TC elettiva o pronto soccorso: la seduta scelta arriva al telefono con la lista.</p>
+      <p>In verifica le righe evidenziate sono quelle su cui la lettura del PDF non è sicura: ogni campo è
+        modificabile. Nella colonna <b>Protocollo</b> si sceglie fra l'opzione ufficiale e la personale; il
+        telefono riceve la scelta e si può cambiare idea anche lì. Se l'app è chiusa, la lista arriva
+        all'apertura, entro 12 ore.</p></details>
+    <details><summary>Protocolli</summary>
+      <p>Qui si decide cosa suggerirà il telefono: fasi, zone, mezzo di contrasto e i termini del quesito che
+        fanno riconoscere il protocollo. Con <b>Sincronizza</b> il telefono riceve questa libreria.</p>
+      <p><b>Personali.</b> Sono le varianti di chi usa il tool e vengono suggerite prima degli ufficiali. Si
+        creano con il builder, con «Copia nei personali» da un ufficiale, oppure scegliendo in verifica un
+        protocollo diverso da quello suggerito: il tool lo impara per i casi con lo stesso esame e gli stessi
+        termini clinici. Un protocollo appreso vale per quei casi; per usarlo anche in casi simili si aggiungono
+        termini del quesito in «Riconoscimento».</p>
+      <p><b>Acquisizioni.</b> Le fasi nell'ordine in cui si eseguono. Una zona <b>fissa</b> fa parte del
+        protocollo; altrimenti il telefono la sostituisce con la regione dell'esame richiesto.</p>
+      <p><b>Mezzo di contrasto.</b> Dose e velocità di iodio per chilogrammo: il telefono le converte in volume e
+        flusso con il mezzo in uso.</p>
+      <p><b>Fase basale.</b> Cosa dire in reparto quando esiste un esame precedente di confronto.</p>
+      <p><b>Riconoscimento.</b> Il telefono suggerisce un protocollo quando il quesito contiene uno dei suoi
+        termini e l'esame riguarda una delle regioni compatibili. I termini dell'esame aggiungono un punto e
+        servono a decidere fra protocolli simili.</p></details>
+    <details><summary>Protocol builder</summary>
+      <p>Si parte da richieste reali, scritte o prese dalla lista: il builder ne ricava i termini che faranno
+        riconoscere il protocollo (clic su un termine per usarlo o toglierlo), poi si compongono fasi e
+        contrasto. Il risultato entra nei protocolli personali e diventa l'opzione personale per i pazienti
+        con quelle richieste. Gli esempi non vengono salvati.</p></details>
+    <details><summary>Profilo, telefono e backup</summary>
+      <p>I protocolli personali vivono nel profilo, sul telefono di chi li usa. Con «Accedi» il telefono si
+        collega a questo PC con un QR, una volta sola: il tool carica il profilo e ciò che si crea qui torna al
+        telefono. Con «Esci» il profilo lascia questo PC.</p>
+      <p>Il backup della libreria ufficiale scrive una copia in una cartella del computer, anche dentro Google
+        Drive o OneDrive per desktop. Il profilo ha il suo backup su Google Drive, dal telefono.</p></details>
+  </section>
 </div>
 
 <main class="shell">
@@ -1105,14 +1160,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         <p>Trascina qui la lista esami, oppure fai clic per sceglierla</p>
       </div>
     </div>
-    <p class="formato">Formato «Lista esami da eseguire», RIS Desio. La seduta scelta qui arriva al telefono con la lista.</p>
     <div id="stato"></div>
-    <div class="nota">
-      <b>Il PDF non viene caricato da nessuna parte.</b> Viene letto qui, dentro il browser:
-      il file resta sul computer e nulla viene inviato in rete. La lista dei pazienti non
-      viene conservata — chiudendo la pagina non ne resta traccia. Il tool ricorda soltanto
-      la <b>libreria dei protocolli</b>, che non contiene dati personali.
-    </div>
   </section>
 
   <!-- ═══ 2 ═══ -->
@@ -1139,8 +1187,6 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         <button class="btn solid sm" id="reteInvia" hidden>Invia la lista al telefono</button>
       </div>
     </div>
-    <p class="nota-riga">Le righe evidenziate sono da controllare: ogni campo è modificabile. Nella colonna
-      <b>Protocollo</b> scegli fra l'opzione ufficiale e la personale: il telefono riceve la scelta.</p>
     <div class="tabwrap">
     <table class="tab">
       <thead><tr>
@@ -1166,10 +1212,6 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     <div>
       <span class="eyebrow">Libreria protocolli</span>
       <h2>Come si acquisisce, per ogni quesito.</h2>
-      <p class="lede">Qui si decide cosa suggerirà il telefono: fasi, zone, mezzo di contrasto
-        e i termini del quesito che fanno riconoscere il protocollo. I <b>personali</b> hanno la
-        precedenza sugli ufficiali, e si arricchiscono da soli con le scelte fatte in verifica.
-        Con <b>Sincronizza</b>, in alto, il telefono riceve questa libreria.</p>
     </div>
     <button class="btn solid sm" id="vaiBuilder" title="Crea un protocollo personale partendo da richieste reali">+ Insegna un protocollo</button>
   </div>
@@ -1209,9 +1251,6 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
       <button class="btn xs indietro-lib" id="bIndietro">← Libreria protocolli</button>
       <span class="eyebrow">Protocol builder</span>
       <h2>Insegna al tool un tuo protocollo.</h2>
-      <p class="lede">Parti da richieste reali: il builder ne ricava i termini che faranno riconoscere il protocollo,
-        poi componi fasi e contrasto. Il risultato entra nei <b>protocolli personali</b> e diventa l'opzione
-        personale per i pazienti con quelle richieste.</p>
     </div>
   </div>
   <div class="bgrid">
@@ -1930,7 +1969,7 @@ function disegnaAccesso() {
     ? `<b>${saluto()}, ${esc(nomeCortese(p))}</b><span>${n} protocoll${n === 1 ? 'o' : 'i'} personal${n === 1 ? 'e' : 'i'}`
       + (app ? `, di cui ${app} appres${app === 1 ? 'o' : 'i'}` : '') + ` · dal telefono ${esc(a.dispositivo || '')}</span>`
     : a ? '<b>Telefono collegato</b><span>In attesa del profilo dal telefono…</span>'
-        : '<b>Accedi con il tuo telefono</b><span>Inquadra il codice: il tool riconosce il tuo profilo, carica i tuoi protocolli personali e ci salva quelli nuovi.</span>';
+        : '<b>Accedi con il tuo telefono</b><span>Carica il tuo profilo e i tuoi protocolli.</span>';
 }
 $('profiloBtn').onclick = e => { e.stopPropagation(); apriProfilo(); };
 document.addEventListener('mousedown', e => {
@@ -2436,10 +2475,7 @@ function disegnaEditor() {
     ed.innerHTML = tab === 'ufficiale'
       ? `<div class="plate card"><div class="vuoto">La libreria è vuota. Crea un protocollo o ripristina la libreria SIRM.</div></div>`
       : `<div class="plate card"><div class="card-h"><span class="tile t-viola">${ICONE.app}</span><h3>Protocolli personali</h3></div>
-          <p class="card-d" style="margin:10px 0 0;max-width:70ch">Sono le varianti del reparto, e vengono suggerite <b>prima</b> degli
-          ufficiali. Si creano in tre modi: scegliendo in <b>Verifica</b> un protocollo diverso da quello suggerito (il tool lo
-          impara per i casi con lo stesso esame e gli stessi termini clinici), con «Personalizza per questo caso», oppure con
-          «+ Nuovo protocollo personale» o «Copia nei personali» da un protocollo ufficiale.</p></div>`;
+          <div class="vuoto">Nessun protocollo personale: crealo con «+ Insegna un protocollo».</div></div>`;
     return;
   }
   if (prova.per !== p.id) esempioProva(p);
@@ -2467,8 +2503,6 @@ function disegnaEditor() {
     <div class="plate card span">
       <div class="card-h"><span class="tile t-viola">${ICONE.app}</span><h3>Appreso dall'uso</h3>
         <span class="volte">scelto ${p.appreso.volte} ${p.appreso.volte === 1 ? 'volta' : 'volte'}</span></div>
-      <p class="card-d">Suggerito per primo quando un caso ha <b>lo stesso esame e gli stessi termini clinici</b>.
-        Per usarlo anche in casi simili aggiungi dei termini del quesito in «Riconoscimento».</p>
       <div class="firma">
         <div><span class="lbl">Esame</span><b>${esc(p.appreso.esame || '—')}</b></div>
         <div><span class="lbl">Termini clinici</span>${p.appreso.termini.length
@@ -2482,8 +2516,6 @@ function disegnaEditor() {
     <div class="plate card span">
       <div class="segnala" id="edSegnala"></div>
       <div class="card-h"><span class="tile t-sky">${ICONE.fasi}</span><h3>Acquisizioni</h3></div>
-      <p class="card-d">Le fasi nell'ordine in cui si eseguono. Una zona <b>fissa</b> fa parte del protocollo;
-        altrimenti il telefono la sostituisce con la regione dell'esame richiesto.</p>
       ${htmlFasi(p)}
     </div>
 
@@ -2496,15 +2528,11 @@ function disegnaEditor() {
 
     <div class="plate card">
       <div class="card-h"><span class="tile t-amber">${ICONE.bas}</span><h3>Fase basale</h3></div>
-      <p class="card-d">Cosa dire in reparto quando esiste un esame precedente di confronto.</p>
       ${htmlBasale(p)}
     </div>
 
     <div class="plate card span">
       <div class="card-h"><span class="tile t-jade">${ICONE.ric}</span><h3>Riconoscimento</h3></div>
-      <p class="card-d">Il telefono suggerisce questo protocollo quando il <b>quesito</b> contiene uno dei suoi termini
-        e l'esame riguarda una delle regioni compatibili. I termini dell'esame aggiungono un punto e servono a
-        decidere tra protocolli simili.</p>
       <div class="cards" style="margin-top:0">
         <div>
           ${htmlTermini(p)}
@@ -2541,8 +2569,7 @@ function aggiornaEditor() {
 
   const m = conMdc(p);
   $('cardMdc').classList.toggle('spento', !m);
-  $('mdcD').textContent = m ? 'Dose e velocità di iodio per chilogrammo: il telefono le converte in volume e flusso col mezzo in uso.'
-                            : 'Nessuna fase con contrasto: dose e velocità non si applicano.';
+  $('mdcD').textContent = m ? '' : 'Nessuna fase con contrasto: dose e velocità non si applicano.';
   const ag = AGENTI[agenteProva], gi = p.giKg * pesoProva;
   $('mdcPrev').innerHTML = `Per un paziente di <b>${pesoProva} kg</b> con
     <select id="mdcAg" aria-label="Mezzo di contrasto">${AGENTI.map((a, k) => `<option value="${k}"${k === agenteProva ? ' selected' : ''}>${esc(a.l)}</option>`).join('')}</select>
@@ -3017,7 +3044,7 @@ const Backup = (() => {
     const ora = ultimo ? new Date(ultimo).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : '';
     t.innerHTML = {
       'non-supportato': 'Il backup automatico richiede Chrome o Edge. Qui puoi usare «Esporta».',
-      spento: 'Backup della libreria ufficiale spento. Scegli una cartella, anche dentro Google Drive: ci terrà una copia sempre aggiornata.',
+      spento: 'Spento: scegli una cartella, anche dentro Google Drive.',
       attivo: `Backup ${nome.startsWith('«') ? 'in ' + nome : nome}` + (ora ? ` · aggiornato alle ${ora}` : ''),
       pausa: `Backup ${nome.startsWith('«') ? 'in ' + nome : nome} in pausa: il browser chiede di nuovo il permesso.`,
       errore: `Backup ${nome.startsWith('«') ? 'in ' + nome : nome} non riuscito: ${esc(errore)}`,
@@ -3156,8 +3183,6 @@ function disegnaBuilder() {
 
   <div class="plate card bpasso">
     <div class="card-h"><span class="disc">1</span><h3>Richieste d'esempio</h3></div>
-    <p class="card-d">Scrivi o prendi dalla lista una o più richieste per cui vuoi questo protocollo. Il builder ne ricava i
-      termini: <b>clic su un termine</b> per usarlo o toglierlo. Gli esempi non vengono salvati.</p>
     <div class="esempi">${esempi.map((e, j) => `
       <div class="esempio">
         <div class="es-campi">
@@ -3179,8 +3204,6 @@ function disegnaBuilder() {
 
   <div class="plate card bpasso">
     <div class="card-h"><span class="disc">2</span><h3>Come si riconosce</h3></div>
-    <p class="card-d">Questi termini decidono quando il telefono proporrà il protocollo come opzione personale.
-      Puoi aggiungerne altri a mano.</p>
     ${htmlTermini(bozza)}
   </div>
 
@@ -3253,8 +3276,7 @@ function aggiornaBuilder() {
       <div><b>${esiti.filter(x => x.ok).length}/${esiti.length}</b><span>esempi riconosciuti</span></div>
       <div><b>${pazienti.length ? passano : '—'}</b><span>${pazienti.length ? 'pazienti in lista con questa opzione' : 'nessuna lista caricata'}</span></div>
     </div>
-    <p class="muted" style="font-size:.78rem;margin-top:14px">I protocolli personali hanno la precedenza sugli ufficiali:
-      il telefono lo proporrà per primo, con l'ufficiale come alternativa.</p>`;
+`;
 }
 
 collegaModulo(bRad, () => bozza, r => r ? disegnaBuilder() : aggiornaBuilder());
