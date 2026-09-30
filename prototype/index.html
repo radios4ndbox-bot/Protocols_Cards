@@ -418,7 +418,10 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 .prof-nome{width:100%;height:40px;padding:0 12px;border:1px solid var(--border);border-radius:10px;
   background:var(--surface2);font:inherit;font-size:14px;font-weight:600;color:var(--text)}
 .prof-nome:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-s)}
-.prof-az{display:flex;gap:8px;margin-top:11px}
+.prof-az{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
+.pa-drive{display:block;width:100%;margin-top:14px;padding:8px;border:0;background:none;
+  color:var(--accent-d);font:inherit;font-size:13px;font-weight:700;text-decoration:underline;cursor:pointer}
+.pa-drive[hidden]{display:none}
 .prof-tit{display:flex;gap:4px;padding:3px;border-radius:11px;background:var(--surface2);border:1px solid var(--border)}
 .prof-tit button{flex:1;height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;
   font-weight:700;color:var(--muted);cursor:pointer}
@@ -445,6 +448,8 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 .mask{position:fixed;inset:0;z-index:70;background:rgba(21,35,63,.42);backdrop-filter:blur(3px);
   display:none;align-items:center;justify-content:center;padding:24px}
 .mask.open{display:flex;animation:fade .18s}
+/* la conferma sta sopra ogni altra finestra: annullando si torna a quella sotto */
+#mask{z-index:75}
 @keyframes fade{from{opacity:0}}
 .modal{width:100%;max-width:340px;background:var(--surface);border-radius:17px;padding:20px;
   box-shadow:var(--sh-l);animation:up .24s cubic-bezier(.32,.72,0,1)}
@@ -622,7 +627,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
   </div>
   <div class="ab-sp"></div>
   <button class="ico" id="btnTrash" aria-label="Cestino">🗑<b id="trashN" style="display:none">0</b></button>
-  <button class="ico" id="btnSet" aria-label="Impostazioni">⚙</button>
+  <button class="ico" id="btnSet" aria-label="Impostazioni">⚙<b id="setN" style="display:none" title="Backup su Drive da aggiornare">!</b></button>
 </div>
 
 <!-- ══ BOARD ══ -->
@@ -694,6 +699,10 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     <div class="sec-t">Il tuo profilo</div>
     <div id="profBox"></div>
     <input type="file" id="profFile" accept=".json,application/json" hidden>
+  </div>
+  <div class="blk">
+    <div class="sec-t">Backup su Google Drive</div>
+    <div id="driveBox"></div>
   </div>
   <div class="blk">
     <div class="sec-t">Collegamento al PC <span class="sp"></span><span id="pcN"></span></div>
@@ -846,6 +855,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
       <button type="button" data-t="" class="on">Nessuno</button></div>
     <div class="modal-a"><button class="mb-no" id="paDopo">Più tardi</button>
       <button class="mb-yes safe" id="paCrea">Crea profilo</button></div>
+    <button class="pa-drive" id="paDrive" hidden>Hai già un profilo? Recuperalo da Google Drive</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1050,6 +1060,7 @@ function learn(p){
       esame:p.esame, quesito:p.quesito, idr:p.idr, giKg:p.giKg,
       count:1, lastUsed:Date.now(), created:Date.now() };
   persist();
+  pianificaDrive();                      // gli appresi sono parte del profilo
 }
 
 /* ═══ BOOT ═══════════════════════════════════════════════ */
@@ -1112,7 +1123,7 @@ function show(v){
   else { T.textContent='Cestino'; S.textContent=''; }
 
   if(v==='board')    renderBoard();
-  if(v==='settings'){ renderSettings(); renderProfilo(); renderPc(); }
+  if(v==='settings'){ renderSettings(); renderProfilo(); renderPc(); Drive.disegna(); }
   if(v==='trash')    renderTrash();
 }
 $('navBack').onclick = () => { if(!busy) show('board'); };
@@ -1893,7 +1904,9 @@ const Archivio = (() => {
   }
   return { prepara, scrivi, leggi, stato:() => stato, persistente:() => persistente };
 })();
-function salvaProfilo(p){ save('profilo', p); Archivio.scrivi(p); costruisciProtocolli(); }
+function salvaProfilo(p){ save('profilo', p); Archivio.scrivi(p); costruisciProtocolli(); pianificaDrive(); }
+/* il modulo Drive è più in basso: all'avvio può non esserci ancora */
+function pianificaDrive(){ try{ Drive.pianifica(); }catch(_){} }
 
 function mioProfilo(){
   if(!profilo || !RE_PROF.test(profilo.id || '')){
@@ -1993,10 +2006,34 @@ function renderProfilo(){
   $('profImporta').onclick = () => $('profFile').click();
 }
 
+/* il profilo come file: per «Esporta» e per il backup su Drive. Mai la
+   chiave di abbinamento. Nel cloud gli appresi vanno senza il testo del
+   quesito: restano esame e firma, che bastano a riconoscere il caso.   */
+function datiProfilo(perCloud = false){
+  const p = mioProfilo();
+  const app = perCloud
+    ? Object.fromEntries(Object.entries(learned).map(([k, v]) => [k, { ...v, quesito:'' }]))
+    : learned;
+  return { app:'Protocol Cards', tipo:'profilo', v:2, esportato:new Date().toISOString(),
+    id:p.id, nome:p.nome, cognome:p.cognome, titolo:p.titolo, aggiornato:p.aggiornato, personali:p.personali, appresiTelefono:app };
+}
+const profiloValido = j => !!j && j.app==='Protocol Cards' && j.tipo==='profilo' && RE_PROF.test(j.id || '') && Array.isArray(j.personali);
+/* sostituisce il profilo di questo telefono con uno letto da file o da Drive */
+function applicaProfilo(j){
+  if(j.cognome===undefined){ const parti = String(j.nome || '').trim().split(/\s+/); j.nome = parti.shift() || ''; j.cognome = parti.join(' '); }
+  const app = j.appresiTelefono && typeof j.appresiTelefono==='object' ? j.appresiTelefono : null;
+  /* versione nuova: al prossimo collegamento il PC la prende */
+  profilo = { id:j.id, nome:String(j.nome || '').slice(0,40), cognome:String(j.cognome || '').slice(0,40),
+              titolo:TITOLI.includes(j.titolo) ? j.titolo : '', personali:j.personali, aggiornato:Date.now() };
+  if(app){ learned = app; persist(); }
+  salvaProfilo(profilo); Archivio.prepara();
+  if(view==='settings'){ renderSettings(); renderProfilo(); }
+  inviaProfilo();
+}
+
 function esportaProfilo(){
   const p = mioProfilo();
-  const dati = { app:'Protocol Cards', tipo:'profilo', v:2, esportato:new Date().toISOString(),
-    id:p.id, nome:p.nome, cognome:p.cognome, titolo:p.titolo, aggiornato:p.aggiornato, personali:p.personali, appresiTelefono:learned };
+  const dati = datiProfilo();
   const chi = [p.nome, p.cognome].filter(Boolean).join(' ') || 'senza-nome';
   const nome = `profilo-protocol-cards-${chi.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-')}.json`;
   const blob = new Blob([JSON.stringify(dati, null, 1)], { type:'application/json' });
@@ -2014,26 +2051,210 @@ $('profFile').onchange = async e => {
   const f = e.target.files[0]; e.target.value = '';
   if(!f) return;
   let j;
-  try{
-    j = JSON.parse(await f.text());
-    if(j.app!=='Protocol Cards' || j.tipo!=='profilo' || !RE_PROF.test(j.id || '') || !Array.isArray(j.personali)) throw 0;
-  }catch(_){ return toast('Non è un profilo di Protocol Cards'); }
-  if(j.cognome===undefined){ const parti = String(j.nome || '').trim().split(/\s+/); j.nome = parti.shift() || ''; j.cognome = parti.join(' '); }
-  const app = j.appresiTelefono && typeof j.appresiTelefono==='object' ? j.appresiTelefono : null;
-  const chi = nomeCortese(j) || 'senza nome';
+  try{ j = JSON.parse(await f.text()); if(!profiloValido(j)) throw 0; }
+  catch(_){ return toast('Non è un profilo di Protocol Cards'); }
+  const n = j.appresiTelefono && typeof j.appresiTelefono==='object' ? Object.keys(j.appresiTelefono).length : 0;
+  const chi = nomeCortese(j.cognome===undefined ? { nome:j.nome } : j) || 'senza nome';
   ask('Importare il profilo?',
     `«${chi}»: ${j.personali.length} protocolli personali`
-    + (app ? ` e ${Object.keys(app).length} appresi sul telefono` : '') + '. Sostituiscono il profilo di questo telefono.',
-    'Importa', () => {
-      /* versione nuova: al prossimo collegamento il PC la prende */
-      profilo = { id:j.id, nome:String(j.nome || '').slice(0,40), cognome:String(j.cognome || '').slice(0,40),
-                  titolo:TITOLI.includes(j.titolo) ? j.titolo : '', personali:j.personali, aggiornato:Date.now() };
-      if(app){ learned = app; persist(); }
-      salvaProfilo(profilo); Archivio.prepara();
-      renderSettings(); renderProfilo(); inviaProfilo();
-      toast('Profilo importato');
-    }, true);
+    + (n ? ` e ${n} appresi sul telefono` : '') + '. Sostituiscono il profilo di questo telefono.',
+    'Importa', () => { applicaProfilo(j); toast('Profilo importato'); }, true);
 };
+
+/* ═══ BACKUP SU GOOGLE DRIVE ═════════════════════════════
+   Una copia del profilo nel Drive dell'operatore, nella cartella nascosta
+   riservata all'app (appDataFolder, permesso drive.appdata): Protocol
+   Cards vede solo quel file, e il file non compare fra i documenti.
+   Nel file: nome, titolo, personali, appresi senza il testo del quesito.
+   Mai dati dei pazienti, mai la chiave di abbinamento.
+
+   L'accesso a Google vale un'ora e si chiede con un tocco (il browser
+   apre la finestra di Google solo dopo un gesto). Finché vale, ogni
+   modifica al profilo va su Drive da sola; dopo, il backup resta in
+   sospeso: pallino sulle impostazioni e «Aggiorna backup» con un tocco.
+   Su un telefono nuovo, al primo accesso, «Recuperalo da Google Drive». */
+const DRIVE_CLIENT_ID = '';     // ID client OAuth «Applicazione web» del progetto Google Cloud
+const Drive = (() => {
+  const SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+  const FILE = 'protocol-cards-profilo.json';
+  const API = 'https://www.googleapis.com';
+  const GIORNO = 24*60*60*1000;
+  let st = load('drive', null);            // { fileId, email, ultimo, sospeso }
+  let token = null, scade = 0, client = null, attesa = null, timer = null, caricando = null;
+  const idClient = () => DRIVE_CLIENT_ID || window.__driveClientId || '';
+  const configurato = () => !!idClient();
+  const valido = () => !!token && Date.now() < scade - 60000;
+  const salva = () => { save('drive', st); badge(); };
+
+  /* la libreria di Google si carica solo se il backup è configurato */
+  function libreria(){
+    if(window.google && google.accounts && google.accounts.oauth2) return Promise.resolve();
+    if(caricando) return caricando;
+    return caricando = new Promise((ok, ko) => {
+      const sc = document.createElement('script');
+      sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true;
+      sc.onload = () => ok(); sc.onerror = () => { caricando = null; ko(new Error('Google non raggiungibile')); };
+      document.head.appendChild(sc);
+    });
+  }
+  function prepara(){
+    if(!configurato() || client) return;
+    libreria().then(() => {
+      client = google.accounts.oauth2.initTokenClient({ client_id:idClient(), scope:SCOPE,
+        callback: r => {
+          const a = attesa; attesa = null;
+          if(!a) return;
+          if(r && r.access_token){ token = r.access_token; scade = Date.now() + (+r.expires_in || 3600)*1000; a.ok(); }
+          else a.ko(new Error(r && r.error ? 'accesso negato' : 'accesso non riuscito'));
+        },
+        error_callback: e => { const a = attesa; attesa = null; if(a) a.ko(new Error(e && e.type==='popup_closed' ? 'finestra chiusa' : 'accesso non riuscito')); },
+      });
+    }).catch(() => {});
+  }
+  /* va chiamata dentro un tocco: apre la finestra di Google se serve */
+  function accedi(){
+    if(valido()) return Promise.resolve();
+    if(!client){ prepara(); return Promise.reject(new Error('Google non ancora pronto: riprova fra un attimo')); }
+    return new Promise((ok, ko) => { attesa = { ok, ko }; client.requestAccessToken({ prompt: st ? '' : 'consent' }); });
+  }
+  async function api(percorso, opz = {}){
+    const r = await fetch(API + percorso, { ...opz, headers:{ Authorization:'Bearer ' + token, ...(opz.headers || {}) } });
+    if(r.status === 401){ token = null; throw new Error('accesso a Google scaduto'); }
+    if(!r.ok) throw new Error('Drive: HTTP ' + r.status);
+    return r;
+  }
+  async function trova(){
+    const q = encodeURIComponent(`name='${FILE}'`);
+    const j = await (await api(`/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,modifiedTime)&orderBy=modifiedTime desc`)).json();
+    return (j.files || [])[0] || null;
+  }
+  async function leggi(id){ return (await api(`/drive/v3/files/${encodeURIComponent(id)}?alt=media`)).json(); }
+  async function scrivi(){
+    const corpo = JSON.stringify(datiProfilo(true));
+    let id = st && st.fileId;
+    if(id){
+      try{ await api(`/upload/drive/v3/files/${encodeURIComponent(id)}?uploadType=media`,
+             { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body:corpo }); }
+      catch(e){ if(!/HTTP 404/.test(e.message)) throw e; id = null; }     // tolto da Drive: si ricrea
+    }
+    if(!id){
+      const b = 'pc' + Math.random().toString(36).slice(2);
+      const meta = JSON.stringify({ name:FILE, parents:['appDataFolder'], mimeType:'application/json' });
+      const multi = `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n`
+                  + `--${b}\r\nContent-Type: application/json\r\n\r\n${corpo}\r\n--${b}--`;
+      const j = await (await api('/upload/drive/v3/files?uploadType=multipart&fields=id',
+        { method:'POST', headers:{ 'Content-Type':`multipart/related; boundary=${b}` }, body:multi })).json();
+      id = j.id;
+    }
+    st = { ...(st || {}), fileId:id, ultimo:Date.now(), sospeso:false }; salva();
+  }
+  async function email(){
+    try{ const j = await (await api('/drive/v3/about?fields=user(emailAddress)')).json();
+         return (j.user && j.user.emailAddress) || ''; }catch(_){ return ''; }
+  }
+
+  /* ogni modifica al profilo: su Drive poco dopo, se l'accesso vale */
+  function pianifica(){
+    if(!st) return;
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if(!valido()){ st.sospeso = true; salva(); disegna(); return; }
+      try{ await scrivi(); }catch(_){ st.sospeso = true; salva(); }
+      disegna();
+    }, 2500);
+  }
+  const daAggiornare = () => !!st && (st.sospeso || Date.now() - (st.ultimo || 0) > GIORNO);
+  function badge(){ const b = $('setN'); if(b) b.style.display = daAggiornare() ? '' : 'none'; }
+
+  /* collegamento: se su Drive c'è un profilo e questo telefono è vuoto,
+     si propone di recuperarlo; altrimenti parte subito la copia        */
+  async function collega(){
+    try{
+      await accedi();
+      const f = await trova();
+      st = { ...(st || {}), fileId:f ? f.id : null, email:await email() }; salva();
+      const p = mioProfilo();
+      if(f && !p.nome && !p.cognome && !p.personali.length){
+        const j = await leggi(f.id);
+        if(profiloValido(j)){ recuperaDa(j); return; }
+      }
+      await scrivi(); toast('Backup su Google Drive attivo');
+    }catch(e){ toast('Google Drive: ' + e.message); }
+    disegna();
+  }
+  function recuperaDa(j){
+    const n = j.personali.length;
+    ask('Recuperare il profilo da Drive?', `«${nomeCortese(j) || 'senza nome'}»: ${n} protocoll${n===1?'o':'i'} personal${n===1?'e':'i'}`
+      + (j.aggiornato ? `, salvato il ${new Date(j.aggiornato).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}` : '')
+      + '. Sostituisce il profilo di questo telefono.', 'Recupera', () => {
+        applicaProfilo(j); $('primoAccesso').classList.remove('open');
+        toast(`Profilo recuperato: ${nomeCortese(profilo) || 'senza nome'}`); disegna();
+      }, true);
+  }
+  async function recupera(){
+    try{
+      await accedi();
+      const f = await trova();
+      if(!st){ st = { fileId:f ? f.id : null, email:await email() }; salva(); }
+      if(!f) return toast('Su questo account Google non c\'è un profilo di Protocol Cards');
+      const j = await leggi(f.id);
+      if(!profiloValido(j)) return toast('Il file su Drive non è un profilo leggibile');
+      recuperaDa(j);
+    }catch(e){ toast('Google Drive: ' + e.message); }
+  }
+  async function aggiorna(){
+    try{ await accedi(); await scrivi(); toast('Backup aggiornato su Google Drive'); }
+    catch(e){ toast('Google Drive: ' + e.message); }
+    disegna();
+  }
+  function scollega(){
+    ask('Scollegare Google Drive?', 'Il telefono smette di copiare il profilo su Drive. La copia già salvata resta nel tuo Drive e si può recuperare collegandolo di nuovo.',
+      'Scollega', () => {
+        try{ if(token && window.google) google.accounts.oauth2.revoke(token, () => {}); }catch(_){}
+        token = null; st = null; save('drive', null); badge(); disegna(); toast('Google Drive scollegato');
+      });
+  }
+
+  function disegna(){
+    badge();
+    $('paDrive').hidden = !configurato();
+    const box = $('driveBox'); if(!box || view!=='settings') return;
+    const quando = t => new Date(t).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    if(!configurato()){
+      box.innerHTML = `<div class="item"><div class="item-s">Non ancora attivo in questa versione dell'app: serve
+        l'ID client di Google del progetto. Intanto «Esporta profilo» salva una copia a mano.</div></div>`;
+      return;
+    }
+    prepara();
+    if(!st){
+      box.innerHTML = `<div class="item"><div class="item-n">Nessun backup</div>
+        <div class="item-s">Collega il tuo Google Drive: il profilo si copia da solo in una cartella nascosta
+        riservata all'app, e su un telefono nuovo lo recuperi con un tocco. Niente dati dei pazienti.</div>
+        <div class="prof-az"><button class="mini-b" id="drvCollega">Collega Google Drive</button>
+          <button class="mini-b" id="drvRecupera">Recupera da Drive</button></div></div>`;
+      $('drvCollega').onclick = collega; $('drvRecupera').onclick = recupera;
+      return;
+    }
+    const stato = !st.ultimo ? 'nessuna copia ancora'
+      : daAggiornare() ? `da aggiornare · ultima copia ${quando(st.ultimo)}` : `aggiornato · ${quando(st.ultimo)}`;
+    box.innerHTML = `<div class="item"><div class="item-h"><div style="min-width:0;flex:1">
+        <div class="item-n">Google Drive · ${esc(stato)}</div>
+        <div class="item-s">${st.email ? esc(st.email) + ' · ' : ''}${valido() ? 'copia automatica attiva' : 'la copia automatica riparte con «Aggiorna backup»'}</div>
+      </div><button class="mini-b" id="drvOff">Scollega</button></div>
+      <div class="prof-az"><button class="mini-b" id="drvAggiorna">Aggiorna backup</button>
+        <button class="mini-b" id="drvRecupera">Recupera da Drive</button></div></div>`;
+    $('drvAggiorna').onclick = aggiorna; $('drvRecupera').onclick = recupera; $('drvOff').onclick = scollega;
+  }
+
+  /* Google si contatta solo se serve: backup attivo, o profilo ancora da
+     creare (al primo accesso si può recuperare da Drive)              */
+  { const p = load('profilo', null);
+    if(configurato() && (st || !p || (!p.nome && !p.cognome))) prepara(); }
+  badge();
+  return { pianifica, disegna, recupera, prepara, configurato };
+})();
+$('paDrive').onclick = () => Drive.recupera();
+Drive.disegna();
 
 /* se la memoria rapida dell'app si è svuotata, il profilo torna dalla sua cartella */
 if(!load('profilo', null)){
