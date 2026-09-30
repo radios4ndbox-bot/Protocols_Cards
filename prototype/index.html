@@ -2073,7 +2073,7 @@ $('profFile').onchange = async e => {
    modifica al profilo va su Drive da sola; dopo, il backup resta in
    sospeso: pallino sulle impostazioni e «Aggiorna backup» con un tocco.
    Su un telefono nuovo, al primo accesso, «Recuperalo da Google Drive». */
-const DRIVE_CLIENT_ID = '';     // ID client OAuth «Applicazione web» del progetto Google Cloud
+const DRIVE_CLIENT_ID = '709205755015-ivqd4id8i4t50r4v1a6n9u08vn92v35c.apps.googleusercontent.com';     // ID client OAuth «Applicazione web» del progetto Google Cloud
 const Drive = (() => {
   const SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
   const FILE = 'protocol-cards-profilo.json';
@@ -2081,7 +2081,11 @@ const Drive = (() => {
   const GIORNO = 24*60*60*1000;
   let st = load('drive', null);            // { fileId, email, ultimo, sospeso }
   let token = null, scade = 0, client = null, attesa = null, timer = null, caricando = null;
-  const idClient = () => DRIVE_CLIENT_ID || window.__driveClientId || '';
+  /* Google accetta l'ID solo dall'origine autorizzata nel progetto: da una
+     copia locale il backup resta spento. I test lo impostano a mano.   */
+  const ORIGINE = 'https://radios4ndbox-bot.github.io';
+  const idClient = () => '__driveClientId' in window ? window.__driveClientId
+                       : location.origin === ORIGINE ? DRIVE_CLIENT_ID : '';
   const configurato = () => !!idClient();
   const valido = () => !!token && Date.now() < scade - 60000;
   const salva = () => { save('drive', st); badge(); };
@@ -2221,8 +2225,8 @@ const Drive = (() => {
     const box = $('driveBox'); if(!box || view!=='settings') return;
     const quando = t => new Date(t).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     if(!configurato()){
-      box.innerHTML = `<div class="item"><div class="item-s">Non ancora attivo in questa versione dell'app: serve
-        l'ID client di Google del progetto. Intanto «Esporta profilo» salva una copia a mano.</div></div>`;
+      box.innerHTML = `<div class="item"><div class="item-s">Disponibile solo nell'app pubblicata
+        (${ORIGINE.replace('https://', '')}). Intanto «Esporta profilo» salva una copia a mano.</div></div>`;
       return;
     }
     prepara();

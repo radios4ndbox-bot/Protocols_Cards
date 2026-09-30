@@ -51,7 +51,7 @@ async function api(route) {
   const errs = [];
   const telefono = async (idClient = 'test.apps.googleusercontent.com') => {
     const c = await b.newContext({ viewport: { width: 412, height: 915 }, reducedMotion: 'reduce', hasTouch: true, isMobile: true });
-    if (idClient) await c.addInitScript(id => { window.__driveClientId = id; }, idClient);
+    await c.addInitScript(id => { window.__driveClientId = id; }, idClient);
     await c.route('https://accounts.google.com/gsi/client', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: GSI }));
     await c.route('https://www.googleapis.com/**', api);
     await c.route('https://ntfy.sh/**', r => r.abort());
@@ -61,12 +61,12 @@ async function api(route) {
     return p;
   };
 
-  console.log('── SENZA ID CLIENT ─────────────────────');
+  console.log('── FUORI DALL\'APP PUBBLICATA ──────────');
   let t = await telefono('');
   ok('primo accesso: nessun «Recupera da Drive»', await t.locator('#paDrive').isHidden());
   await t.locator('#paDopo').click();
   await t.locator('#btnSet').click(); await t.waitForTimeout(300);
-  ok('impostazioni: backup non ancora attivo', /Non ancora attivo/.test(await t.locator('#driveBox').textContent()));
+  ok('impostazioni: backup non disponibile', /Disponibile solo nell'app pubblicata/.test(await t.locator('#driveBox').textContent()));
   ok('Google non viene contattato', await t.evaluate(() => !window.google));
   await t.context().close();
 

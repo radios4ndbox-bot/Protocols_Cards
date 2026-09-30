@@ -122,9 +122,11 @@ abbinamento. Il token di Google resta solo in memoria.
   Drive»; oppure «Recupera da Drive» nelle impostazioni.
 - **Scollega** revoca l'accesso; la copia su Drive resta.
 
-Per attivarlo serve un ID client OAuth di Google, da mettere in
-`DRIVE_CLIENT_ID` in `prototype/index.html`. Finché è vuoto l'app non contatta
-Google e la sezione dice che il backup non è ancora attivo.
+L'ID client OAuth di Google è in `DRIVE_CLIENT_ID` in `prototype/index.html`
+(progetto Google Cloud «Protocol Cards», app in test: accedono solo gli utenti di
+test aggiunti nel progetto). Google lo accetta solo dall'origine autorizzata,
+`https://radios4ndbox-bot.github.io`: da una copia locale il backup resta spento
+e l'app non contatta Google. Per ricrearlo:
 
 1. [console.cloud.google.com](https://console.cloud.google.com): nuovo progetto,
    per esempio «Protocol Cards».
