@@ -10,6 +10,12 @@
 <meta name="theme-color" content="#f2f6fd">
 <meta name="author" content="StructuRad · RadioPako">
 <meta name="copyright" content="© 2026 StructuRad. All rights reserved. Powered by RadioPako.">
+<!-- icone: il marchio StructuRad (sorgenti in brand/, rigenerate con brand/genera-icone.js) -->
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Protocol Cards">
 <title>Protocol Cards</title>
 <style>
 /* ═══════════════════════════════════════════════════════════
@@ -112,17 +118,24 @@ button,input,select,textarea{font-family:inherit}
    poi l'app entra dal taglio opposto. Tocco per saltare; con «riduci
    movimento» non c'è.                                                 */
 #apertura{position:fixed;inset:0;z-index:5000;perspective:1400px}
+/* Fluidità: tutto si muove solo con transform e opacity, su due livelli
+   leggeri. Il logo parte quando l'app ha finito di caricarsi (classe
+   .pronto), non mentre il telefono è ancora occupato; l'alone è un
+   gradiente fermo, non un filtro da ricalcolare a ogni fotogramma.
+   Girato il dorso, il fondo sfuma mentre entrano le schede: l'app non
+   ruota più per intero (era il passaggio più pesante).                */
 .ap-dorso{position:absolute;inset:0;display:grid;place-items:center;transform-origin:50% 50%;
-  background:radial-gradient(120% 80% at 50% 40%,#12324A 0%,#0A1A2B 70%);
-  box-shadow:inset 0 0 0 2px rgba(63,214,198,.55);backface-visibility:hidden}
-.ap-dorso svg{width:58%;max-width:280px;height:auto;opacity:0;transform:scale(.92);
-  filter:drop-shadow(0 6px 22px rgba(63,214,198,.3));
-  animation:apLogo .6s cubic-bezier(.22,1,.36,1) .12s forwards}
+  background:radial-gradient(42% 26% at 50% 50%,rgba(63,214,198,.16),transparent 70%),
+             radial-gradient(120% 80% at 50% 40%,#12324A 0%,#0A1A2B 70%);
+  box-shadow:inset 0 0 0 2px rgba(63,214,198,.55);backface-visibility:hidden;will-change:transform}
+.ap-dorso svg{width:58%;max-width:280px;height:auto;opacity:0;transform:scale(.92);will-change:transform,opacity}
+#apertura.pronto .ap-dorso svg{animation:apLogo .6s cubic-bezier(.22,1,.36,1) forwards}
 @keyframes apLogo{to{opacity:1;transform:none}}
 #apertura.gira .ap-dorso{animation:apGira var(--t-meta,380ms) cubic-bezier(.55,0,.85,.35) forwards}
 @keyframes apGira{to{transform:rotateY(90deg)}}
-body.svela{animation:apSvela var(--t-meta,380ms) cubic-bezier(.15,.65,.45,1) both}
-@keyframes apSvela{from{transform:perspective(1400px) rotateY(-90deg)}}
+#apertura.svela{pointer-events:none;animation:apVia .26s ease-out forwards;will-change:opacity}
+#apertura.svela .ap-dorso{visibility:hidden}
+@keyframes apVia{to{opacity:0}}
 @media (prefers-reduced-motion: reduce){#apertura{display:none}}
 
 /* ═══ BOARD ═══════════════════════════════════════════ */
@@ -362,8 +375,10 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 
 .calc{margin-top:10px;padding:14px;background:var(--surface);border:1px solid var(--border);
   border-radius:12px;box-shadow:var(--sh)}
-.calc-out{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.calc-v{font-size:27px;font-weight:800;letter-spacing:-1px;color:var(--accent-d);
+.calc-out{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.calc-k{display:flex;flex-direction:column;gap:5px;padding:10px 12px;border-radius:10px;background:var(--accent-s)}
+.calc-l{font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.calc-v{font-size:30px;font-weight:800;letter-spacing:-1px;color:var(--accent-d);
   font-variant-numeric:tabular-nums;line-height:1}
 .calc-u{font-size:12px;font-weight:650;color:var(--muted)}
 .calc-tot{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.5}
@@ -374,7 +389,17 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 .par{display:flex;align-items:center;gap:10px;padding:5px 0}
 .par-l{flex:1;min-width:0}
 .par-n{font-size:12.5px;font-weight:650}
-.par-s{font-size:10px;color:var(--muted);margin-top:2px}
+.par-u{width:34px;font-size:11px;font-weight:650;color:var(--muted)}
+.calc-ag{flex:0 0 52%;width:52%;min-width:0;height:38px}
+.calc-dose{display:flex;align-items:center;gap:8px;width:100%;margin-top:8px;padding:9px 0 2px;border:0;
+  border-top:1px solid var(--border);background:none;font:inherit;font-size:11.5px;color:var(--muted);text-align:left;cursor:pointer}
+.calc-dose #cDoseT{flex:1;min-width:0}
+.calc-dose b{color:var(--text)}
+.calc-dose .mod{color:var(--st-todo-t);font-weight:700}
+.calc-dose-a{font-weight:700;color:var(--accent-d)}
+.calc-dose-p[hidden]{display:none}
+.calc.vuoto .calc-out,.calc.vuoto .calc-hr,.calc.vuoto .par,.calc.vuoto .calc-dose,.calc.vuoto .calc-dose-p{display:none}
+.calc.vuoto .calc-tot{margin:0;text-align:center;font-size:12px}
 .step{display:flex;align-items:center;flex-shrink:0;border:1px solid var(--border);
   border-radius:10px;overflow:hidden;background:var(--surface)}
 .step button{width:36px;height:36px;border:none;background:var(--surface2);color:var(--accent-d);
@@ -675,8 +700,35 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
       <input type="time" id="nOra">
     </div>
     <div>
-      <label class="fld-l" for="nEsame">Esame richiesto</label>
-      <input type="text" id="nEsame" placeholder="TC ENCEFALO SENZA MDC" autocomplete="off">
+      <label class="fld-l" for="nEsameSel">Esame richiesto</label>
+      <!-- le richieste più frequenti in pronto soccorso; «Altro» per scriverla -->
+      <select class="dd" id="nEsameSel">
+        <option value="">Scegli l'esame…</option>
+        <optgroup label="Encefalo e collo">
+          <option>TC ENCEFALO SENZA MDC</option>
+          <option>TC ENCEFALO CON E SENZA MDC</option>
+          <option>TC ENCEFALO + ANGIO TC VASI INTRACRANICI E DEL COLLO</option>
+          <option>TC RACHIDE CERVICALE SENZA MDC</option>
+        </optgroup>
+        <optgroup label="Torace">
+          <option>TC TORACE SENZA MDC</option>
+          <option>TC TORACE CON MDC</option>
+          <option>ANGIO TC TORACE - ARTERIE POLMONARI</option>
+        </optgroup>
+        <optgroup label="Addome">
+          <option>TC ADDOME COMPLETO SENZA MDC</option>
+          <option>TC ADDOME COMPLETO CON MDC</option>
+          <option>URO TC</option>
+        </optgroup>
+        <optgroup label="Più distretti">
+          <option>TC TORACE ADDOME CON MDC</option>
+          <option>ANGIO TC AORTA TORACO-ADDOMINALE</option>
+          <option>TC TOTAL BODY CON MDC</option>
+        </optgroup>
+        <option value="*">Altro: scrivi la richiesta…</option>
+      </select>
+      <input type="text" id="nEsame" placeholder="TC ENCEFALO SENZA MDC" autocomplete="off" hidden
+        style="margin-top:8px" aria-label="Esame richiesto">
       <div class="f-err" id="eEsame">Campo obbligatorio</div>
     </div>
     <div>
@@ -820,36 +872,46 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     </div>
     <div class="sec">
       <div class="sec-t">Mezzo di contrasto</div>
-      <div class="fld nolabel"><select class="dd" id="ddAgent"></select></div>
+      <!-- in alto quello che serve in sala: volume e flusso; sotto peso e mezzo,
+           la dose del protocollo si apre solo se va cambiata               -->
       <div class="calc">
         <div class="calc-out">
-          <span class="calc-v" id="cVol">—</span><span class="calc-u" id="cVolU"></span>
-          <span class="calc-v" id="cFlow" style="margin-left:auto"></span>
-          <span class="calc-u" id="cFlowU"></span>
+          <div class="calc-k"><span class="calc-l">Volume</span>
+            <span><span class="calc-v" id="cVol">—</span> <span class="calc-u" id="cVolU"></span></span></div>
+          <div class="calc-k"><span class="calc-l">Flusso</span>
+            <span><span class="calc-v" id="cFlow">—</span> <span class="calc-u" id="cFlowU"></span></span></div>
         </div>
-        <div class="calc-tot" id="cTot">aggiungi una fase con contrasto</div>
+        <div class="calc-tot" id="cTot">nessuna fase con contrasto</div>
         <div class="calc-warn" id="cWarn"></div>
         <div class="calc-hr"></div>
         <div class="par">
-          <div class="par-l"><div class="par-n">Peso paziente</div>
-            <div class="par-s">determina il volume totale</div></div>
-          <div class="step"><button data-k="peso" data-d="-1">−</button>
-            <input type="number" id="pPeso" inputmode="numeric">
-            <button data-k="peso" data-d="1">+</button></div>
+          <div class="par-l"><div class="par-n">Peso</div></div>
+          <div class="step"><button data-k="peso" data-d="-1" aria-label="Meno un chilo">−</button>
+            <input type="number" id="pPeso" inputmode="numeric" aria-label="Peso in kg">
+            <button data-k="peso" data-d="1" aria-label="Più un chilo">+</button></div>
+          <span class="par-u">kg</span>
         </div>
         <div class="par">
-          <div class="par-l"><div class="par-n">Iodio · gI/kg</div>
-            <div class="par-s" id="sIodio">—</div></div>
-          <div class="step"><button data-k="giKg" data-d="-0.01">−</button>
-            <input type="number" id="pGiKg" inputmode="decimal" step="0.01">
-            <button data-k="giKg" data-d="0.01">+</button></div>
+          <div class="par-l"><div class="par-n">Mezzo</div></div>
+          <select class="dd calc-ag" id="ddAgent" aria-label="Mezzo di contrasto"></select>
         </div>
-        <div class="par">
-          <div class="par-l"><div class="par-n">IDR · gI/s</div>
-            <div class="par-s" id="sIdr">—</div></div>
-          <div class="step"><button data-k="idr" data-d="-0.1">−</button>
-            <input type="number" id="pIdr" inputmode="decimal" step="0.1">
-            <button data-k="idr" data-d="0.1">+</button></div>
+        <button class="calc-dose" id="cDoseBtn" aria-expanded="false" aria-controls="cDose">
+          <span id="cDoseT">Dose del protocollo</span><span class="calc-dose-a">Modifica</span></button>
+        <div class="calc-dose-p" id="cDose" hidden>
+          <div class="par">
+            <div class="par-l"><div class="par-n">Iodio</div></div>
+            <div class="step"><button data-k="giKg" data-d="-0.01" aria-label="Meno">−</button>
+              <input type="number" id="pGiKg" inputmode="decimal" step="0.01" aria-label="Iodio in gI/kg">
+              <button data-k="giKg" data-d="0.01" aria-label="Più">+</button></div>
+            <span class="par-u">gI/kg</span>
+          </div>
+          <div class="par">
+            <div class="par-l"><div class="par-n">IDR</div></div>
+            <div class="step"><button data-k="idr" data-d="-0.1" aria-label="Meno">−</button>
+              <input type="number" id="pIdr" inputmode="decimal" step="0.1" aria-label="IDR in gI/s">
+              <button data-k="idr" data-d="0.1" aria-label="Più">+</button></div>
+            <span class="par-u">gI/s</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1101,7 +1163,7 @@ function impostaSessione(s){
 }
 
 AGENTS.forEach(a => { const o=document.createElement('option');
-  o.value=a.id; o.textContent=`${a.l} — ${it(a.c,2)} gI/ml`; $('ddAgent').appendChild(o); });
+  o.value=a.id; o.textContent=a.l; $('ddAgent').appendChild(o); });
 /* l'elenco dei protocolli: personali e ufficiali, rifatto a ogni sincronizzazione */
 function riempiProto(){
   const dd = $('ddProto'); if(!dd) return;
@@ -1219,13 +1281,14 @@ function shrink(el, pre){
 
 /* comparsa scaglionata dall'alto verso il basso, e inversa in chiusura */
 function staggerIn(nodes, step=38){
+  /* un solo ricalcolo per tutte le schede, non uno per scheda */
   nodes.forEach((n,i) => {
     n.classList.remove('out','go');
     n.classList.add('rise');
     n.style.animationDelay = (i*step)+'ms';
-    void n.offsetWidth;
-    n.classList.add('go');
   });
+  if(nodes.length) void nodes[0].offsetWidth;
+  nodes.forEach(n => n.classList.add('go'));
   setTimeout(() => nodes.forEach(n => {
     n.classList.remove('rise','go'); n.style.animationDelay='';
   }), (nodes.length-1)*step + 440);
@@ -1322,13 +1385,22 @@ function refreshCounts(){
 }
 
 /* ═══ GESTI ══════════════════════════════════════════════ */
+/* Un tocco apre la scheda solo se è davvero un tocco: non mentre la lista
+   scorre (il tocco che ferma lo scorrimento non apre), non se la lista si
+   è mossa nel frattempo, non se il browser ha preso il gesto per scorrere
+   (pointercancel), non se il dito è rimasto giù a lungo.               */
+let ultimoScroll = 0;
+document.addEventListener('scroll', () => { ultimoScroll = performance.now(); }, { capture:true, passive:true });
 function bindGestures(slot){
   const card = slot.querySelector('.card-mini');
   let x0=0,y0=0,dx=0,dy=0,dragging=false,decided=false,active=false;
+  let t0=0, scorreva=false, vista=null, top0=0;
   card.addEventListener('pointerdown', e => {
     if(e.pointerType==='mouse' && e.button!==0) return;
     active=true; decided=false; dragging=false;
     x0=e.clientX; y0=e.clientY; dx=0; dy=0; card.style.transition='none';
+    t0=performance.now(); scorreva = t0 - ultimoScroll < 350;
+    vista = card.closest('.view'); top0 = vista ? vista.scrollTop : 0;
   });
   card.addEventListener('pointermove', e => {
     if(!active) return;
@@ -1345,7 +1417,7 @@ function bindGestures(slot){
       slot.classList.toggle('swiping', Math.abs(t)>26);
     }
   });
-  const end = () => {
+  const end = e => {
     if(!active) return;
     active=false; card.style.transition=''; card.style.transform='';
     const moved=Math.abs(dx);
@@ -1357,7 +1429,9 @@ function bindGestures(slot){
         p.stato='done'; toast('Esame completato');
       }
       slot.dataset.state=p.stato; refreshCounts(); persist();
-    } else if(!dragging && moved<9 && Math.abs(dy)<9){
+    } else if(!dragging && moved<9 && Math.abs(dy)<9 && e.type==='pointerup' && !scorreva
+              && performance.now()-t0 < 600 && (!vista || Math.abs(vista.scrollTop-top0) < 2)
+              && performance.now()-ultimoScroll > 120){
       open(slot.dataset.id, card);
     }
     slot.classList.remove('swiping'); dragging=false;
@@ -1426,6 +1500,8 @@ function fill(){
   $('notes').value = cur.note; autoGrow($('notes')); countNotes();
   $('ddAgent').value = cur.agent || agent;
   $('pPeso').value = cur.peso; $('pGiKg').value = cur.giKg; $('pIdr').value = cur.idr;
+  $('cDose').hidden = true; $('cDoseBtn').setAttribute('aria-expanded', false);
+  $('cDoseBtn').querySelector('.calc-dose-a').textContent = 'Modifica';
   $('ddPhase').value=''; pick=[];
   syncZone(); syncHint(); renderRows();
 }
@@ -1523,11 +1599,16 @@ function renderRows(){
 function calc(){
   const ag = AGENTS.find(a=>a.id===(cur.agent||agent)) || AGENTS[0];
   const conMdc = cur.fasi.some(f => PH[f.fase].mdc);
-  $('sIodio').textContent = `${it(cur.giKg,2)} × ${cur.peso} kg = ${it(cur.giKg*cur.peso)} gI`;
-  $('sIdr').textContent   = `${it(cur.idr)} ÷ ${it(ag.c,2)} gI/ml = ${it(cur.idr/ag.c)} ml/s`;
+  /* la dose viene dal protocollo: si segnala solo se è stata cambiata */
+  const pr = PROTOCOLS[cur.proto];
+  const mod = pr && (Math.abs(pr.giKg-cur.giKg) > 1e-9 || Math.abs(pr.idr-cur.idr) > 1e-9);
+  $('cDoseT').innerHTML = `Dose <b>${it(cur.giKg,2)}</b> gI/kg · IDR <b>${it(cur.idr)}</b> gI/s`
+    + (mod ? ' <span class="mod">· modificata</span>' : '');
+  /* senza contrasto non c'è niente da calcolare: si mostra solo questo */
+  document.querySelector('.calc').classList.toggle('vuoto', !conMdc);
   if(!conMdc || !cur.giKg){
     $('cVol').textContent='—'; $('cVolU').textContent='';
-    $('cFlow').textContent=''; $('cFlowU').textContent='';
+    $('cFlow').textContent='—'; $('cFlowU').textContent='';
     $('cTot').textContent = conMdc ? 'protocollo senza somministrazione di iodio'
                                    : 'nessuna fase con contrasto';
     $('cWarn').classList.remove('show'); return;
@@ -1535,9 +1616,7 @@ function calc(){
   const gi=cur.giKg*cur.peso, vol=gi/ag.c, flow=cur.idr/ag.c;
   $('cVol').textContent=Math.round(vol);  $('cVolU').textContent='ml';
   $('cFlow').textContent=it(flow);        $('cFlowU').textContent='ml/s';
-  $('cTot').innerHTML = `<b>${it(gi)} gI</b> totali · ${ag.l} a ${it(ag.c,2)} gI/ml<br>`
-    + `volume = ${it(cur.giKg,2)} gI/kg × ${cur.peso} kg ÷ ${it(ag.c,2)} · `
-    + `flusso = IDR ${it(cur.idr)} ÷ ${it(ag.c,2)}`;
+  $('cTot').textContent = `${it(gi)} gI di iodio · ${ag.l}, ${it(ag.c,2)} gI/ml`;
   const w=[];
   if(vol>150) w.push(`Volume elevato (${Math.round(vol)} ml): verifica peso e indicazione.`);
   if(flow>5)  w.push(`Flusso ${it(flow)} ml/s: richiede accesso venoso adeguato (≥18G).`);
@@ -1554,14 +1633,28 @@ function setPar(k,v){
   $({peso:'pPeso',giKg:'pGiKg',idr:'pIdr'}[k]).value = dec?v.toFixed(dec):v;
   calc();
 }
+/* − e +: un tocco cambia di un passo, tenendo premuto continua */
 document.querySelectorAll('.step button').forEach(b => {
-  b.onclick = () => { if(cur) setPar(b.dataset.k, cur[b.dataset.k]+parseFloat(b.dataset.d)); };
+  let t = null;
+  const passo = () => { if(cur) setPar(b.dataset.k, cur[b.dataset.k]+parseFloat(b.dataset.d)); };
+  const ferma = () => { clearTimeout(t); clearInterval(t); t = null; };
+  b.addEventListener('pointerdown', e => {
+    e.preventDefault(); passo(); ferma();
+    t = setTimeout(() => { t = setInterval(passo, 70); }, 420);
+  });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev => b.addEventListener(ev, ferma));
+  b.addEventListener('click', e => { if(e.detail === 0) passo(); });   // da tastiera
 });
 [['pPeso','peso'],['pGiKg','giKg'],['pIdr','idr']].forEach(([id,k]) => {
   $(id).oninput  = e => { const v=parseFloat(e.target.value); if(!isNaN(v)&&cur){cur[k]=v;calc();} };
   $(id).onchange = e => { const v=parseFloat(e.target.value);
                           if(cur) setPar(k, isNaN(v)?LIM[k][0]:v); };
 });
+$('cDoseBtn').onclick = () => {
+  const apri = $('cDose').hidden;
+  $('cDose').hidden = !apri; $('cDoseBtn').setAttribute('aria-expanded', apri);
+  $('cDoseBtn').querySelector('.calc-dose-a').textContent = apri ? 'Chiudi' : 'Modifica';
+};
 $('ddAgent').onchange = e => { cur.agent=e.target.value; agent=e.target.value; calc(); persist(); };
 
 /* ═══ CLINICA ════════════════════════════════════════════ */
@@ -1682,17 +1775,24 @@ $('btnNew').onclick = () => {
   const n=new Date();
   $('nNome').value=''; $('nNasc').value=''; $('nPeso').value='';
   $('nOra').value = selDate===TODAY ? `${pad(n.getHours())}:${pad(n.getMinutes())}` : '08:00';
-  $('nEsame').value=''; $('nQ').value='';
-  ['nNome','nEsame'].forEach(i=>$(i).classList.remove('err'));
+  $('nEsame').value=''; $('nQ').value=''; $('nEsameSel').value=''; $('nEsame').hidden=true;
+  ['nNome','nEsame','nEsameSel'].forEach(i=>$(i).classList.remove('err'));
   ['eNome','eEsame'].forEach(i=>$(i).classList.remove('show'));
   $('ncSub').textContent = `Inserimento manuale · seduta di emergenza del ${dmy(selDate)}.`;
   show('newcard');
 };
 $('ncCancel').onclick = () => show('board');
+$('nEsameSel').onchange = e => {
+  const altro = e.target.value==='*';
+  $('nEsame').hidden = !altro;
+  if(altro) $('nEsame').focus();
+  e.target.classList.remove('err'); $('eEsame').classList.remove('show');
+};
+const esameNuovo = () => ($('nEsameSel').value==='*' ? $('nEsame').value : $('nEsameSel').value).trim().toUpperCase();
 $('ncCreate').onclick = () => {
-  const nome=$('nNome').value.trim().toUpperCase(), esame=$('nEsame').value.trim().toUpperCase();
+  const nome=$('nNome').value.trim().toUpperCase(), esame=esameNuovo();
   let bad=false;
-  [[nome,'nNome','eNome'],[esame,'nEsame','eEsame']].forEach(([v,i,e]) => {
+  [[nome,'nNome','eNome'],[esame,$('nEsameSel').value==='*'?'nEsame':'nEsameSel','eEsame']].forEach(([v,i,e]) => {
     $(i).classList.toggle('err',!v); $(e).classList.toggle('show',!v); if(!v) bad=true;
   });
   if(bad){ toast('Compila i campi obbligatori'); return; }
@@ -2493,22 +2593,24 @@ function apertura(){
   const META = 380;                                   // ogni metà del giro
   const fondo = getComputedStyle(document.body).backgroundColor;
   ap.style.background = fondo;                        // dietro la carta, il fondo dell'app
-  document.documentElement.style.background = fondo;
   ap.style.setProperty('--t-meta', META+'ms');
-  document.body.style.setProperty('--t-meta', META+'ms');
-  let girata = false;
+  let girata = false, attesa = null;
   const gira = () => {
     if(girata) return; girata = true; clearTimeout(attesa);
     ap.classList.add('gira');
     setTimeout(() => {
-      ap.remove();
-      document.body.classList.add('svela');
+      /* il fondo sfuma sull'app ferma, e le schede entrano insieme */
+      ap.classList.add('svela');
       if(view==='board' && sessione) staggerIn(boardNodes());
-      setTimeout(() => { document.body.classList.remove('svela'); document.documentElement.style.background=''; primoAccesso(); }, META);
+      setTimeout(() => { ap.remove(); primoAccesso(); }, 280);
     }, META);
   };
-  const attesa = setTimeout(gira, 1100);
   ap.addEventListener('click', gira);
+  /* il logo parte a caricamento finito: due fotogrammi dopo l'avvio */
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ap.classList.add('pronto');
+    attesa = setTimeout(gira, 1000);
+  }));
 }
 setInterval(() => { cambioGiorno(); purge(); if(view==='trash') renderTrash(); }, 60000);
 </script>

@@ -147,7 +147,9 @@ const ok = (etichetta, cond, extra = '') => {
   await p.locator('#nNome').fill('neri giorgio');
   await p.locator('#nNasc').fill('1962-04-11');
   await p.locator('#nPeso').fill('84');
-  await p.locator('#nEsame').fill('tc addome completo con mdc');
+  ok('esame da tendina: richieste frequenti del pronto soccorso', await p.locator('#nEsameSel option').count() >= 12);
+  await p.locator('#nEsameSel').selectOption('TC ADDOME COMPLETO CON MDC');
+  ok('senza «Altro» il campo libero resta nascosto', await p.locator('#nEsame').isHidden());
   await p.locator('#nQ').fill('Sospetta diverticolite complicata');
   await p.locator('#ncCreate').click(); await p.waitForTimeout(500);
   ok('scheda creata', await p.locator('.card-mini').count() === 4);
