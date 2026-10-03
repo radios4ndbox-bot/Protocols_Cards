@@ -102,6 +102,14 @@ button,input,select,textarea{font-family:inherit}
 .h2{font-size:18px;font-weight:750;letter-spacing:-.3px;margin-bottom:4px}
 .p{font-size:12px;color:var(--muted);line-height:1.55}
 .blk{margin-top:22px}
+.zona-velo{position:fixed;inset:0;z-index:4500;display:grid;place-items:center;padding:28px;background:var(--bg)}
+.zona-velo[hidden]{display:none}
+.zv-box{max-width:320px;text-align:center}
+.zv-ico{width:64px;height:64px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;
+  font-size:30px;color:var(--accent-d);background:var(--accent-s)}
+.zona-velo.fuori .zv-ico{color:var(--danger);background:#fde8e6}
+.zv-box h3{font-size:18px;font-weight:750;margin-bottom:8px}
+.zv-box p{font-size:13px;color:var(--text2);line-height:1.55;margin-bottom:18px}
 .info details{border-top:1px solid var(--border)}
 .info details:last-child{border-bottom:1px solid var(--border)}
 .info summary{cursor:pointer;padding:12px 2px;font-size:13px;font-weight:700;color:var(--text);list-style:none;
@@ -455,6 +463,8 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 .pa-drive{display:block;width:100%;margin-top:14px;padding:8px;border:0;background:none;
   color:var(--accent-d);font:inherit;font-size:13px;font-weight:700;text-decoration:underline;cursor:pointer}
 .pa-drive[hidden]{display:none}
+.zona-az{align-items:center}
+.zona-az .zona-r{width:auto;flex:0 0 auto;height:30px;padding:0 28px 0 10px;font-size:12px;border-radius:9px}
 .prof-tit{display:flex;gap:4px;padding:3px;border-radius:11px;background:var(--surface2);border:1px solid var(--border)}
 .prof-tit button{flex:1;height:34px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;
   font-weight:700;color:var(--muted);cursor:pointer}
@@ -482,7 +492,7 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
   display:none;align-items:center;justify-content:center;padding:24px}
 .mask.open{display:flex;animation:fade .18s}
 /* la conferma sta sopra ogni altra finestra: annullando si torna a quella sotto */
-#mask{z-index:75}
+#mask{z-index:4600}
 @keyframes fade{from{opacity:0}}
 .modal{width:100%;max-width:340px;background:var(--surface);border-radius:17px;padding:20px;
   box-shadow:var(--sh-l);animation:up .24s cubic-bezier(.32,.72,0,1)}
@@ -528,6 +538,17 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 </style>
 </head>
 <body>
+
+<!-- ══ ZONA OSPEDALE: copre le schede finché la posizione non dice «in ospedale» ══ -->
+<div class="zona-velo" id="zonaVelo" role="alertdialog" aria-modal="true" aria-labelledby="zvTit" hidden>
+  <div class="zv-box">
+    <div class="zv-ico" aria-hidden="true">⌖</div>
+    <h3 id="zvTit">Verifico la posizione…</h3>
+    <p id="zvTesto"></p>
+    <button class="btn-prim" id="zvAzione" hidden></button>
+    <button class="btn-ghost" id="zvEsci" hidden style="margin-top:10px">Disattiva la zona e cancella le schede</button>
+  </div>
+</div>
 
 <!-- ══ APERTURA: il dorso della carta, che si gira sulla seduta ══ -->
 <div id="apertura" aria-hidden="true"><div class="ap-dorso">
@@ -755,6 +776,10 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     <input type="file" id="profFile" accept=".json,application/json" hidden>
   </div>
   <div class="blk">
+    <div class="sec-t">Zona ospedale</div>
+    <div id="zonaBox"></div>
+  </div>
+  <div class="blk">
     <div class="sec-t">Backup su Google Drive</div>
     <div id="driveBox"></div>
   </div>
@@ -787,6 +812,14 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         i tuoi file. Niente dati dei pazienti, e degli appresi non va il testo del quesito. L'accesso a Google
         vale un'ora: dopo, il pallino sulle impostazioni ricorda di aggiornare il backup con un tocco. Su un
         telefono nuovo il profilo si recupera al primo accesso.</p></details>
+    <details><summary>Zona ospedale</summary>
+      <p>Con la zona attiva le schede dei pazienti si vedono solo in ospedale. A ogni apertura dell'app le
+        schede restano coperte finché la posizione non conferma che sei nella zona; mentre l'app è aperta
+        la posizione si controlla di continuo. Se risulti fuori, le schede vengono cancellate da questo
+        telefono e le liste del PC non entrano finché non torni.</p>
+      <p>Il telefono non può controllare la posizione quando l'app è chiusa: il controllo avviene alla
+        riapertura, prima di mostrare qualsiasi scheda. Se la posizione non è disponibile le schede restano
+        nascoste, senza essere cancellate. La posizione resta sul telefono: non viene inviata a nessuno.</p></details>
     <details><summary>Cestino</summary>
       <p>Le schede nel cestino vengono eliminate definitivamente 24 ore dopo la chiusura della giornata.</p></details>
   </div>
@@ -1209,7 +1242,7 @@ function show(v){
   else { T.textContent='Cestino'; S.textContent=''; }
 
   if(v==='board')    renderBoard();
-  if(v==='settings'){ renderSettings(); renderProfilo(); renderPc(); Drive.disegna(); }
+  if(v==='settings'){ renderSettings(); renderProfilo(); renderPc(); Drive.disegna(); Zona.disegna(); }
   if(v==='trash')    renderTrash();
 }
 $('navBack').onclick = () => { if(!busy) show('board'); };
@@ -2450,6 +2483,9 @@ async function avviaPc(){
           personali:PERS.length }).catch(()=>{});
         return;
       }
+      /* fuori dalla zona dell'ospedale le liste non entrano: non vengono
+         segnate come ricevute, così arrivano quando si torna dentro      */
+      if(Zona.blocca()) return;
       let lista;
       try{ lista = aggiungi(m); }
       catch(_){ return toast('Lista dal PC incompleta: rinviala dal PC'); }
@@ -2501,6 +2537,149 @@ function dispositivo(){
            : /FxiOS|Firefox\//.test(u) ? 'Firefox' : /Safari\//.test(u) ? 'Safari' : 'browser';
   return `${so} · ${br}`;
 }
+
+/* ═══ ZONA OSPEDALE ══════════════════════════════════════
+   I dati dei pazienti non devono uscire dall'ospedale. Con la zona
+   attiva (centro e raggio impostati qui, una volta, stando in ospedale):
+     · all'apertura e a ogni ritorno nell'app le schede restano coperte
+       finché la posizione non conferma «dentro»;
+     · con l'app aperta la posizione si segue di continuo;
+     · se risulta «fuori», schede e cestino si cancellano subito, e le
+       liste del PC non entrano finché non si torna;
+     · se la posizione non arriva (permesso negato, niente segnale) le
+       schede restano coperte, senza cancellarle.
+   L'incertezza del GPS conta: «fuori» solo se lo è anche tolto
+   l'errore dichiarato, «dentro» se il centro è nel raggio più l'errore
+   (fino a 150 m). Un'app web non può controllare la posizione quando è
+   chiusa: per questo il controllo è all'apertura, prima di mostrare
+   qualsiasi scheda. La posizione non lascia il telefono.            */
+const Zona = (() => {
+  let cfg = load('zona', null);               // { lat, lon, raggio, impostata }
+  let stato = 'spento', watch = null, attesa = null, ultima = null, giro = null;
+  const attiva = () => !!(cfg && isFinite(cfg.lat) && isFinite(cfg.lon) && cfg.raggio > 0);
+  const geo = () => 'geolocation' in navigator;
+  function distanza(a, b){                     // metri, haversine
+    const R = 6371000, r = x => x * Math.PI / 180;
+    const dLat = r(b.lat - a.lat), dLon = r(b.lon - a.lon);
+    const h = Math.sin(dLat/2)**2 + Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLon/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+  function velo(tipo){
+    const v = $('zonaVelo'), b = $('zvAzione');
+    v.classList.toggle('fuori', tipo==='fuori');
+    if(!tipo){ v.hidden = true; return; }
+    const T = {
+      verifica:['Verifico la posizione…', 'Le schede si vedono solo in ospedale.', null],
+      ignota:  ['Posizione non disponibile', 'Le schede restano nascoste finché il telefono non conferma di essere in ospedale. Controlla che la posizione sia attiva.', 'Riprova'],
+      negata:  ['Serve la posizione', 'Per mostrare le schede il telefono deve sapere di essere in ospedale. Consenti la posizione a questa app nelle impostazioni del browser.', 'Riprova'],
+      fuori:   ['Sei fuori dall\'ospedale', 'Le schede dei pazienti sono state cancellate da questo telefono. Le liste del PC torneranno a entrare quando sarai di nuovo in ospedale.', 'Ho capito'],
+    }[tipo];
+    $('zvTit').textContent = T[0]; $('zvTesto').textContent = T[1];
+    b.hidden = !T[2]; b.textContent = T[2] || '';
+    b.onclick = tipo==='fuori' ? () => { save('zonaFuori', null); velo(null); } : () => { velo('verifica'); segui(); };
+    /* senza posizione si può uscire dal blocco, ma solo cancellando le schede */
+    const esci = $('zvEsci');
+    esci.hidden = !(tipo==='ignota' || tipo==='negata');
+    esci.onclick = () => ask('Disattivare la zona?', 'Le schede dei pazienti vengono cancellate da questo telefono, poi la zona si disattiva.',
+      'Cancella e disattiva', () => { ferma(); cfg = null; save('zona', null); save('zonaFuori', null); state = []; trash = []; persist(); location.reload(); });
+    v.hidden = false;
+  }
+  function cancellaSchede(){
+    state = []; trash = []; persist();
+    save('zonaFuori', Date.now());
+    location.reload();                          // si riparte puliti, senza schede in memoria
+  }
+  function valuta(pos){
+    clearTimeout(attesa);
+    const p = { lat:pos.coords.latitude, lon:pos.coords.longitude };
+    const acc = Math.max(0, +pos.coords.accuracy || 0);
+    const d = distanza(cfg, p);
+    ultima = { d:Math.round(d), acc:Math.round(acc), quando:Date.now() };
+    if(d - acc > cfg.raggio){
+      const prima = stato; stato = 'fuori';
+      if(state.length || trash.length) return cancellaSchede();
+      if(prima !== 'fuori'){ save('zonaFuori', Date.now()); velo('fuori'); }   // l'avviso una volta sola
+    } else if(d <= cfg.raggio + Math.min(acc, 150)){
+      stato = 'dentro'; save('zonaFuori', null); velo(null);
+    }                                            // altrimenti incerto: si resta come si è
+    if(view==='settings') disegna();
+  }
+  function errore(e){
+    if(stato==='dentro' || stato==='fuori') return;   // un errore passeggero non cambia nulla
+    stato = e && e.code===1 ? 'negata' : 'ignota';
+    velo(stato);
+    if(view==='settings') disegna();
+  }
+  function ferma(){ if(watch!==null){ navigator.geolocation.clearWatch(watch); watch = null; } clearTimeout(attesa); clearInterval(giro); }
+  function segui(){
+    if(!attiva()) return;
+    ferma();
+    if(!geo()){ stato = 'ignota'; return velo('ignota'); }
+    if(stato!=='fuori') stato = 'verifica';
+    watch = navigator.geolocation.watchPosition(valuta, errore, { enableHighAccuracy:true, maximumAge:30000, timeout:20000 });
+    /* su alcuni telefoni il «segui» si ferma senza dirlo: ogni 20 s si
+       rilegge la posizione comunque                                    */
+    giro = setInterval(() => navigator.geolocation.getCurrentPosition(valuta, () => {},
+      { enableHighAccuracy:true, maximumAge:10000, timeout:15000 }), 20000);
+    attesa = setTimeout(() => errore({ code:3 }), 15000);     // oltre, si dice che non arriva
+  }
+  /* uscendo dall'app le schede si coprono subito; rientrando si ricontrolla */
+  document.addEventListener('visibilitychange', () => {
+    if(!attiva()) return;
+    if(document.hidden){ ferma(); if(stato!=='fuori'){ stato = 'verifica'; velo('verifica'); } }
+    else segui();
+  });
+
+  function imposta(){
+    if(!geo()) return toast('Questo browser non dà la posizione');
+    toast('Leggo la posizione…', 4000);
+    navigator.geolocation.getCurrentPosition(pos => {
+      const acc = Math.round(pos.coords.accuracy || 0);
+      const raggio = +$('zonaRaggio').value || 500;
+      cfg = { lat:pos.coords.latitude, lon:pos.coords.longitude, raggio, impostata:Date.now() };
+      save('zona', cfg); stato = 'dentro'; save('zonaFuori', null);
+      ultima = { d:0, acc, quando:Date.now() };
+      segui(); disegna();
+      toast(acc > 150 ? `Zona attiva, ma la posizione è imprecisa (±${acc} m): riprova all'aperto o vicino a una finestra` : 'Zona ospedale attiva', 5000);
+    }, e => toast(e && e.code===1 ? 'Permesso di posizione negato' : 'Posizione non disponibile: riprova', 5000),
+       { enableHighAccuracy:true, maximumAge:0, timeout:20000 });
+  }
+  function disattiva(){
+    ask('Disattivare la zona ospedale?', 'Le schede resteranno visibili anche fuori dall\'ospedale.', 'Disattiva', () => {
+      ferma(); cfg = null; save('zona', null); save('zonaFuori', null); stato = 'spento'; velo(null); disegna();
+      toast('Zona ospedale disattivata');
+    });
+  }
+  function disegna(){
+    const box = $('zonaBox'); if(!box) return;
+    const raggi = [300, 500, 1000], scelto = attiva() ? cfg.raggio : 500;
+    const sel = `<select class="dd zona-r" id="zonaRaggio" aria-label="Raggio">${raggi.map(r =>
+      `<option value="${r}"${r===scelto?' selected':''}>${r < 1000 ? r + ' m' : r/1000 + ' km'}</option>`).join('')}</select>`;
+    if(!attiva()){
+      box.innerHTML = `<div class="item"><div class="item-n">Non attiva</div>
+        <div class="item-s">Le schede si vedono ovunque.</div>
+        <div class="prof-az zona-az">${sel}<button class="mini-b" id="zonaImposta">L'ospedale è qui: attiva</button></div></div>`;
+    } else {
+      const dove = { dentro:'sei in ospedale', fuori:'sei fuori', verifica:'verifica in corso', ignota:'posizione non disponibile', negata:'permesso di posizione negato' }[stato] || '';
+      box.innerHTML = `<div class="item"><div class="item-h"><div style="min-width:0;flex:1">
+          <div class="item-n">Attiva · ${dove}</div>
+          <div class="item-s">${ultima ? `a ${ultima.d} m dal centro (±${ultima.acc} m) · ` : ''}raggio ${cfg.raggio < 1000 ? cfg.raggio + ' m' : cfg.raggio/1000 + ' km'}</div>
+        </div><button class="mini-b" id="zonaOff">Disattiva</button></div>
+        <div class="prof-az zona-az">${sel}<button class="mini-b" id="zonaImposta">Reimposta qui</button></div></div>`;
+      $('zonaOff').onclick = disattiva;
+    }
+    $('zonaImposta').onclick = imposta;
+    $('zonaRaggio').onchange = e => { if(attiva()){ cfg.raggio = +e.target.value; save('zona', cfg); segui(); disegna(); } };
+  }
+
+  /* all'avvio: prima di mostrare le schede */
+  if(attiva()){
+    if(load('zonaFuori', null)){ stato = 'fuori'; velo('fuori'); }
+    else velo('verifica');
+    segui();
+  }
+  return { disegna, blocca:() => attiva() && stato!=='dentro', attiva };
+})();
 
 const PC_STATO = { connessione:'collegamento al relay…', aperto:'in ascolto',
   riconnessione:'rete assente, riprovo…', errore:'abbinamento non valido: rifallo dal PC',

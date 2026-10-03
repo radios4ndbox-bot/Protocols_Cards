@@ -152,6 +152,34 @@ e l'app non contatta Google. Per ricrearlo:
    un segreto: identifica l'app, e Google accetta richieste solo dalle origini
    autorizzate.
 
+## Zona ospedale (telefono)
+
+In Impostazioni → «Zona ospedale», stando in ospedale, «L'ospedale è qui: attiva»
+salva sul telefono il centro e il raggio (300 m, 500 m o 1 km). Da lì le schede
+dei pazienti si vedono solo dentro la zona:
+
+- all'apertura e a ogni ritorno nell'app restano coperte finché la posizione non
+  conferma «dentro»; con l'app aperta la posizione si segue di continuo, e si
+  rilegge comunque ogni 20 secondi;
+- se risulta «fuori» (anche tolto l'errore dichiarato dal GPS) schede e cestino si
+  cancellano subito e le liste del PC non entrano finché non si torna: non vengono
+  segnate come ricevute, quindi arrivano al rientro (il relay le tiene 12 ore);
+- se la posizione non arriva entro 15 secondi o il permesso è negato, le schede
+  restano coperte senza essere cancellate; si può disattivare la zona solo
+  cancellandole.
+
+Un'app web non può leggere la posizione quando è chiusa: il controllo avviene alla
+riapertura, prima di mostrare qualsiasi scheda. La posizione non lascia il
+telefono.
+
+## Icone
+
+Il marchio StructuRad sul dorso blu della carta. Sorgenti vettoriali in `brand/`
+(`icona.svg`, `icona-maskable.svg`, `favicon.svg` con le sole lettere SD); i PNG
+dell'app (192, 512, maskable, Apple, favicon 32) si rigenerano con
+`node brand/genera-icone.js`. Il tool PC ha la favicon incorporata, per restare un
+file unico; l'app ha il manifest per la schermata Home.
+
 ## Backup della libreria ufficiale
 
 La libreria ufficiale è del reparto e resta sul PC. Nelle impostazioni del
