@@ -25,22 +25,26 @@ const ok = (etichetta, cond, extra = '') => {
   await p.reload();
   await p.waitForTimeout(400);
 
-  console.log('── APERTURA: IL DORSO SI GIRA ──────────');
-  ok('dorso a tutto schermo all\'avvio', await p.evaluate(() => {
-    const r = document.querySelector('#apertura .ap-dorso').getBoundingClientRect();
-    return r.width >= 412 && r.height >= 915; }));
+  console.log('── APERTURA: LA CARTA SI GIRA ──────────');
+  ok('una carta al centro, con gli angoli arrotondati', await p.evaluate(() => {
+    const d = document.querySelector('#apertura .ap-dorso'), r = d.getBoundingClientRect();
+    return r.width > 200 && r.width < 412 && Math.abs(r.left + r.width / 2 - 206) < 30
+      && parseFloat(getComputedStyle(d).borderTopLeftRadius) >= 16; }));
+  ok('con uno spessore', await p.evaluate(() => document.querySelectorAll('#apertura .ap-bordo i').length >= 5
+    && getComputedStyle(document.querySelector('#apertura .ap-carta')).transformStyle === 'preserve-3d'));
+  ok('sul fronte il nome dell\'app', (await p.locator('#apertura .ap-fronte').textContent()).includes('Protocol Cards'));
   ok('con il marchio StructuRad', await p.locator('#apertura .ap-dorso svg path').count() > 10);
   ok('niente calendario né scelta della seduta',
      await p.locator('#calendar, #session, #tcEl, #tcEm').count() === 0);
   const giro = [];
-  for (let i = 0; i < 34; i++) {                      // ~2 s: attesa, giro, rimozione
+  for (let i = 0; i < 50; i++) {                      // ~3 s: entrata, giro, rimozione
     await p.waitForTimeout(60);
     giro.push(await p.evaluate(() => {
-      const d = document.querySelector('#apertura .ap-dorso');
+      const d = document.querySelector('#apertura .ap-carta');
       return d ? getComputedStyle(d).transform : 'tolto';
     }));
   }
-  ok('il dorso ruota di taglio', giro.some(t => t.startsWith('matrix3d')), giro.find(t => t.startsWith('matrix3d')) ? 'sì' : giro.join(' | ').slice(0, 80));
+  ok('la carta ruota in 3D', giro.some(t => t.startsWith('matrix3d')), giro.find(t => t.startsWith('matrix3d')) ? 'sì' : giro.join(' | ').slice(0, 80));
   ok('poi viene tolto', giro[giro.length - 1] === 'tolto');
   await p.waitForTimeout(800);
   ok('sotto c\'è la bacheca', await p.locator('#board:not(.hidden)').count() === 1);
@@ -62,10 +66,11 @@ const ok = (etichetta, cond, extra = '') => {
 
   console.log('\n── SCAGLIONAMENTO ──────────────────────');
   await p.reload();
-  await p.waitForTimeout(1100 + 380 + 60);             // attesa del dorso + prima metà del giro
+  await p.waitForFunction(() => { const a = document.getElementById('apertura'); return a && a.classList.contains('svela'); });
+  await p.waitForTimeout(60);
   const rit = await p.evaluate(() => [...document.querySelectorAll('#board .rise')]
     .map(x => Math.round(parseFloat(getComputedStyle(x).animationDelay) * 1000)));
-  ok('le schede entrano dall\'alto mentre la carta si gira', rit.length > 4 && rit.every((v, i) => i === 0 || v > rit[i-1]),
+  ok('le schede entrano dall\'alto mentre la carta sfuma', rit.length > 4 && rit.every((v, i) => i === 0 || v > rit[i-1]),
      rit.length + ' nodi');
   const passi = [...new Set(rit.slice(1).map((v, i) => v - rit[i]))];
   ok('passo costante', passi.length === 1, passi.join(',') + ' ms');
@@ -74,7 +79,7 @@ const ok = (etichetta, cond, extra = '') => {
   console.log('\n── UN TOCCO SALTA L\'ATTESA ─────────────');
   await p.reload(); await p.waitForTimeout(200);
   await p.locator('#apertura').click();
-  await p.waitForTimeout(900);
+  await p.waitForTimeout(1300);                       // giro (820 ms) e dissolvenza (300 ms)
   ok('la carta si è già girata', await p.locator('#apertura').count() === 0);
   await p.waitForTimeout(500);
 
