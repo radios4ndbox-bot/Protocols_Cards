@@ -32,7 +32,9 @@ const ok = (etichetta, cond, extra = '') => {
       && parseFloat(getComputedStyle(d).borderTopLeftRadius) >= 16; }));
   ok('con uno spessore', await p.evaluate(() => document.querySelectorAll('#apertura .ap-bordo i').length >= 5
     && getComputedStyle(document.querySelector('#apertura .ap-carta')).transformStyle === 'preserve-3d'));
-  ok('sul fronte il nome dell\'app', (await p.locator('#apertura .ap-fronte').textContent()).includes('Protocol Cards'));
+  ok('sul fronte la pagina in miniatura, con l\'intestazione dell\'app', await p.locator('#apertura .ap-fronte .ap-pagina .appbar h1').count() === 1);
+  ok('la copia non duplica gli id della pagina', await p.locator('#apertura [id]').count() === 0 || await p.evaluate(() =>
+     [...document.querySelectorAll('#apertura [id]')].every(e => document.querySelectorAll('#' + CSS.escape(e.id)).length === 1)));
   ok('il marchio è già stampato sul dorso', await p.evaluate(() => getComputedStyle(document.querySelector('#apertura .ap-dorso svg')).opacity === '1'));
   ok('con il marchio StructuRad', await p.locator('#apertura .ap-dorso svg path').count() > 10);
   ok('niente calendario né scelta della seduta',
@@ -67,15 +69,34 @@ const ok = (etichetta, cond, extra = '') => {
 
   console.log('\n── SCAGLIONAMENTO ──────────────────────');
   await p.reload();
-  await p.waitForFunction(() => { const a = document.getElementById('apertura'); return a && a.classList.contains('svela'); });
-  await p.waitForTimeout(60);
+  /* la carta si toglie nello stesso istante in cui i pazienti iniziano a entrare */
+  await p.waitForFunction(() => !document.getElementById('apertura'));
   const rit = await p.evaluate(() => [...document.querySelectorAll('#board .rise')]
     .map(x => Math.round(parseFloat(getComputedStyle(x).animationDelay) * 1000)));
-  ok('le schede entrano dall\'alto mentre la carta sfuma', rit.length > 4 && rit.every((v, i) => i === 0 || v > rit[i-1]),
+  ok('tolta la carta, le schede entrano dall\'alto', rit.length > 4 && rit.every((v, i) => i === 0 || v > rit[i-1]),
      rit.length + ' nodi');
   const passi = [...new Set(rit.slice(1).map((v, i) => v - rit[i]))];
   ok('passo costante', passi.length === 1, passi.join(',') + ' ms');
   await p.waitForTimeout(900);
+
+  console.log('\n── LA MINIATURA COINCIDE CON LA PAGINA ─');
+  /* la carta nello stato finale dell'allargamento: l'intestazione in
+     miniatura deve stare esattamente sopra quella vera                 */
+  await p.reload();
+  await p.waitForFunction(() => document.querySelector('#apertura .ap-pagina'));
+  const scarto = await p.evaluate(() => {
+    const ap = document.getElementById('apertura'); ap.classList.add('gira', 'espandi');
+    const sc = ap.querySelector('.ap-scena'), ca = ap.querySelector('.ap-carta');
+    sc.style.animation = 'none'; sc.style.opacity = '1';
+    sc.style.transform = `scale(${getComputedStyle(ap).getPropertyValue('--s-pieno')})`; ca.style.animation = 'none';
+    const mini = ap.querySelector('.ap-pagina .appbar');
+    const coppie = [[mini.querySelector('h1'), document.getElementById('abTitle')],
+                    [mini.querySelectorAll('.ico')[2], document.getElementById('btnSet')]];
+    return Math.max(...coppie.flatMap(([a, b]) => { const x = a.getBoundingClientRect(), y = b.getBoundingClientRect();
+      return [x.left - y.left, x.top - y.top, x.width - y.width, x.height - y.height].map(Math.abs); }));
+  });
+  ok('a fine allargamento l\'intestazione coincide al pixel', scarto < 0.5, scarto.toFixed(2) + ' px');
+  await p.reload(); await p.waitForFunction(() => !document.getElementById('apertura'), null, { timeout: 8000 });
 
   console.log('\n── UN TOCCO SALTA L\'ATTESA ─────────────');
   await p.reload(); await p.waitForTimeout(200);
