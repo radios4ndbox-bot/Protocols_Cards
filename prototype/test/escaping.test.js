@@ -18,6 +18,7 @@ let fail=0; const ok=(l,c,x='')=>{console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x
   await p.reload(); await p.waitForTimeout(350);
   await p.locator('#btnNew').click(); await p.waitForTimeout(350);
   await p.locator('#nNome').fill(veleno);
+  await p.locator('#nEsameSel').selectOption('*');
   await p.locator('#nEsame').fill('TC ENCEFALO '+veleno);
   await p.locator('#nQ').fill('Trauma cranico '+veleno);
   await p.locator('#ncCreate').click(); await p.waitForTimeout(600);
