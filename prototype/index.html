@@ -122,10 +122,11 @@ button,input,select,textarea{font-family:inherit}
 /* ═══ APERTURA ════════════════════════════════════════
    All'avvio una carta vera, al centro: angoli arrotondati, uno spessore
    che si vede quando ruota, un'ombra morbida sotto, il marchio
-   StructuRad già stampato sul dorso. Entra inclinata, si gira sul fronte
-   (del colore dell'app, con il nome), il fronte si allarga a tutto
-   schermo e poi compaiono i pazienti. Tocco per saltare; con «riduci
-   movimento» non c'è.
+   StructuRad già stampato sul dorso. Entra inclinata e si gira: il fronte
+   è la pagina dell'app in miniatura, con la sua intestazione già al
+   posto giusto. Il fronte si allarga finché la miniatura coincide al
+   pixel con la pagina vera, la carta si toglie e compaiono i pazienti:
+   nessuno stacco. Tocco per saltare; con «riduci movimento» non c'è.
 
    Leggerezza, perché su un telefono vero non scatti:
      · lo spessore sono cinque fette uguali (stessa forma, stessi angoli)
@@ -135,6 +136,9 @@ button,input,select,textarea{font-family:inherit}
      · l'ombra è un gradiente, non un filtro;
      · il collegamento al PC (cifratura e rete) parte a carta posata.  */
 #apertura{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;overflow:hidden}
+/* il «tavolo» è appena più scuro della pagina, così la carta si stacca;
+   mentre il fronte si allarga sfuma, e resta il colore della pagina     */
+.ap-tavolo{position:absolute;inset:0;background:rgba(10,26,43,.07)}
 .ap-scena{position:relative;width:min(62vw,290px);aspect-ratio:5/7;perspective:1000px;opacity:0}
 .ap-carta{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(10deg) rotateY(-16deg)}
 .ap-carta > div{position:absolute;inset:0;border-radius:22px}
@@ -145,11 +149,12 @@ button,input,select,textarea{font-family:inherit}
              radial-gradient(120% 80% at 50% 38%,#16405c 0%,#0A1A2B 72%);
   box-shadow:inset 0 0 0 2px rgba(63,214,198,.6),inset 0 0 0 9px #0A1A2B,inset 0 0 0 10px rgba(63,214,198,.22)}
 .ap-dorso svg{width:72%;height:auto}
-.ap-fronte{transform:rotateY(180deg) translateZ(2.5px);backface-visibility:hidden;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-  background:var(--ap-fondo,var(--bg));box-shadow:inset 0 0 0 1.5px var(--border)}
-.ap-nome{font-size:21px;font-weight:800;letter-spacing:-.4px;color:var(--text)}
-.ap-sotto{font-size:10.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent-d)}
+.ap-fronte{transform:rotateY(180deg) translateZ(2.5px);backface-visibility:hidden;overflow:hidden;
+  background:var(--ap-fondo,var(--bg))}
+.ap-fronte::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1.5px var(--border)}
+/* la pagina in miniatura: grande come lo schermo, rimpicciolita sulla carta */
+.ap-pagina{position:absolute;transform-origin:0 0;pointer-events:none}
+.ap-pagina .appbar{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--ap-fondo,var(--bg))}
 .ap-ombra{position:absolute;left:8%;right:8%;bottom:-9%;height:16%;border-radius:50%;opacity:0;
   background:radial-gradient(closest-side,rgba(10,26,43,.32),transparent)}
 /* entrata */
@@ -172,12 +177,11 @@ button,input,select,textarea{font-family:inherit}
 /* il fronte si allarga a tutto schermo: è del colore dell'app, quindi
    diventa la pagina; il nome e l'ombra intanto sfumano              */
 #apertura.espandi .ap-carta{transform:rotateY(180deg);animation:none}
-#apertura.espandi .ap-scena{animation:apEspandi var(--t-espandi,460ms) cubic-bezier(.65,0,.25,1) forwards}
-#apertura.espandi .ap-nome,#apertura.espandi .ap-sotto{animation:apVia .2s ease-out forwards}
-#apertura.espandi .ap-ombra{animation:apVia .2s ease-out forwards}
+#apertura.espandi .ap-scena{perspective:none;animation:apEspandi var(--t-espandi,460ms) cubic-bezier(.65,0,.25,1) forwards}
+#apertura.espandi .ap-ombra,#apertura.espandi .ap-tavolo,#apertura.espandi .ap-fronte::after{animation:apVia .25s ease-out forwards}
 @keyframes apEspandi{to{transform:scale(var(--s-pieno,3))}}
 @keyframes apVia{to{opacity:0}}
-#apertura.svela{pointer-events:none;animation:apVia .18s ease-out forwards}
+
 @media (prefers-reduced-motion: reduce){#apertura{display:none}}
 
 /* ═══ BOARD ═══════════════════════════════════════════ */
@@ -585,9 +589,9 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 </div>
 
 <!-- ══ APERTURA: il dorso della carta, che si gira sulla seduta ══ -->
-<div id="apertura" aria-hidden="true"><div class="ap-scena"><div class="ap-ombra"></div><div class="ap-carta">
+<div id="apertura" aria-hidden="true"><div class="ap-tavolo"></div><div class="ap-scena"><div class="ap-ombra"></div><div class="ap-carta">
 <div class="ap-bordo"><i style="--z:-2px"></i><i style="--z:-1px"></i><i style="--z:0px"></i><i style="--z:1px"></i><i style="--z:2px"></i></div>
-<div class="ap-fronte"><div class="ap-nome">Protocol Cards</div><div class="ap-sotto">CT Assistant</div></div>
+<div class="ap-fronte"></div>
 <div class="ap-dorso">
 <svg aria-hidden="true" version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 340.000000 192.000000"
@@ -2805,39 +2809,64 @@ show('board');
    l'apertura il telefono pensa solo all'animazione                     */
 apertura(avviaPc);
 
-/* la carta entra, si gira sul fronte, il fronte si allarga a tutto schermo
-   e diventa la pagina; poi entrano i pazienti. `dopo` parte a carta posata */
+/* la carta entra e si gira; il fronte è la pagina in miniatura e si
+   allarga finché coincide con quella vera; poi entrano i pazienti.
+   `dopo` parte a carta posata                                         */
 function apertura(dopo = () => {}){
   const ap = $('apertura');
   const fine = () => { primoAccesso(); dopo(); };
   if(!ap) return fine();
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){ ap.remove(); return fine(); }
-  const GIRO = 820, ESPANDI = 460;
+  const GIRO = 820, ESPANDI = 480;
   const fondo = getComputedStyle(document.body).backgroundColor;
   ap.style.background = fondo;                        // il tavolo è il fondo dell'app
   ap.style.setProperty('--ap-fondo', fondo);          // e il fronte della carta pure
   ap.style.setProperty('--t-giro', GIRO+'ms');
   ap.style.setProperty('--t-espandi', ESPANDI+'ms');
+  const scena = ap.querySelector('.ap-scena');
+
+  /* La miniatura: una pagina grande come lo schermo con la copia
+     dell'intestazione vera, alla stessa posizione, rimpicciolita di 1/s.
+     s è quanto il fronte deve crescere per coprire lo schermo; la zona
+     della carta che a quel punto coincide con lo schermo è centrata, e
+     lì sta la miniatura. Si prepara prima del giro, a scena ferma.      */
+  let s = 1;
+  function miniatura(){
+    const r = scena.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+    s = Math.max(W / r.width, H / r.height);
+    const pag = document.createElement('div'); pag.className = 'ap-pagina';
+    Object.assign(pag.style, { width:W+'px', height:H+'px', transform:`scale(${1/s})`,
+      left:((r.width - W/s) / 2)+'px', top:((r.height - H/s) / 2)+'px' });
+    const bar = document.querySelector('.appbar');
+    if(bar){
+      const b = bar.getBoundingClientRect(), copia = bar.cloneNode(true);
+      copia.removeAttribute('id'); copia.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+      Object.assign(copia.style, { position:'absolute', left:b.left+'px', top:b.top+'px', width:b.width+'px', height:b.height+'px', margin:0 });
+      pag.appendChild(copia);
+    }
+    ap.querySelector('.ap-fronte').appendChild(pag);
+    ap.style.setProperty('--s-pieno', s.toFixed(4));
+  }
+
   let girata = false, attesa = null;
   const gira = () => {
     if(girata) return; girata = true; clearTimeout(attesa);
+    if(!ap.querySelector('.ap-pagina')) miniatura();
     ap.classList.add('gira');
     setTimeout(() => {
-      /* quanto ingrandire il fronte perché copra tutto lo schermo */
-      const r = ap.querySelector('.ap-scena').getBoundingClientRect();
-      ap.style.setProperty('--s-pieno', (Math.max(innerWidth / r.width, innerHeight / r.height) * 1.08).toFixed(3));
       ap.classList.add('espandi');
       setTimeout(() => {
-        /* il fronte ora è la pagina: via la carta, entrano i pazienti */
-        ap.classList.add('svela');
+        /* la miniatura ora coincide con la pagina: via la carta, nello
+           stesso fotogramma in cui i pazienti iniziano a entrare       */
         if(view==='board' && sessione) staggerIn(boardNodes());
-        setTimeout(() => { ap.remove(); fine(); }, 180);
-      }, ESPANDI);
+        ap.remove(); fine();
+      }, ESPANDI + 20);
     }, GIRO);
   };
   ap.addEventListener('click', gira);
   /* la carta entra a caricamento finito: due fotogrammi dopo l'avvio */
   requestAnimationFrame(() => requestAnimationFrame(() => {
+    miniatura();
     ap.classList.add('pronto');
     attesa = setTimeout(gira, 1100);
   }));
