@@ -227,6 +227,7 @@ main{padding:30px 0 60px}
 .chip.seduta.ps{background:var(--coral-s);color:var(--coral-ink)}
 .chip.giorno{background:var(--plate-2);color:var(--ink)}
 .chip.giorno.passata{background:var(--amber-s);color:var(--amber-ink)}
+.chip.giorno.plan{background:var(--jade-s);color:var(--jade-ink)}
 
 .tabwrap{border-radius:var(--r-md);box-shadow:var(--clay);overflow-x:auto;scrollbar-width:thin;
   background:linear-gradient(160deg,#FAFCFF,var(--plate) 46%,var(--plate-2))}
@@ -5221,15 +5222,18 @@ function giornata() {
   attivi().forEach(p => { if (RE_GG.test(p.data || '')) conta[p.data] = (conta[p.data] || 0) + 1; });
   const date = Object.keys(conta).sort((a, b) => conta[b] - conta[a] || isoGG(b).localeCompare(isoGG(a)));
   const d = date[0] || '';
-  return { d, diverse: date.length > 1, passata: !!d && isoGG(d) < oggiIso(), mancante: !d };
+  return { d, diverse: date.length > 1, passata: !!d && isoGG(d) < oggiIso(), mancante: !d,
+           futura: !!d && isoGG(d) > oggiIso() };           // planning: la lista di un giorno a venire
 }
 function disegnaSeduta() {
   const g = giornata(), c = $('chipSeduta'), cg = $('chipGiorno');
   c.textContent = nomeSeduta(); c.classList.toggle('ps', seduta === 'emergenza');
   const lbl = g.d ? new Date(isoGG(g.d) + 'T12:00').toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '';
-  cg.textContent = g.mancante ? 'giornata non riconosciuta' : lbl + (g.passata ? ' · giornata passata' : g.diverse ? ' · date diverse' : '');
+  cg.textContent = g.mancante ? 'giornata non riconosciuta' : lbl + (g.passata ? ' · giornata passata' : g.diverse ? ' · date diverse' : g.futura ? ' · planning' : '');
   cg.classList.toggle('passata', g.passata || g.mancante || g.diverse);
+  cg.classList.toggle('plan', g.futura && !g.diverse);
   cg.title = g.passata ? 'Il telefono non tiene le giornate passate: la lista verrebbe scartata.'
+           : g.futura && !g.diverse ? 'Planning: il telefono tiene la lista per quel giorno e la apre da sola il giorno degli esami. Sul telefono resta aperta la giornata di oggi.'
            : g.diverse ? 'Non tutti i pazienti sono dello stesso giorno: vale quello più frequente.'
            : g.mancante ? 'Nessuna data d\'esame nel PDF: il telefono userà la data di oggi.' : '';
 }
@@ -5378,7 +5382,8 @@ function disegnaRete() {
   $('reteInvia').hidden = !a;
   $('reteAccedi').hidden = !!a;
   if (!reteInvio) $('reteInvia').disabled = !attivi().length;
-  $('reteInvia').textContent = a && conNome(profilo) ? `Invia la lista a ${nomeCortese(profilo)}` : 'Invia la lista al telefono';
+  const cosa = pazienti.length && giornata().futura ? 'il planning' : 'la lista';
+  $('reteInvia').textContent = a && conNome(profilo) ? `Invia ${cosa} a ${nomeCortese(profilo)}` : `Invia ${cosa} al telefono`;
   $('reteScollega').hidden = !a && !inAbbinamento;
   $('reteScollega').textContent = inAbbinamento ? 'Annulla' : 'Esci';
   $('reteAbbina').textContent = a ? 'Accedi con un altro telefono' : 'Accedi';
@@ -5481,7 +5486,10 @@ $('reteInvia').onclick = async () => {
     await Canale.inviaLista(sess, 'pc', { corpo, z: metodo === 'deflate' ? 'deflate' : 'nessuna', id: invio.id },
       (i, n) => { if (reteInvio === invio) reteStato(n > 1 ? `Invio in corso: parte ${i} di ${n}…` : 'Invio in corso…'); });
     if (reteInvio !== invio) return;               // già confermata, o scollegato nel frattempo
-    reteStato(`Lista inviata, <b>${attivi().length} pazienti</b>. In attesa di conferma dal telefono:
+    reteStato(giornata().futura
+      ? `Planning inviato, <b>${attivi().length} pazienti</b>. In attesa di conferma: se l'app è chiusa
+         il telefono lo riceve all'apertura, purché entro 12 ore. Il giorno degli esami l'app si apre da sola su questa lista.`
+      : `Lista inviata, <b>${attivi().length} pazienti</b>. In attesa di conferma dal telefono:
       se l'app è chiusa la riceverà all'apertura, entro 12 ore.`);
   } catch (e) {
     reteInvio = null;

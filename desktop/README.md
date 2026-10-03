@@ -152,6 +152,23 @@ e l'app non contatta Google. Per ricrearlo:
    un segreto: identifica l'app, e Google accetta richieste solo dalle origini
    autorizzate.
 
+## Planning
+
+Si può importare la lista di un giorno a venire, per esempio quella di domani, e
+preparare i protocolli in anticipo: in verifica sul PC, oppure sul telefono.
+
+- **PC.** La giornata è quella del PDF: se è futura, la verifica la segna
+  «planning» e il tasto diventa «Invia il planning». Il telefono deve aprire l'app
+  entro 12 ore dall'invio (il relay non tiene i messaggi più a lungo).
+- **Telefono.** Se si sta lavorando sulla giornata di oggi, resta aperta: il
+  planning compare nel selettore delle giornate in cima alla bacheca («Oggi ·
+  Planning · dom 4 ott»). Le schede si possono già impostare; «Fine giornata» non
+  c'è finché la giornata non arriva.
+- **Il giorno degli esami** l'app si apre da sola su quella giornata, con le
+  schede e i protocolli già pronti, senza reimportare nulla. Se il PC rimanda la
+  lista quel giorno, le schede già impostate restano come sono e si aggiungono
+  solo i pazienti nuovi.
+
 ## Zona ospedale (telefono)
 
 In Impostazioni → «Zona ospedale», stando in ospedale, «L'ospedale è qui: attiva»

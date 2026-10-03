@@ -255,6 +255,39 @@ function paziente(i, data = OGGI.dmy) {
   const arrivate = await tel.evaluate(() => ['0D26090700', '0D26090701', '0D26090702'].map(id => (state.find(p => p.id === id) || {}).proto));
   ok('sul telefono la stessa scelta del PC', arrivate[0] == null && arrivate[1] === scelte[1] && arrivate[2] === scelte[2], arrivate.join());
 
+  console.log('\n── PLANNING ────────────────────────────');
+  const DOMANI = gg(1);
+  await pc.evaluate(lista => { seduta = 'elettiva'; pazienti = lista; vai(2); }, [paziente(800, DOMANI.dmy), paziente(801, DOMANI.dmy)]);
+  await pc.waitForTimeout(200);
+  ok('il PC riconosce il planning', /planning/.test(await pc.locator('#chipGiorno').textContent()), await pc.locator('#chipGiorno').textContent());
+  ok('«Invia il planning»', /Invia il planning/.test(await pc.locator('#reteInvia').textContent()), await pc.locator('#reteInvia').textContent());
+  await pc.locator('#reteInvia').click();
+  ok('ricevuto', await attendi(async () => /Ricevuta dal telefono: 2 nuove/.test(await pc.locator('#reteStato').textContent())),
+     (await pc.locator('#reteStato').textContent()).trim());
+  ok('sul telefono resta aperta la giornata di oggi', await tel.evaluate(d => sessione.data === d, OGGI.iso));
+  ok('il planning compare nel selettore', await attendi(() => tel.locator('#giorni button.plan').isVisible()));
+  await tel.locator('#giorni button.plan').click(); await tel.waitForTimeout(300);
+  ok('si apre il planning', await tel.evaluate(d => sessione.data === d, DOMANI.iso)
+     && /planning/.test(await tel.locator('#abSub').textContent()), await tel.locator('#abSub').textContent());
+  ok('niente «Fine giornata» nel planning', await tel.locator('#btnEod').isHidden());
+  /* sul telefono si prepara il protocollo di un paziente */
+  await tel.evaluate(() => { const p = state.find(x => x.id === '0D26090801'); p.stato = 'set';
+    p.fasi = [{ fase: 'venosa', zone: ['TO'], delay: '70' }]; persist(); });
+  await tel.locator('#giorni button:not(.plan)').first().click(); await tel.waitForTimeout(200);
+  ok('si torna a oggi', await tel.evaluate(d => sessione.data === d, OGGI.iso));
+  /* il giorno degli esami: un'altra apertura, con l'orologio a domani mattina */
+  const domani = await cTel.newPage();
+  domani.on('pageerror', e => errs.push(e.message));
+  await domani.clock.install({ time: new Date(DOMANI.iso + 'T07:30:00') });
+  await domani.goto(TEL); await domani.waitForTimeout(500);
+  ok('il giorno degli esami l\'app si apre sul planning', await domani.evaluate(d => sessione && sessione.data === d && TODAY === d, DOMANI.iso),
+     await domani.evaluate(() => JSON.stringify(sessione)));
+  ok('con i pazienti e il protocollo già impostato', await domani.evaluate(() =>
+     inBoard().length === 2 && state.find(x => x.id === '0D26090801').stato === 'set'));
+  ok('la giornata di ieri non c\'è più', await domani.evaluate(d => !state.some(p => p.data === d), OGGI.iso));
+  await domani.close();
+  await tel.evaluate(() => persist());              // il telefono di «oggi» rimette le sue schede
+
   console.log('\n── SCOLLEGAMENTO ───────────────────────');
   await tel.locator('#btnSet').click(); await tel.waitForTimeout(300);
   ok('impostazioni: PC in ascolto', (await tel.locator('#pcBox').textContent()).includes('in ascolto'));
