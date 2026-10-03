@@ -885,8 +885,9 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     <details><summary>Zona ospedale</summary>
       <p>Con la zona attiva le schede dei pazienti si vedono solo in ospedale. A ogni apertura dell'app le
         schede restano coperte finché la posizione non conferma che sei nella zona; mentre l'app è aperta
-        la posizione si controlla di continuo. Se risulti fuori, le schede vengono cancellate da questo
-        telefono e le liste del PC non entrano finché non torni.</p>
+        la posizione si controlla di continuo. Se risulti fuori, le schede di oggi vengono cancellate da
+        questo telefono e le liste del PC non entrano finché non torni. Il planning dei giorni a venire
+        resta, nascosto, e ricompare al rientro: il lavoro preparato non si perde.</p>
       <p>Il telefono non può controllare la posizione quando l'app è chiusa: il controllo avviene alla
         riapertura, prima di mostrare qualsiasi scheda. Se la posizione non è disponibile le schede restano
         nascoste, senza essere cancellate. La posizione resta sul telefono: non viene inviata a nessuno.</p></details>
@@ -1273,11 +1274,12 @@ function impostaSessione(s){
 const isPlanning = d => (d || '') > iso(new Date());
 function giornate(){
   const oggi = iso(new Date()), m = new Map();
-  state.forEach(p => { if((p.data || '') < oggi) return;
+  state.forEach(p => { if((p.data || '') < oggi || !visibile(p)) return;
     const k = p.data + '|' + p.modo;
     if(!m.has(k)) m.set(k, { data:p.data, modo:p.modo, n:0 });
     m.get(k).n++; });
-  if(sessione && !m.has(sessione.data + '|' + sessione.modo)) m.set(sessione.data + '|' + sessione.modo, { ...sessione, n:0 });
+  if(sessione && !m.has(sessione.data + '|' + sessione.modo) && !(isPlanning(sessione.data) && planningNascosto()))
+    m.set(sessione.data + '|' + sessione.modo, { ...sessione, n:0 });
   return [...m.values()].sort((a, b) => a.data.localeCompare(b.data) || a.modo.localeCompare(b.modo));
 }
 /* all'avvio: la giornata di oggi se c'è, altrimenti quella aperta o la prossima */
@@ -1470,7 +1472,10 @@ const detailNodes = () => [
 /* ═══ BOARD ══════════════════════════════════════════════ */
 const summary = p => p.fasi.map(f=>`<span>${PH[f.fase].l.slice(0,3)}</span>`).join('');
 const isAM = p => parseInt(p.ora.slice(0,2),10) < 14;
-const inBoard = () => state.filter(p => p.data===selDate && p.modo===selMode)
+/* fuori dalla zona ospedale il planning resta nel telefono ma non si vede */
+const planningNascosto = () => { try{ return Zona.blocca(); }catch(_){ return false; } };
+const visibile = p => !(isPlanning(p.data) && planningNascosto());
+const inBoard = () => state.filter(p => p.data===selDate && p.modo===selMode && visibile(p))
                            .sort((a,b)=>a.ora.localeCompare(b.ora));
 
 function renderBoard(){
@@ -1482,6 +1487,12 @@ function renderBoard(){
   if(!sessione){
     grid.innerHTML = `<div class="empty" style="margin-top:30px">Nessuna lista ancora.<br>
       Dal tool PC accedi con il tuo profilo e invia la lista.</div>`;
+    $('btnEod').disabled = true;
+    return;
+  }
+  if(isPlanning(selDate) && planningNascosto()){
+    grid.innerHTML = `<div class="empty" style="margin-top:30px">Planning nascosto fuori dall'ospedale.<br>
+      Ricompare quando torni nella zona.</div>`;
     $('btnEod').disabled = true;
     return;
   }
@@ -2694,7 +2705,7 @@ const Zona = (() => {
       verifica:['Verifico la posizione…', 'Le schede si vedono solo in ospedale.', null],
       ignota:  ['Posizione non disponibile', 'Le schede restano nascoste finché il telefono non conferma di essere in ospedale. Controlla che la posizione sia attiva.', 'Riprova'],
       negata:  ['Serve la posizione', 'Per mostrare le schede il telefono deve sapere di essere in ospedale. Consenti la posizione a questa app nelle impostazioni del browser.', 'Riprova'],
-      fuori:   ['Sei fuori dall\'ospedale', 'Le schede dei pazienti sono state cancellate da questo telefono. Le liste del PC torneranno a entrare quando sarai di nuovo in ospedale.', 'Ho capito'],
+      fuori:   ['Sei fuori dall\'ospedale', 'Le schede di oggi sono state cancellate da questo telefono. Il planning resta, nascosto, e ricompare quando torni in ospedale; anche le liste del PC entreranno solo allora.', 'Ho capito'],
     }[tipo];
     $('zvTit').textContent = T[0]; $('zvTesto').textContent = T[1];
     b.hidden = !T[2]; b.textContent = T[2] || '';
@@ -2706,8 +2717,10 @@ const Zona = (() => {
       'Cancella e disattiva', () => { ferma(); cfg = null; save('zona', null); save('zonaFuori', null); state = []; trash = []; persist(); location.reload(); });
     v.hidden = false;
   }
+  /* fuori: via le schede di oggi e il cestino; il planning resta,
+     nascosto finché non si torna nella zona                          */
   function cancellaSchede(){
-    state = []; trash = []; persist();
+    state = state.filter(p => isPlanning(p.data)); trash = []; persist();
     save('zonaFuori', Date.now());
     location.reload();                          // si riparte puliti, senza schede in memoria
   }
@@ -2719,10 +2732,12 @@ const Zona = (() => {
     ultima = { d:Math.round(d), acc:Math.round(acc), quando:Date.now() };
     if(d - acc > cfg.raggio){
       const prima = stato; stato = 'fuori';
-      if(state.length || trash.length) return cancellaSchede();
+      if(state.some(p => !isPlanning(p.data)) || trash.length) return cancellaSchede();
       if(prima !== 'fuori'){ save('zonaFuori', Date.now()); velo('fuori'); }   // l'avviso una volta sola
     } else if(d <= cfg.raggio + Math.min(acc, 150)){
+      const prima = stato;
       stato = 'dentro'; save('zonaFuori', null); velo(null);
+      if(prima !== 'dentro' && view==='board' && !cur && !busy && state.some(p => isPlanning(p.data))) show('board');   // ricompare il planning
     }                                            // altrimenti incerto: si resta come si è
     if(view==='settings') disegna();
   }

@@ -179,9 +179,11 @@ dei pazienti si vedono solo dentro la zona:
 - all'apertura e a ogni ritorno nell'app restano coperte finché la posizione non
   conferma «dentro»; con l'app aperta la posizione si segue di continuo, e si
   rilegge comunque ogni 20 secondi;
-- se risulta «fuori» (anche tolto l'errore dichiarato dal GPS) schede e cestino si
-  cancellano subito e le liste del PC non entrano finché non si torna: non vengono
-  segnate come ricevute, quindi arrivano al rientro (il relay le tiene 12 ore);
+- se risulta «fuori» (anche tolto l'errore dichiarato dal GPS) le schede di oggi e
+  il cestino si cancellano subito e le liste del PC non entrano finché non si
+  torna: non vengono segnate come ricevute, quindi arrivano al rientro (il relay le
+  tiene 12 ore). Il planning dei giorni a venire resta nel telefono, nascosto (né in
+  bacheca né nel selettore), e ricompare al rientro, con le schede già impostate;
 - se la posizione non arriva entro 15 secondi o il permesso è negato, le schede
   restano coperte senza essere cancellate; si può disattivare la zona solo
   cancellandole.

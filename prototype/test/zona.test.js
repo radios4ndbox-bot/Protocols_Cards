@@ -74,10 +74,19 @@ const lontano = (metri, accuracy = 20) => ({ latitude: OSPEDALE.latitude + metri
   await p.waitForTimeout(800);
   ok('non cancella per un dubbio', await schede() === n0 && (await velo()) === false);
 
+  console.log('\n── PLANNING PREPARATO IN OSPEDALE ──────');
+  const domani = await p.evaluate(() => shift(TODAY, 1));
+  await p.evaluate(d => { state.push({ ...state[0], id: 'PLAN1', data: d, stato: 'set', fasi: [{ fase: 'venosa', zone: ['TO'], delay: '70' }] }); persist(); }, domani);
+  ok('il planning c\'è', await p.evaluate(() => state.some(x => x.id === 'PLAN1')));
+
   console.log('\n── USCITA DALL\'OSPEDALE ───────────────');
   await sposta(p, lontano(2500));
   ok('fuori: avviso', await attendi(async () => /fuori dall'ospedale/.test(await velo() || ''), 6000), String(await velo()));
-  ok('schede cancellate dal telefono', await p.evaluate(() => JSON.parse(localStorage.getItem('pc.v4.state')).length === 0 && state.length === 0));
+  ok('schede di oggi cancellate dal telefono', await p.evaluate(() => !state.some(x => !isPlanning(x.data))
+     && !JSON.parse(localStorage.getItem('pc.v4.state')).some(x => x.data <= TODAY)));
+  ok('il planning resta, impostato', await p.evaluate(() => { const x = state.find(y => y.id === 'PLAN1'); return !!x && x.stato === 'set'; }));
+  ok('ma non si vede: né in bacheca né nel selettore', await p.evaluate(() => !inBoard().some(x => x.id === 'PLAN1')
+     && !giornate().some(g => isPlanning(g.data))));
   ok('cestino vuoto', await p.evaluate(() => trash.length === 0));
   ok('le liste del PC non entrano', await p.evaluate(() => Zona.blocca()));
   await p.locator('#zvAzione').click();
@@ -88,6 +97,8 @@ const lontano = (metri, accuracy = 20) => ({ latitude: OSPEDALE.latitude + metri
   console.log('\n── RITORNO IN OSPEDALE ─────────────────');
   await sposta(p, OSPEDALE);
   ok('le liste tornano a entrare', await attendi(() => p.evaluate(() => !Zona.blocca())));
+  ok('il planning ricompare', await p.evaluate(() => giornate().some(g => isPlanning(g.data))
+     && state.find(x => x.id === 'PLAN1').stato === 'set'));
 
   console.log('\n── POSIZIONE CHE NON ARRIVA ────────────');
   const cm = await b.newContext({ viewport: { width: 412, height: 915 }, reducedMotion: 'reduce', hasTouch: true, isMobile: true });
