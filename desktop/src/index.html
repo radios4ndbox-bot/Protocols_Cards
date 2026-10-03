@@ -784,6 +784,9 @@ body:has(.top.intro-in-corso) .copyright{position:fixed;right:16px;bottom:10px;z
    a ventaglio mentre la riga scivola a sinistra: stessa durata e stessa
    curva della slitta, un movimento solo. Il fill «backwards» le tiene
    raccolte finché non tocca a loro.                                    */
+/* finché l'intro non parte le carte non si vedono: mentre il browser
+   legge il file e impagina, comparirebbero ferme e poi a sinistra    */
+.intro-palco:not(.in-scena) .pc-carta{opacity:0}
 .intro-palco.in-scena .pc-carta{
   animation:introCartaEntra var(--t-carta-dur,500ms) ease-out var(--d,0ms) backwards,
             introCartaApre var(--t-slitta-dur,700ms) var(--intro-ease) var(--t-slitta,800ms) backwards}
