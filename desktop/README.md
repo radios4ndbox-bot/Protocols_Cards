@@ -155,7 +155,8 @@ e l'app non contatta Google. Per ricrearlo:
 ## Zona ospedale (telefono)
 
 In Impostazioni → «Zona ospedale», stando in ospedale, «L'ospedale è qui: attiva»
-salva sul telefono il centro e il raggio (300 m, 500 m o 1 km). Da lì le schede
+salva sul telefono il centro e il raggio: 2 km di base, per stare larghi anche negli
+ospedali grandi; 1 km o 500 m per quelli piccoli. Da lì le schede
 dei pazienti si vedono solo dentro la zona:
 
 - all'apertura e a ogni ritorno nell'app restano coperte finché la posizione non

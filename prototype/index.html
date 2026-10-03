@@ -2540,7 +2540,8 @@ function dispositivo(){
 
 /* ═══ ZONA OSPEDALE ══════════════════════════════════════
    I dati dei pazienti non devono uscire dall'ospedale. Con la zona
-   attiva (centro e raggio impostati qui, una volta, stando in ospedale):
+   attiva (centro e raggio impostati qui, una volta, stando in ospedale;
+   raggio 2 km di base, 1 km o 500 m per gli ospedali piccoli):
      · all'apertura e a ogni ritorno nell'app le schede restano coperte
        finché la posizione non conferma «dentro»;
      · con l'app aperta la posizione si segue di continuo;
@@ -2635,7 +2636,7 @@ const Zona = (() => {
     toast('Leggo la posizione…', 4000);
     navigator.geolocation.getCurrentPosition(pos => {
       const acc = Math.round(pos.coords.accuracy || 0);
-      const raggio = +$('zonaRaggio').value || 500;
+      const raggio = +$('zonaRaggio').value || 2000;
       cfg = { lat:pos.coords.latitude, lon:pos.coords.longitude, raggio, impostata:Date.now() };
       save('zona', cfg); stato = 'dentro'; save('zonaFuori', null);
       ultima = { d:0, acc, quando:Date.now() };
@@ -2652,7 +2653,8 @@ const Zona = (() => {
   }
   function disegna(){
     const box = $('zonaBox'); if(!box) return;
-    const raggi = [300, 500, 1000], scelto = attiva() ? cfg.raggio : 500;
+    /* 2 km di base: copre anche gli ospedali grandi, con i loro padiglioni */
+    const raggi = [500, 1000, 2000], scelto = attiva() ? cfg.raggio : 2000;
     const sel = `<select class="dd zona-r" id="zonaRaggio" aria-label="Raggio">${raggi.map(r =>
       `<option value="${r}"${r===scelto?' selected':''}>${r < 1000 ? r + ' m' : r/1000 + ' km'}</option>`).join('')}</select>`;
     if(!attiva()){

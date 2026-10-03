@@ -53,6 +53,7 @@ const lontano = (metri, accuracy = 20) => ({ latitude: OSPEDALE.latitude + metri
   console.log('\n── ATTIVAZIONE IN OSPEDALE ─────────────');
   await p.locator('#btnSet').click(); await p.waitForTimeout(300);
   ok('impostazioni: non attiva', /Non attiva/.test(await p.locator('#zonaBox').textContent()));
+  ok('raggio di base 2 km', await p.locator('#zonaRaggio').inputValue() === '2000');
   await p.locator('#zonaRaggio').selectOption('500');
   await p.locator('#zonaImposta').click();
   ok('attiva, sei in ospedale', await attendi(async () => /Attiva · sei in ospedale/.test(await p.locator('#zonaBox').textContent())),
