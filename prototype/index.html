@@ -193,6 +193,17 @@ button,input,select,textarea{font-family:inherit}
 
 @media (prefers-reduced-motion: reduce){#apertura{display:none}}
 
+/* ═══ GIORNATE: oggi e planning ══════════════════════ */
+.giorni{display:flex;gap:6px;margin:0 0 12px;padding:4px;border-radius:13px;background:var(--surface2);
+  border:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.giorni[hidden]{display:none}
+.giorni::-webkit-scrollbar{display:none}
+.giorni button{flex:1 0 auto;min-width:0;height:38px;padding:0 12px;border:0;border-radius:10px;background:none;
+  font:inherit;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap}
+.giorni button small{font-weight:600;opacity:.8;margin-left:5px}
+.giorni button.on{background:var(--surface);color:var(--text);box-shadow:var(--sh)}
+.giorni button.plan.on{color:var(--accent-d)}
+
 /* ═══ BOARD ═══════════════════════════════════════════ */
 .legend{display:flex;gap:13px;flex-wrap:wrap;padding:2px 2px 4px;
   font-size:10.5px;color:var(--muted)}
@@ -269,6 +280,7 @@ button,input,select,textarea{font-family:inherit}
   background:var(--surface);color:var(--text2);font-size:14px;font-weight:650;
   cursor:pointer;box-shadow:var(--sh)}
 .eod:active{transform:scale(.985)}
+.eod[hidden]{display:none}
 .eod:disabled{opacity:.45;cursor:not-allowed}
 
 /* ═══ DETTAGLIO ════════════════════════════════════════ */
@@ -736,6 +748,8 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
 
 <!-- ══ BOARD ══ -->
 <main class="view" id="board">
+  <!-- le giornate disponibili: oggi e quelle pianificate -->
+  <div class="giorni" id="giorni" role="tablist" aria-label="Giornate" hidden></div>
   <button class="newcard hidden" id="btnNew">+ Nuova scheda manuale</button>
   <div class="legend">
     <span><i style="background:var(--st-todo)"></i>da protocollare</span>
@@ -862,11 +876,18 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         i tuoi file. Niente dati dei pazienti, e degli appresi non va il testo del quesito. L'accesso a Google
         vale un'ora: dopo, il pallino sulle impostazioni ricorda di aggiornare il backup con un tocco. Su un
         telefono nuovo il profilo si recupera al primo accesso.</p></details>
+    <details><summary>Planning</summary>
+      <p>Il PC può mandare in anticipo la lista di un giorno futuro, per preparare i protocolli prima. Se
+        stai lavorando sulla giornata di oggi, resta aperta: la giornata pianificata compare nel selettore in
+        cima alla bacheca. Il giorno degli esami l'app si apre da sola su quella giornata, con le schede e i
+        protocolli già pronti; se il PC rimanda la lista quel giorno, le schede già impostate restano come
+        sono e si aggiungono solo i pazienti nuovi.</p></details>
     <details><summary>Zona ospedale</summary>
       <p>Con la zona attiva le schede dei pazienti si vedono solo in ospedale. A ogni apertura dell'app le
         schede restano coperte finché la posizione non conferma che sei nella zona; mentre l'app è aperta
-        la posizione si controlla di continuo. Se risulti fuori, le schede vengono cancellate da questo
-        telefono e le liste del PC non entrano finché non torni.</p>
+        la posizione si controlla di continuo. Se risulti fuori, le schede di oggi vengono cancellate da
+        questo telefono e le liste del PC non entrano finché non torni. Il planning dei giorni a venire
+        resta, nascosto, e ricompare al rientro: il lavoro preparato non si perde.</p>
       <p>Il telefono non può controllare la posizione quando l'app è chiusa: il controllo avviene alla
         riapertura, prima di mostrare qualsiasi scheda. Se la posizione non è disponibile le schede restano
         nascoste, senza essere cancellate. La posizione resta sul telefono: non viene inviata a nessuno.</p></details>
@@ -1244,6 +1265,51 @@ let selDate = sessione ? sessione.data : TODAY, selMode = sessione ? sessione.mo
 function impostaSessione(s){
   sessione = s; selDate = s ? s.data : TODAY; selMode = s ? s.modo : null; save('sessione', s);
 }
+/* ── PLANNING ──
+   Le giornate sul telefono: oggi e quelle a venire, arrivate dal PC in
+   anticipo per preparare i protocolli. Una lista di un giorno futuro non
+   toglie di vista la giornata di oggi: si passa dall'una all'altra con il
+   selettore in cima. Il giorno degli esami l'app si apre da sola sulla
+   giornata pianificata, con le schede e i protocolli già pronti.       */
+const isPlanning = d => (d || '') > iso(new Date());
+function giornate(){
+  const oggi = iso(new Date()), m = new Map();
+  state.forEach(p => { if((p.data || '') < oggi || !visibile(p)) return;
+    const k = p.data + '|' + p.modo;
+    if(!m.has(k)) m.set(k, { data:p.data, modo:p.modo, n:0 });
+    m.get(k).n++; });
+  if(sessione && !m.has(sessione.data + '|' + sessione.modo) && !(isPlanning(sessione.data) && planningNascosto()))
+    m.set(sessione.data + '|' + sessione.modo, { ...sessione, n:0 });
+  return [...m.values()].sort((a, b) => a.data.localeCompare(b.data) || a.modo.localeCompare(b.modo));
+}
+/* all'avvio: la giornata di oggi se c'è, altrimenti quella aperta o la prossima */
+function sessioneAvvio(){
+  const oggi = iso(new Date()), L = giornate().filter(g => g.n);
+  const diOggi = L.filter(g => g.data === oggi);
+  if(diOggi.length){
+    if(!sessione || sessione.data !== oggi) impostaSessione({ data:oggi, modo:diOggi[0].modo });
+  } else if(!sessione && L.length) impostaSessione({ data:L[0].data, modo:L[0].modo });
+}
+function disegnaGiorni(){
+  const box = $('giorni'); if(!box) return;
+  const L = giornate(), oggi = iso(new Date());
+  box.hidden = L.length < 2 && !(L.length === 1 && isPlanning(L[0].data));
+  if(box.hidden) return;
+  const giorno = d => d === oggi ? 'Oggi'
+    : new Date(d + 'T12:00').toLocaleDateString('it-IT', { weekday:'short', day:'numeric', month:'short' });
+  box.innerHTML = L.map(g => {
+    const on = sessione && g.data === sessione.data && g.modo === sessione.modo;
+    const plan = isPlanning(g.data);
+    return `<button role="tab" class="${on ? 'on' : ''}${plan ? ' plan' : ''}" aria-selected="${on}"
+      data-d="${esc(g.data)}" data-m="${esc(g.modo)}">${plan ? 'Planning · ' : ''}${esc(giorno(g.data))}${
+      g.modo === 'emergenza' ? ' · PS' : ''}<small>${g.n}</small></button>`;
+  }).join('');
+  box.querySelectorAll('button').forEach(b => b.onclick = () => {
+    if(busy || cur) return;
+    impostaSessione({ data:b.dataset.d, modo:b.dataset.m });
+    show('board'); staggerIn(boardNodes());
+  });
+}
 
 AGENTS.forEach(a => { const o=document.createElement('option');
   o.value=a.id; o.textContent=a.l; $('ddAgent').appendChild(o); });
@@ -1286,7 +1352,7 @@ function show(v){
   const T = $('abTitle'), S = $('abSub');
   if(v==='board' && !sessione){ T.textContent='Protocol Cards'; S.textContent='in attesa della lista dal PC'; }
   else if(v==='board'){ T.textContent = selMode==='emergenza'?'TC di pronto soccorso':'TC elettiva';
-    S.textContent = dmy(selDate) + (selDate===TODAY?' · oggi':''); }
+    S.textContent = dmy(selDate) + (selDate===TODAY?' · oggi':isPlanning(selDate)?' · planning':''); }
   else if(v==='newcard'){ T.textContent='Nuova scheda'; S.textContent=dmy(selDate); }
   else if(v==='settings'){ T.textContent='Impostazioni'; S.textContent=''; }
   else { T.textContent='Cestino'; S.textContent=''; }
@@ -1406,16 +1472,27 @@ const detailNodes = () => [
 /* ═══ BOARD ══════════════════════════════════════════════ */
 const summary = p => p.fasi.map(f=>`<span>${PH[f.fase].l.slice(0,3)}</span>`).join('');
 const isAM = p => parseInt(p.ora.slice(0,2),10) < 14;
-const inBoard = () => state.filter(p => p.data===selDate && p.modo===selMode)
+/* fuori dalla zona ospedale il planning resta nel telefono ma non si vede */
+const planningNascosto = () => { try{ return Zona.blocca(); }catch(_){ return false; } };
+const visibile = p => !(isPlanning(p.data) && planningNascosto());
+const inBoard = () => state.filter(p => p.data===selDate && p.modo===selMode && visibile(p))
                            .sort((a,b)=>a.ora.localeCompare(b.ora));
 
 function renderBoard(){
+  disegnaGiorni();
   $('btnNew').classList.toggle('hidden', selMode!=='emergenza');
+  $('btnEod').hidden = isPlanning(selDate);           // la giornata non è ancora cominciata
   const list = inBoard();
   grid.innerHTML='';
   if(!sessione){
     grid.innerHTML = `<div class="empty" style="margin-top:30px">Nessuna lista ancora.<br>
-      Dal tool PC, al passo «Trasferisci», abbina il telefono e invia la lista.</div>`;
+      Dal tool PC accedi con il tuo profilo e invia la lista.</div>`;
+    $('btnEod').disabled = true;
+    return;
+  }
+  if(isPlanning(selDate) && planningNascosto()){
+    grid.innerHTML = `<div class="empty" style="margin-top:30px">Planning nascosto fuori dall'ospedale.<br>
+      Ricompare quando torni nella zona.</div>`;
     $('btnEod').disabled = true;
     return;
   }
@@ -2050,8 +2127,13 @@ function importaLista(pl){
     r.nuove++;
   });
   persist();
-  impostaSessione({ data, modo });                 // si apre la seduta appena arrivata
-  return { ...r, modo };
+  /* si apre la giornata appena arrivata, salvo un planning mentre si
+     lavora su oggi: oggi resta aperta, il planning è nel selettore     */
+  const oggi = iso(new Date());
+  const lavoroOggi = sessione && sessione.data === oggi && state.some(p => p.data === oggi && p.modo === sessione.modo);
+  const planning = data > oggi;
+  if(!(planning && lavoroOggi)) impostaSessione({ data, modo });
+  return { ...r, modo, planning };
 }
 
 function ridisegnaDopoImport(){
@@ -2551,8 +2633,8 @@ async function avviaPc(){
       }
       link.ultima = Date.now(); salvaPc();
       ridisegnaDopoImport(); renderPc();
-      toast(`${r.modo==='emergenza'?'Pronto soccorso':'Elettiva'} del ${dmy(r.data)}: ${r.nuove} ${r.nuove===1?'nuova':'nuove'}`
-        + (r.aggiornate ? `, ${r.aggiornate} aggiornate` : ''));
+      toast((r.planning ? 'Planning · ' : '') + `${r.modo==='emergenza'?'Pronto soccorso':'Elettiva'} del ${dmy(r.data)}: ${r.nuove} ${r.nuove===1?'nuova':'nuove'}`
+        + (r.aggiornate ? `, ${r.aggiornate} aggiornate` : '') + (r.planning && sessione && sessione.data !== r.data ? ' · in alto per aprirlo' : ''), 3500);
       Canale.invia(sess, 'tel', { tipo:'ricevuta', rif:lista.id,
         nuove:r.nuove, aggiornate:r.aggiornate, invariate:r.invariate }).catch(()=>{});
     },
@@ -2623,7 +2705,7 @@ const Zona = (() => {
       verifica:['Verifico la posizione…', 'Le schede si vedono solo in ospedale.', null],
       ignota:  ['Posizione non disponibile', 'Le schede restano nascoste finché il telefono non conferma di essere in ospedale. Controlla che la posizione sia attiva.', 'Riprova'],
       negata:  ['Serve la posizione', 'Per mostrare le schede il telefono deve sapere di essere in ospedale. Consenti la posizione a questa app nelle impostazioni del browser.', 'Riprova'],
-      fuori:   ['Sei fuori dall\'ospedale', 'Le schede dei pazienti sono state cancellate da questo telefono. Le liste del PC torneranno a entrare quando sarai di nuovo in ospedale.', 'Ho capito'],
+      fuori:   ['Sei fuori dall\'ospedale', 'Le schede di oggi sono state cancellate da questo telefono. Il planning resta, nascosto, e ricompare quando torni in ospedale; anche le liste del PC entreranno solo allora.', 'Ho capito'],
     }[tipo];
     $('zvTit').textContent = T[0]; $('zvTesto').textContent = T[1];
     b.hidden = !T[2]; b.textContent = T[2] || '';
@@ -2635,8 +2717,10 @@ const Zona = (() => {
       'Cancella e disattiva', () => { ferma(); cfg = null; save('zona', null); save('zonaFuori', null); state = []; trash = []; persist(); location.reload(); });
     v.hidden = false;
   }
+  /* fuori: via le schede di oggi e il cestino; il planning resta,
+     nascosto finché non si torna nella zona                          */
   function cancellaSchede(){
-    state = []; trash = []; persist();
+    state = state.filter(p => isPlanning(p.data)); trash = []; persist();
     save('zonaFuori', Date.now());
     location.reload();                          // si riparte puliti, senza schede in memoria
   }
@@ -2648,10 +2732,12 @@ const Zona = (() => {
     ultima = { d:Math.round(d), acc:Math.round(acc), quando:Date.now() };
     if(d - acc > cfg.raggio){
       const prima = stato; stato = 'fuori';
-      if(state.length || trash.length) return cancellaSchede();
+      if(state.some(p => !isPlanning(p.data)) || trash.length) return cancellaSchede();
       if(prima !== 'fuori'){ save('zonaFuori', Date.now()); velo('fuori'); }   // l'avviso una volta sola
     } else if(d <= cfg.raggio + Math.min(acc, 150)){
+      const prima = stato;
       stato = 'dentro'; save('zonaFuori', null); velo(null);
+      if(prima !== 'dentro' && view==='board' && !cur && !busy && state.some(p => isPlanning(p.data))) show('board');   // ricompare il planning
     }                                            // altrimenti incerto: si resta come si è
     if(view==='settings') disegna();
   }
@@ -2786,6 +2872,7 @@ function togliPassati(){
   if(sessione && sessione.data < oggi) impostaSessione(null);
 }
 togliPassati();
+sessioneAvvio();
 const cambioGiorno = () => { if(iso(new Date()) !== TODAY) location.reload(); };
 document.addEventListener('visibilitychange', () => { if(!document.hidden) cambioGiorno(); });
 

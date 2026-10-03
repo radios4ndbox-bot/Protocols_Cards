@@ -152,6 +152,23 @@ e l'app non contatta Google. Per ricrearlo:
    un segreto: identifica l'app, e Google accetta richieste solo dalle origini
    autorizzate.
 
+## Planning
+
+Si può importare la lista di un giorno a venire, per esempio quella di domani, e
+preparare i protocolli in anticipo: in verifica sul PC, oppure sul telefono.
+
+- **PC.** La giornata è quella del PDF: se è futura, la verifica la segna
+  «planning» e il tasto diventa «Invia il planning». Il telefono deve aprire l'app
+  entro 12 ore dall'invio (il relay non tiene i messaggi più a lungo).
+- **Telefono.** Se si sta lavorando sulla giornata di oggi, resta aperta: il
+  planning compare nel selettore delle giornate in cima alla bacheca («Oggi ·
+  Planning · dom 4 ott»). Le schede si possono già impostare; «Fine giornata» non
+  c'è finché la giornata non arriva.
+- **Il giorno degli esami** l'app si apre da sola su quella giornata, con le
+  schede e i protocolli già pronti, senza reimportare nulla. Se il PC rimanda la
+  lista quel giorno, le schede già impostate restano come sono e si aggiungono
+  solo i pazienti nuovi.
+
 ## Zona ospedale (telefono)
 
 In Impostazioni → «Zona ospedale», stando in ospedale, «L'ospedale è qui: attiva»
@@ -162,9 +179,11 @@ dei pazienti si vedono solo dentro la zona:
 - all'apertura e a ogni ritorno nell'app restano coperte finché la posizione non
   conferma «dentro»; con l'app aperta la posizione si segue di continuo, e si
   rilegge comunque ogni 20 secondi;
-- se risulta «fuori» (anche tolto l'errore dichiarato dal GPS) schede e cestino si
-  cancellano subito e le liste del PC non entrano finché non si torna: non vengono
-  segnate come ricevute, quindi arrivano al rientro (il relay le tiene 12 ore);
+- se risulta «fuori» (anche tolto l'errore dichiarato dal GPS) le schede di oggi e
+  il cestino si cancellano subito e le liste del PC non entrano finché non si
+  torna: non vengono segnate come ricevute, quindi arrivano al rientro (il relay le
+  tiene 12 ore). Il planning dei giorni a venire resta nel telefono, nascosto (né in
+  bacheca né nel selettore), e ricompare al rientro, con le schede già impostate;
 - se la posizione non arriva entro 15 secondi o il permesso è negato, le schede
   restano coperte senza essere cancellate; si può disattivare la zona solo
   cancellandole.
