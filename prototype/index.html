@@ -120,29 +120,57 @@ button,input,select,textarea{font-family:inherit}
 .info p{margin:0 2px 12px;font-size:12px;line-height:1.55;color:var(--muted)}
 
 /* ═══ APERTURA ════════════════════════════════════════
-   All'avvio il dorso della carta, con il marchio StructuRad, riempie lo
-   schermo e si gira: dall'altra parte c'è la seduta. Il giro è in due
-   metà, come una carta vera: il dorso ruota fino a mettersi di taglio,
-   poi l'app entra dal taglio opposto. Tocco per saltare; con «riduci
-   movimento» non c'è.                                                 */
-#apertura{position:fixed;inset:0;z-index:5000;perspective:1400px}
-/* Fluidità: tutto si muove solo con transform e opacity, su due livelli
-   leggeri. Il logo parte quando l'app ha finito di caricarsi (classe
-   .pronto), non mentre il telefono è ancora occupato; l'alone è un
-   gradiente fermo, non un filtro da ricalcolare a ogni fotogramma.
-   Girato il dorso, il fondo sfuma mentre entrano le schede: l'app non
-   ruota più per intero (era il passaggio più pesante).                */
-.ap-dorso{position:absolute;inset:0;display:grid;place-items:center;transform-origin:50% 50%;
-  background:radial-gradient(42% 26% at 50% 50%,rgba(63,214,198,.16),transparent 70%),
-             radial-gradient(120% 80% at 50% 40%,#12324A 0%,#0A1A2B 70%);
-  box-shadow:inset 0 0 0 2px rgba(63,214,198,.55);backface-visibility:hidden;will-change:transform}
-.ap-dorso svg{width:58%;max-width:280px;height:auto;opacity:0;transform:scale(.92);will-change:transform,opacity}
-#apertura.pronto .ap-dorso svg{animation:apLogo .6s cubic-bezier(.22,1,.36,1) forwards}
+   All'avvio una carta vera, al centro: angoli arrotondati, uno spessore
+   che si vede quando ruota, un'ombra morbida sotto. Entra inclinata
+   mostrando il dorso con il marchio StructuRad, poi si gira: sul fronte
+   il nome dell'app, e sotto c'è già la seduta. Tocco per saltare; con
+   «riduci movimento» non c'è.
+
+   Lo spessore sono sette fette uguali sovrapposte a distanza di un pixel
+   (stessa forma, stessi angoli): ruotando, i loro bordi fanno il taglio
+   della carta. Tutto si muove solo con transform e opacity; l'opacità
+   sta sulla scena e non sulla carta, che altrimenti si appiattirebbe.
+   Il logo parte a caricamento finito (classe .pronto).                */
+#apertura{position:fixed;inset:0;z-index:5000;display:grid;place-items:center}
+.ap-scena{position:relative;width:min(62vw,290px);aspect-ratio:5/7;perspective:1000px;opacity:0;will-change:opacity}
+.ap-carta{position:absolute;inset:0;transform-style:preserve-3d;
+  transform:rotateX(10deg) rotateY(-16deg);will-change:transform}
+.ap-carta > div{position:absolute;inset:0;border-radius:22px}
+.ap-bordo i{position:absolute;inset:0;border-radius:22px;
+  background:linear-gradient(160deg,#2a5a72,#123247 55%,#0b2032);transform:translateZ(var(--z))}
+.ap-dorso{display:grid;place-items:center;transform:translateZ(3.5px);backface-visibility:hidden;
+  background:radial-gradient(48% 30% at 50% 50%,rgba(63,214,198,.18),transparent 70%),
+             radial-gradient(120% 80% at 50% 38%,#16405c 0%,#0A1A2B 72%);
+  box-shadow:inset 0 0 0 2px rgba(63,214,198,.6),inset 0 0 0 9px #0A1A2B,inset 0 0 0 10px rgba(63,214,198,.22)}
+.ap-dorso svg{width:72%;height:auto;opacity:0;transform:scale(.92);will-change:transform,opacity}
+.ap-fronte{transform:rotateY(180deg) translateZ(3.5px);backface-visibility:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  background:linear-gradient(165deg,#ffffff,var(--surface2));box-shadow:inset 0 0 0 1.5px var(--border)}
+.ap-nome{font-size:21px;font-weight:800;letter-spacing:-.4px;color:var(--text)}
+.ap-sotto{font-size:10.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent-d)}
+/* l'ombra sul «tavolo»: un gradiente, non un filtro */
+.ap-ombra{position:absolute;left:8%;right:8%;bottom:-9%;height:16%;border-radius:50%;opacity:0;
+  background:radial-gradient(closest-side,rgba(10,26,43,.32),transparent);will-change:transform,opacity}
+#apertura.pronto .ap-scena{animation:apAppare .4s ease-out forwards}
+#apertura.pronto .ap-carta{animation:apEntra .75s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes apAppare{to{opacity:1}}
+#apertura.pronto .ap-ombra{animation:apOmbra .75s cubic-bezier(.22,1,.36,1) forwards}
+#apertura.pronto .ap-dorso svg{animation:apLogo .6s cubic-bezier(.22,1,.36,1) .2s forwards}
+@keyframes apEntra{from{transform:translateY(34px) scale(.9) rotateX(26deg) rotateY(-30deg)}
+                   to{transform:rotateX(10deg) rotateY(-16deg)}}
+@keyframes apOmbra{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
 @keyframes apLogo{to{opacity:1;transform:none}}
-#apertura.gira .ap-dorso{animation:apGira var(--t-meta,380ms) cubic-bezier(.55,0,.85,.35) forwards}
-@keyframes apGira{to{transform:rotateY(90deg)}}
-#apertura.svela{pointer-events:none;animation:apVia .26s ease-out forwards;will-change:opacity}
-#apertura.svela .ap-dorso{visibility:hidden}
+/* il giro: la carta si solleva a metà, si gira sul fronte e si posa */
+#apertura.gira .ap-scena{opacity:1}
+#apertura.gira .ap-carta{animation:apGira var(--t-giro,820ms) cubic-bezier(.45,.05,.25,1) forwards}
+#apertura.gira .ap-ombra{opacity:1;animation:apOmbraGiro var(--t-giro,820ms) cubic-bezier(.45,.05,.25,1) forwards}
+#apertura.gira .ap-dorso svg{opacity:1;transform:none}
+@keyframes apGira{
+  0%{transform:rotateX(10deg) rotateY(-16deg)}
+  50%{transform:translateZ(70px) rotateX(6deg) rotateY(90deg)}
+  100%{transform:rotateX(0deg) rotateY(180deg)}}
+@keyframes apOmbraGiro{50%{opacity:.45;transform:scale(.7)}100%{opacity:1;transform:none}}
+#apertura.svela{pointer-events:none;animation:apVia .3s ease-out forwards;will-change:opacity}
 @keyframes apVia{to{opacity:0}}
 @media (prefers-reduced-motion: reduce){#apertura{display:none}}
 
@@ -551,7 +579,10 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 </div>
 
 <!-- ══ APERTURA: il dorso della carta, che si gira sulla seduta ══ -->
-<div id="apertura" aria-hidden="true"><div class="ap-dorso">
+<div id="apertura" aria-hidden="true"><div class="ap-scena"><div class="ap-ombra"></div><div class="ap-carta">
+<div class="ap-bordo"><i style="--z:-3px"></i><i style="--z:-2px"></i><i style="--z:-1px"></i><i style="--z:0px"></i><i style="--z:1px"></i><i style="--z:2px"></i><i style="--z:3px"></i></div>
+<div class="ap-fronte"><div class="ap-nome">Protocol Cards</div><div class="ap-sotto">CT Assistant</div></div>
+<div class="ap-dorso">
 <svg aria-hidden="true" version="1.0" xmlns="http://www.w3.org/2000/svg"
  viewBox="0 0 340.000000 192.000000"
  preserveAspectRatio="xMidYMid meet">
@@ -671,7 +702,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
 <path d="M898 133 c7 -3 16 -2 19 1 4 3 -2 6 -13 5 -11 0 -14 -3 -6 -6z"/>
 </g>
 </svg>
-</div></div>
+</div></div></div></div>
 
 <div class="appbar">
   <button class="ico hide" id="navBack" aria-label="Indietro">←</button>
@@ -2767,30 +2798,29 @@ show('board');
 avviaPc();
 apertura();
 
-/* il dorso a tutto schermo si gira sulla seduta */
+/* la carta entra, si gira sul fronte e lascia il posto alla seduta */
 function apertura(){
   const ap = $('apertura'); if(!ap) return primoAccesso();
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){ ap.remove(); primoAccesso(); return; }
-  const META = 380;                                   // ogni metà del giro
-  const fondo = getComputedStyle(document.body).backgroundColor;
-  ap.style.background = fondo;                        // dietro la carta, il fondo dell'app
-  ap.style.setProperty('--t-meta', META+'ms');
+  const GIRO = 820, VIA = 300;
+  ap.style.background = getComputedStyle(document.body).backgroundColor;   // il tavolo è il fondo dell'app
+  ap.style.setProperty('--t-giro', GIRO+'ms');
   let girata = false, attesa = null;
   const gira = () => {
     if(girata) return; girata = true; clearTimeout(attesa);
     ap.classList.add('gira');
     setTimeout(() => {
-      /* il fondo sfuma sull'app ferma, e le schede entrano insieme */
+      /* la carta posata sul fronte sfuma sull'app ferma; le schede entrano */
       ap.classList.add('svela');
       if(view==='board' && sessione) staggerIn(boardNodes());
-      setTimeout(() => { ap.remove(); primoAccesso(); }, 280);
-    }, META);
+      setTimeout(() => { ap.remove(); primoAccesso(); }, VIA);
+    }, GIRO - 60);
   };
   ap.addEventListener('click', gira);
-  /* il logo parte a caricamento finito: due fotogrammi dopo l'avvio */
+  /* la carta entra a caricamento finito: due fotogrammi dopo l'avvio */
   requestAnimationFrame(() => requestAnimationFrame(() => {
     ap.classList.add('pronto');
-    attesa = setTimeout(gira, 1000);
+    attesa = setTimeout(gira, 1250);
   }));
 }
 setInterval(() => { cambioGiorno(); purge(); if(view==='trash') renderTrash(); }, 60000);
