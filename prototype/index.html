@@ -129,8 +129,11 @@ button,input,select,textarea{font-family:inherit}
    nessuno stacco. Tocco per saltare; con «riduci movimento» non c'è.
 
    Leggerezza, perché su un telefono vero non scatti:
-     · lo spessore sono cinque fette uguali (stessa forma, stessi angoli)
-       a un pixel l'una dall'altra; ruotando, i bordi fanno il taglio;
+     · lo spessore sono quattro strisce sottili sui lati, messe di taglio:
+       la scheda grafica disegna due facce e quattro strisce, non una
+       pila di carte intere sovrapposte (era il costo maggiore del giro);
+     · niente ritaglio arrotondato sul fronte: la miniatura sta già
+       dentro la carta;
      · si muovono solo transform e opacity; l'opacità sta sulla scena e
        non sulla carta, che altrimenti si appiattirebbe;
      · l'ombra è un gradiente, non un filtro;
@@ -141,15 +144,21 @@ button,input,select,textarea{font-family:inherit}
 .ap-tavolo{position:absolute;inset:0;background:rgba(10,26,43,.07)}
 .ap-scena{position:relative;width:min(62vw,290px);aspect-ratio:5/7;perspective:1000px;opacity:0}
 .ap-carta{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(10deg) rotateY(-16deg)}
-.ap-carta > div{position:absolute;inset:0;border-radius:22px}
-.ap-bordo i{position:absolute;inset:0;border-radius:22px;
-  background:linear-gradient(160deg,#2a5a72,#123247 55%,#0b2032);transform:translateZ(var(--z))}
+.ap-dorso,.ap-fronte{position:absolute;inset:0;border-radius:22px}
+/* il taglio: --mw e --mh sono metà larghezza e metà altezza della carta */
+.ap-lato{position:absolute;background:linear-gradient(90deg,#123247,#2a5a72 50%,#123247)}
+.ap-lato.sx,.ap-lato.dx{top:16px;bottom:16px;left:50%;width:5px;margin-left:-2.5px}
+.ap-lato.su,.ap-lato.giu{left:16px;right:16px;top:50%;height:5px;margin-top:-2.5px}
+.ap-lato.dx{transform:rotateY(90deg) translateZ(var(--mw,145px))}
+.ap-lato.sx{transform:rotateY(-90deg) translateZ(var(--mw,145px))}
+.ap-lato.su{transform:rotateX(90deg) translateZ(var(--mh,203px))}
+.ap-lato.giu{transform:rotateX(-90deg) translateZ(var(--mh,203px))}
 .ap-dorso{display:grid;place-items:center;transform:translateZ(2.5px);backface-visibility:hidden;
   background:radial-gradient(48% 30% at 50% 50%,rgba(63,214,198,.18),transparent 70%),
              radial-gradient(120% 80% at 50% 38%,#16405c 0%,#0A1A2B 72%);
   box-shadow:inset 0 0 0 2px rgba(63,214,198,.6),inset 0 0 0 9px #0A1A2B,inset 0 0 0 10px rgba(63,214,198,.22)}
 .ap-dorso svg{width:72%;height:auto}
-.ap-fronte{transform:rotateY(180deg) translateZ(2.5px);backface-visibility:hidden;overflow:hidden;
+.ap-fronte{transform:rotateY(180deg) translateZ(2.5px);backface-visibility:hidden;
   background:var(--ap-fondo,var(--bg))}
 .ap-fronte::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1.5px var(--border)}
 /* la pagina in miniatura: grande come lo schermo, rimpicciolita sulla carta */
@@ -590,7 +599,7 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 
 <!-- ══ APERTURA: il dorso della carta, che si gira sulla seduta ══ -->
 <div id="apertura" aria-hidden="true"><div class="ap-tavolo"></div><div class="ap-scena"><div class="ap-ombra"></div><div class="ap-carta">
-<div class="ap-bordo"><i style="--z:-2px"></i><i style="--z:-1px"></i><i style="--z:0px"></i><i style="--z:1px"></i><i style="--z:2px"></i></div>
+<i class="ap-lato sx"></i><i class="ap-lato dx"></i><i class="ap-lato su"></i><i class="ap-lato giu"></i>
 <div class="ap-fronte"></div>
 <div class="ap-dorso">
 <svg aria-hidden="true" version="1.0" xmlns="http://www.w3.org/2000/svg"
@@ -2846,6 +2855,8 @@ function apertura(dopo = () => {}){
     }
     ap.querySelector('.ap-fronte').appendChild(pag);
     ap.style.setProperty('--s-pieno', s.toFixed(4));
+    ap.style.setProperty('--mw', (r.width / 2).toFixed(1) + 'px');        // per il taglio della carta
+    ap.style.setProperty('--mh', (r.height / 2).toFixed(1) + 'px');
   }
 
   let girata = false, attesa = null;
