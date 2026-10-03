@@ -30,7 +30,7 @@ const ok = (etichetta, cond, extra = '') => {
     const d = document.querySelector('#apertura .ap-dorso'), r = d.getBoundingClientRect();
     return r.width > 200 && r.width < 412 && Math.abs(r.left + r.width / 2 - 206) < 30
       && parseFloat(getComputedStyle(d).borderTopLeftRadius) >= 16; }));
-  ok('con uno spessore', await p.evaluate(() => document.querySelectorAll('#apertura .ap-bordo i').length >= 5
+  ok('con uno spessore', await p.evaluate(() => document.querySelectorAll('#apertura .ap-lato').length === 4
     && getComputedStyle(document.querySelector('#apertura .ap-carta')).transformStyle === 'preserve-3d'));
   ok('sul fronte la pagina in miniatura, con l\'intestazione dell\'app', await p.locator('#apertura .ap-fronte .ap-pagina .appbar h1').count() === 1);
   ok('la copia non duplica gli id della pagina', await p.locator('#apertura [id]').count() === 0 || await p.evaluate(() =>
