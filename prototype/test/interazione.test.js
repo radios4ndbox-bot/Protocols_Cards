@@ -33,11 +33,12 @@ const ok = (etichetta, cond, extra = '') => {
   ok('con uno spessore', await p.evaluate(() => document.querySelectorAll('#apertura .ap-bordo i').length >= 5
     && getComputedStyle(document.querySelector('#apertura .ap-carta')).transformStyle === 'preserve-3d'));
   ok('sul fronte il nome dell\'app', (await p.locator('#apertura .ap-fronte').textContent()).includes('Protocol Cards'));
+  ok('il marchio è già stampato sul dorso', await p.evaluate(() => getComputedStyle(document.querySelector('#apertura .ap-dorso svg')).opacity === '1'));
   ok('con il marchio StructuRad', await p.locator('#apertura .ap-dorso svg path').count() > 10);
   ok('niente calendario né scelta della seduta',
      await p.locator('#calendar, #session, #tcEl, #tcEm').count() === 0);
   const giro = [];
-  for (let i = 0; i < 50; i++) {                      // ~3 s: entrata, giro, rimozione
+  for (let i = 0; i < 60; i++) {                      // ~3,6 s: entrata, giro, allargamento, rimozione
     await p.waitForTimeout(60);
     giro.push(await p.evaluate(() => {
       const d = document.querySelector('#apertura .ap-carta');
@@ -79,7 +80,7 @@ const ok = (etichetta, cond, extra = '') => {
   console.log('\n── UN TOCCO SALTA L\'ATTESA ─────────────');
   await p.reload(); await p.waitForTimeout(200);
   await p.locator('#apertura').click();
-  await p.waitForTimeout(1300);                       // giro (820 ms) e dissolvenza (300 ms)
+  await p.waitForTimeout(1800);                       // giro (820 ms), fronte a tutto schermo (460 ms), via (180 ms)
   ok('la carta si è già girata', await p.locator('#apertura').count() === 0);
   await p.waitForTimeout(500);
 
