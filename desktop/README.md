@@ -152,6 +152,25 @@ e l'app non contatta Google. Per ricrearlo:
    un segreto: identifica l'app, e Google accetta richieste solo dalle origini
    autorizzate.
 
+## Fasi per sezione (telefono)
+
+Nella scheda del telefono le fasi non si scelgono più zona per zona: i distretti
+della richiesta (anche più esami insieme, «TC torace | TC addome») diventano
+**sezioni** — encefalo, collo, torace, addome superiore o completo — e per ciascuna
+si toccano le fasi possibili. Le acquisizioni si compongono da sole:
+
+- sezioni vicine nella stessa fase diventano una sola scansione: torace + addome
+  in venosa → torace-addome completo (o superiore), collo + torace + addome →
+  «collo + torace-addome»; fasi diverse restano separate;
+- «separa» / «unisci» su un'acquisizione tiene distinti o riunisce torace e addome;
+- il protocollo applicato si stende sulle sezioni, che si mostrano già colorate;
+- per l'encefalo c'è la fase **Ritardo 5'** (300 s), a sé;
+- le zone che non sono un distretto (l'angio-TC, le fasi fisse dei protocolli)
+  restano come sono; per i casi particolari resta «Aggiunta manuale».
+
+La lettura della richiesta ora riconosce anche «TC collo torace addome» come
+un'unica regione dal collo all'addome (prima risultava solo «collo»).
+
 ## Planning
 
 Si può importare la lista di un giorno a venire, per esempio quella di domani, e

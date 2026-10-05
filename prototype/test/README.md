@@ -9,5 +9,6 @@ node zone.test.js          # deduzione della regione dall'esame
 node sigle.test.js         # sigle di zona espandibili
 node escaping.test.js      # testo ostile nei campi non deve iniettare markup
 node drive.test.js         # backup del profilo su Google Drive, con Google e Drive simulati
+node sezioni.test.js       # sezioni dalla richiesta, unione automatica, separa, ritardo 5' encefalo
 node zona.test.js          # zona ospedale: dentro, fuori (schede cancellate), posizione assente o negata
 ```

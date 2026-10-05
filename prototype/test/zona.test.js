@@ -64,7 +64,11 @@ const lontano = (metri, accuracy = 20) => ({ latitude: OSPEDALE.latitude + metri
 
   console.log('\n── RIAPERTURA IN OSPEDALE ──────────────');
   const n0 = await schede();
+  /* con file:// Chromium può perdere una scrittura del localStorage se la
+     pagina si ricarica subito dopo: si lascia il tempo di salvarla      */
+  await p.waitForTimeout(1200);
   await p.reload(); await p.waitForTimeout(100);
+  ok('la zona resta impostata dopo la riapertura', await p.evaluate(() => !!JSON.parse(localStorage.getItem('pc.v4.zona') || 'null')));
   ok('all\'avvio le schede sono coperte finché la posizione non risponde', /Verifico/.test(await velo() || '') || (await velo()) === false);
   ok('poi si scoprono', await attendi(async () => (await velo()) === false));
   ok('schede intatte', await schede() === n0);

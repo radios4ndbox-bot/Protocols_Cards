@@ -413,7 +413,40 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 .add:disabled{background:var(--surface2);color:var(--muted);cursor:not-allowed}
 .add:not(:disabled):active{transform:scale(.985)}
 
-.rows{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+.rows{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+/* sezioni: i distretti della richiesta, ciascuno con le sue fasi */
+.sezioni{display:flex;flex-direction:column;gap:8px}
+.sez{border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:var(--sh);overflow:hidden}
+.sez-h{display:flex;align-items:center;gap:10px;width:100%;padding:12px 13px;border:0;background:none;
+  font:inherit;text-align:left;cursor:pointer;color:var(--text)}
+.sez-n{font-size:13.5px;font-weight:750;flex:1;min-width:0}
+.sez-n small{font-weight:600;color:var(--muted);margin-left:6px;font-size:11px}
+.sez-p{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.sez-p i{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.3px;color:#fff;padding:3px 6px;border-radius:5px;background:var(--ph)}
+.sez-p .vuota{background:none;color:var(--muted);font-weight:600;letter-spacing:0;padding:3px 0}
+.sez-h::after{content:'';width:7px;height:7px;border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);
+  transform:rotate(45deg);margin:-4px 2px 0 4px;transition:transform .2s}
+.sez.aperta .sez-h::after{transform:rotate(225deg);margin-top:4px}
+.sez-f{display:none;padding:2px 13px 13px}
+.sez.aperta .sez-f{display:block}
+.sez-fasi{display:flex;flex-wrap:wrap;gap:6px}
+.sez-fasi button{height:34px;padding:0 12px;border-radius:9px;border:1.5px solid var(--ph);background:var(--surface);
+  color:var(--ph);font:inherit;font-size:12px;font-weight:750;cursor:pointer}
+.sez-fasi button.on{background:var(--ph);color:#fff}
+.sez-alt{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:11.5px;color:var(--muted)}
+.sez-alt button{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--accent-d);cursor:pointer}
+.sez-alt .via{margin-left:auto;color:var(--danger)}
+.sez-agg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sez-agg button{height:30px;padding:0 11px;border-radius:9px;border:1px dashed var(--border2);background:none;
+  font:inherit;font-size:11.5px;font-weight:700;color:var(--muted);cursor:pointer}
+.acq-t{margin-top:14px;font-size:9px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)}
+.row-s{border:0;background:none;padding:0 2px;font:inherit;font-size:10.5px;font-weight:700;color:var(--accent-d);cursor:pointer}
+.manuale{margin-top:10px}
+.manuale summary{cursor:pointer;font-size:11.5px;font-weight:700;color:var(--muted);padding:4px 0;list-style:none}
+.manuale summary::-webkit-details-marker{display:none}
+.manuale summary::before{content:'+ '}
+.manuale[open] summary::before{content:'− '}
+.manuale .combo{margin-top:8px}
 .row{display:flex;align-items:center;gap:9px;padding:10px 11px;background:var(--surface);
   border:1px solid var(--border);border-left:3px solid var(--ph,var(--accent));
   border-radius:10px;box-shadow:var(--sh);animation:pop .26s cubic-bezier(.32,.72,0,1)}
@@ -876,6 +909,13 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         i tuoi file. Niente dati dei pazienti, e degli appresi non va il testo del quesito. L'accesso a Google
         vale un'ora: dopo, il pallino sulle impostazioni ricorda di aggiornare il backup con un tocco. Su un
         telefono nuovo il profilo si recupera al primo accesso.</p></details>
+    <details><summary>Fasi per sezione</summary>
+      <p>Aprendo una scheda, i distretti della richiesta diventano sezioni (encefalo, collo, torace, addome
+        superiore o completo). Tocca una sezione per scegliere le sue fasi: compaiono solo quelle possibili per
+        quel distretto, e per l'encefalo c'è anche il ritardo a 5 minuti. Le acquisizioni si compongono da
+        sole: sezioni vicine nella stessa fase diventano una sola scansione (torace e addome in venosa
+        diventano torace-addome completo), fasi diverse restano separate. «Separa» tiene distinti torace e
+        addome; una sezione mancante si aggiunge con «+»; per le zone particolari c'è «Aggiunta manuale».</p></details>
     <details><summary>Planning</summary>
       <p>Il PC può mandare in anticipo la lista di un giorno futuro, per preparare i protocolli prima. Se
         stai lavorando sulla giornata di oggi, resta aperta: la giornata pianificata compare nel selettore in
@@ -954,6 +994,10 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     </div>
     <div class="sec">
       <div class="sec-t">Fasi di acquisizione</div>
+      <!-- i distretti della richiesta: un tocco apre le fasi di quella sezione -->
+      <div class="sezioni" id="sezioni"></div>
+      <div class="sez-agg" id="sezAgg"></div>
+      <details class="manuale"><summary>Aggiunta manuale</summary>
       <div class="combo">
         <div class="fld">
           <label class="fld-l" for="ddPhase">Fase</label>
@@ -962,6 +1006,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
             <option value="arteriosa">Arteriosa</option><option value="venosa">Venosa</option>
             <option value="tardiva">Eq. tardiva</option>
             <option value="urografica">Urografica</option><option value="surrene">Tardiva surrene</option>
+            <option value="ritardo">Ritardo 5' (encefalo)</option>
           </select>
         </div>
         <div class="fld">
@@ -971,6 +1016,8 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         </div>
       </div>
       <button class="add" id="addBtn" disabled>+ Aggiungi fase</button>
+      </details>
+      <div class="acq-t" id="acqT">Acquisizioni</div>
       <div class="rows" id="rows"></div>
       <div class="empty" id="empty">Nessuna fase impostata</div>
     </div>
@@ -1123,8 +1170,11 @@ const PH = {
   tardiva:  { l:'Eq. tardiva', c:'#c2601a', mdc:true,  delay:'300' },
   urografica:{ l:'Urografica', c:'#b08a00', mdc:true,  delay:'600' },
   surrene:  { l:'Tardiva surrene', c:'#8E1B3A', mdc:true, delay:'900' },
+  /* il tardivo dell'encefalo a 5 minuti: fase a sé, solo per l'encefalo */
+  ritardo:  { l:"Ritardo 5'", c:'#6E4BC8', mdc:true, delay:'300' },
 };
 ZONES.urografica = PR.ZONE.urografica; ZONES.surrene = PR.ZONE.surrene;
+ZONES.ritardo = [['ENC','Encefalo']];
 
 /* ═══ UTIL ═══════════════════════════════════════════════ */
 const $  = id => document.getElementById(id);
@@ -1608,6 +1658,7 @@ async function open(id, card){
   if(cur || busy) return;
   busy = true;
   cur = state.find(s => s.id===id);
+  sezAperta = null;                                   // le sezioni partono chiuse
   await grow(card, 'opening', () => {
     fill();
     $('board').classList.add('hidden');
@@ -1732,18 +1783,143 @@ $('applyBtn').onclick = () => {
   toast(r ? `Protocollo applicato · ${ZONE_L[r]}` : 'Protocollo applicato');
 };
 
+/* ═══ SEZIONI ════════════════════════════════════════════
+   I distretti della richiesta diventano sezioni; per ciascuna si scelgono
+   le fasi con un tocco. Le acquisizioni si compongono da sole: sezioni
+   vicine con la stessa fase diventano una sola scansione (torace e
+   addome in venosa → torace-addome completo), fasi diverse restano
+   separate; «separa» tiene distinte torace e addome in una fase.
+   Le acquisizioni che non sono di un distretto (l'angio-TC del collo e
+   dell'encefalo, fasi fisse dei protocolli) restano come sono.       */
+const SEZ = { ENC:'Encefalo', Collo:'Collo', TO:'Torace', AD:'Addome' };
+const SEZ_ORD = ['ENC','Collo','TO','AD'];
+const SIGLA = { basale:'BAS', arteriosa:'ART', venosa:'VEN', tardiva:'TAR', urografica:'URO', surrene:'SUR', ritardo:"5'" };
+const COPRE = { ENC:['ENC'], Collo:['Collo'], TO:['TO'], ADs:['AD'], ADc:['AD'], TAs:['TO','AD'], TAc:['TO','AD'],
+                'Collo TAs':['Collo','TO','AD'], 'Collo TAc':['Collo','TO','AD'] };
+const mappabile = f => f.zone.length && f.zone.every(z => COPRE[z]);
+let sezAperta = null;
+
+/* i distretti scritti nella richiesta, anche più esami insieme */
+function sezioniDa(esame){
+  const t = PR.normText(esame), s = new Set();
+  if(/total body|whole body|politrauma/.test(t)) SEZ_ORD.forEach(k => s.add(k));
+  if(/encefal|cranio|cerebral|\bcapo\b/.test(t)) s.add('ENC');
+  if(/\bcollo\b|tronchi sovra|\btsa\b|tiroide|laring|faring/.test(t)) s.add('Collo');
+  if(/torac|polmon/.test(t)) s.add('TO');
+  if(/addom|\buro\b|urotc|renal|reni\b|vescic|pelvi|surren|fegat|pancrea/.test(t)) s.add('AD');
+  if(/aorta/.test(t) && !/torac|addom/.test(t)) s.add('AD');
+  return SEZ_ORD.filter(k => s.has(k));
+}
+const adDa = esame => /addom\w*\s+(superior|sup\b)/.test(PR.normText(esame)) ? 'ADs' : 'ADc';
+const codiceSez = k => k === 'AD' ? (cur.sezAd || 'ADc') : k;
+const fasePermessa = (fase, k) => (ZONES[fase] || []).some(([c]) => c === codiceSez(k));
+
+/* per ogni sezione, le fasi in cui è acquisita */
+function fasiDelleSezioni(){
+  const m = {}; SEZ_ORD.forEach(k => m[k] = new Set());
+  cur.fasi.filter(mappabile).forEach(f => f.zone.forEach(z => COPRE[z].forEach(k => m[k].add(f.fase))));
+  return m;
+}
+/* le sezioni della scheda: dalla richiesta, più quelle che le fasi già coprono */
+function sezioniScheda(){
+  if(!cur.sezioni){ cur.sezioni = sezioniDa(cur.esame); cur.sezAd = adDa(cur.esame); }
+  const m = fasiDelleSezioni();
+  SEZ_ORD.forEach(k => { if(m[k].size && !cur.sezioni.includes(k)) cur.sezioni.push(k); });
+  cur.sezioni = SEZ_ORD.filter(k => cur.sezioni.includes(k));
+  return cur.sezioni;
+}
+/* le zone di una fase, dalle sezioni che la usano: unione delle vicine */
+function componi(fase, chiavi){
+  const ha = k => chiavi.includes(k), v = cur.sezAd || 'ADc', ta = v === 'ADs' ? 'TAs' : 'TAc';
+  const sep = !!(cur.separa && cur.separa[fase]);
+  const out = [];
+  if(ha('ENC')) out.push('ENC');
+  if(!sep && ha('Collo') && ha('TO') && ha('AD')) out.push('Collo ' + ta);
+  else if(!sep && ha('TO') && ha('AD')){ if(ha('Collo')) out.push('Collo'); out.push(ta); }
+  else { if(ha('Collo')) out.push('Collo'); if(ha('TO')) out.push('TO'); if(ha('AD')) out.push(v); }
+  /* solo zone ammesse per la fase: quelle unite si spezzano se serve */
+  const ok = new Set((ZONES[fase] || []).map(([c]) => c));
+  const PARTI = { 'Collo TAs':['Collo','TAs'], 'Collo TAc':['Collo','TAc'], TAs:['TO','ADs'], TAc:['TO','ADc'] };
+  const fin = [], metti = z => { if(ok.has(z)) fin.push(z); else if(PARTI[z]) PARTI[z].forEach(metti); };
+  out.forEach(metti);
+  return [...new Set(fin)];
+}
+function ricomponi(fase, chiavi){
+  const i = cur.fasi.findIndex(f => f.fase === fase && mappabile(f));
+  const zone = componi(fase, chiavi);
+  if(!zone.length){ if(i >= 0) cur.fasi.splice(i, 1); }
+  else if(i >= 0){ cur.fasi[i].zone = zone; delete cur.fasi[i].fix; }
+  else cur.fasi.push({ fase, zone, delay:PH[fase].delay || '' });
+  cur.fasi.sort((a, b) => Object.keys(PH).indexOf(a.fase) - Object.keys(PH).indexOf(b.fase));
+}
+function tocca(k, fase){
+  const m = fasiDelleSezioni();
+  const chiavi = SEZ_ORD.filter(x => x === k ? !m[x].has(fase) : m[x].has(fase));
+  ricomponi(fase, chiavi);
+  renderRows(); syncHint();
+}
+function renderSezioni(){
+  const box = $('sezioni'); if(!box || !cur) return;
+  const sez = sezioniScheda(), m = fasiDelleSezioni();
+  box.innerHTML = sez.map(k => {
+    const fasi = Object.keys(PH).filter(f => m[k].has(f));
+    const nome = SEZ[k] + (k === 'AD' ? `<small>${(cur.sezAd || 'ADc') === 'ADs' ? 'superiore' : 'completo'}</small>` : '');
+    return `<div class="sez${sezAperta === k ? ' aperta' : ''}" data-k="${k}">
+      <button class="sez-h" aria-expanded="${sezAperta === k}"><span class="sez-n">${nome}</span>
+        <span class="sez-p">${fasi.length ? fasi.map(f => `<i style="--ph:${PH[f].c}">${SIGLA[f] || f}</i>`).join('') : '<i class="vuota">nessuna fase</i>'}</span></button>
+      <div class="sez-f"><div class="sez-fasi">${Object.keys(PH).filter(f => fasePermessa(f, k)).map(f =>
+          `<button class="${m[k].has(f) ? 'on' : ''}" style="--ph:${PH[f].c}" data-f="${f}" aria-pressed="${m[k].has(f)}">${PH[f].l}</button>`).join('')}</div>
+        <div class="sez-alt">${k === 'AD' ? `<button data-ad>${(cur.sezAd || 'ADc') === 'ADs' ? 'Passa ad addome completo' : 'Passa ad addome superiore'}</button>` : ''}
+          <button class="via" data-via>Togli sezione</button></div></div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('.sez').forEach(el => {
+    const k = el.dataset.k;
+    el.querySelector('.sez-h').onclick = () => { sezAperta = sezAperta === k ? null : k; renderSezioni(); };
+    el.querySelectorAll('[data-f]').forEach(b => b.onclick = () => tocca(k, b.dataset.f));
+    const ad = el.querySelector('[data-ad]');
+    if(ad) ad.onclick = () => {
+      cur.sezAd = (cur.sezAd || 'ADc') === 'ADs' ? 'ADc' : 'ADs';
+      Object.keys(PH).forEach(f => { const mm = fasiDelleSezioni(); if(mm.AD.has(f)) ricomponi(f, SEZ_ORD.filter(x => mm[x].has(f))); });
+      renderRows(); syncHint();
+    };
+    el.querySelector('[data-via]').onclick = () => {
+      const mm = fasiDelleSezioni();
+      Object.keys(PH).forEach(f => { if(mm[k].has(f)) ricomponi(f, SEZ_ORD.filter(x => x !== k && mm[x].has(f))); });
+      cur.sezioni = cur.sezioni.filter(x => x !== k); sezAperta = null;
+      renderRows(); syncHint();
+    };
+  });
+  /* le sezioni che mancano si aggiungono con un tocco */
+  const agg = $('sezAgg');
+  agg.innerHTML = SEZ_ORD.filter(k => !sez.includes(k)).map(k => `<button data-k="${k}">+ ${SEZ[k]}</button>`).join('');
+  agg.querySelectorAll('button').forEach(b => b.onclick = () => {
+    cur.sezioni.push(b.dataset.k); sezAperta = b.dataset.k; renderRows();
+  });
+}
+
 function renderRows(){
+  renderSezioni();
   const box=$('rows'); box.innerHTML='';
   $('empty').style.display = cur.fasi.length ? 'none' : 'block';
+  $('acqT').style.display = cur.fasi.length ? '' : 'none';
   cur.fasi.forEach((f,i) => {
     const m=PH[f.fase];
     const row=document.createElement('div');
     row.className='row'; row.style.setProperty('--ph',m.c);
     row.innerHTML = `<span class="row-n">${m.l}</span>
       <div class="row-z">${f.zone.map(zChip).join('')}</div>
+      ${mappabile(f) && (cur.separa?.[f.fase] || f.zone.some(z => /TA[sc]$/.test(z)))
+        ? `<button class="row-s">${cur.separa?.[f.fase] ? 'unisci' : 'separa'}</button>` : ''}
       ${m.delay!==null?`<input class="row-d" value="${esc(f.delay)}" aria-label="ritardo">`:''}
       <button class="row-x" aria-label="Rimuovi">×</button>`;
     row.querySelector('.row-x').onclick = () => { cur.fasi.splice(i,1); renderRows(); syncHint(); };
+    const sp=row.querySelector('.row-s');
+    if(sp) sp.onclick = () => {
+      cur.separa = { ...(cur.separa || {}), [f.fase]: !(cur.separa && cur.separa[f.fase]) };
+      const mm = fasiDelleSezioni(); ricomponi(f.fase, SEZ_ORD.filter(x => mm[x].has(f.fase)));
+      renderRows(); syncHint();
+    };
     const d=row.querySelector('.row-d');
     if(d) d.oninput = e => { f.delay=e.target.value; };
     box.appendChild(row);

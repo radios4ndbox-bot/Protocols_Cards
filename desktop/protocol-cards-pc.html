@@ -4171,8 +4171,11 @@ var qrcode = function() {
     /* prima del collo: «rachide cervicale» è colonna, non collo */
     if (/rachide|colonna|vertebr|bacino|femore|ginocchio|spalla|omero|arto|polso|caviglia|piede|mano|massiccio|facciale|temporale|orbit|seni paranasal|mandibol/.test(t))
       return 'ALTRO';                       // distretto riconosciuto ma fuori tassonomia
-    if (/\bcollo\b|cervical|tiroide|laring|faring|parotid/.test(t)) return 'Collo';
     const tor = /torac/.test(t), add = /addom/.test(t), sup = /superior|\bsup\b/.test(t);
+    /* «collo torace addome» è un'unica scansione dal collo all'addome */
+    const collo = /\bcollo\b|cervical|tiroide|laring|faring|parotid/.test(t);
+    if (collo && tor && add) return sup ? 'Collo TAs' : 'Collo TAc';
+    if (collo) return 'Collo';
     if (tor && add) return sup ? 'TAs' : 'TAc';
     if (tor)        return 'TO';
     if (add)        return sup ? 'ADs' : 'ADc';
@@ -4195,7 +4198,9 @@ var qrcode = function() {
       const kw = (v.kw || []).filter(w => w && trovato(w, tq));
       const ex = (v.ex || []).filter(w => w && te.includes(normText(w)));
       const sKw = kw.reduce((s, w) => s + pesoTermine(w), 0);
-      const fuori = !!(regione && v.reg && v.reg.length && !v.reg.includes(regione));
+      /* per la compatibilità, «collo + torace-addome» vale come torace-addome */
+      const base = regione && regione.startsWith('Collo ') ? regione.slice(6) : regione;
+      const fuori = !!(base && v.reg && v.reg.length && !v.reg.includes(base));
       if (!sKw && !ex.length) return;
       const c = { id: v.id, punteggio: sKw + ex.length, kw, ex, fuori, ordine };
       candidati.push(c);

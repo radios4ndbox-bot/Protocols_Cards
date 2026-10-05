@@ -80,6 +80,7 @@ const ok=(l,c,x='')=>{console.log((c?'  ok  ':'  FAIL')+' │ '+l+(x?'  → '+x:
      (await p.locator('.row-z .zc').first().getAttribute('data-z')));
 
   console.log('\n── ZONA TORACE NEI MENU ────────────────');
+  await p.evaluate(() => { document.querySelector('.manuale').open = true; });
   await p.selectOption('#ddPhase','basale');
   await p.locator('#ddZone').click(); await p.waitForTimeout(200);
   const opts = await p.locator('#pop .pop-i span').allTextContents();
