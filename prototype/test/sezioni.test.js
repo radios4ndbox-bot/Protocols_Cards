@@ -96,6 +96,20 @@ const FILE = 'file://' + path.resolve(__dirname, '../index.html');
   await p.locator(`.card-mini[data-id="${await p.evaluate(() => state[0].id)}"]`).click(); await p.waitForTimeout(1100);
   ok('riaprendo la scheda le sezioni restano', await sezioni() === 'TO,AD');
 
+  console.log('\n── FLUSSO MODIFICABILE ─────────────────');
+  await p.locator('.calc').scrollIntoViewIfNeeded();
+  const c = await p.evaluate(() => agenteScheda().c);
+  await p.locator('#cFlow').fill('4.5'); await p.locator('#cFlow').press('Enter'); await p.locator('#cFlow').blur();
+  ok('scritto il flusso, l\'IDR segue', await p.evaluate(c => Math.abs(cur.idr - 4.5 * c) < 1e-6, c), await p.evaluate(() => cur.idr));
+  ok('e il flusso mostrato è quello scritto', await p.locator('#cFlow').inputValue() === '4.5');
+  ok('la dose risulta modificata', /modificata/.test(await p.locator('#cDoseT').textContent()));
+  await p.locator('.fl-b[data-d="0.1"]').click();
+  ok('+ aggiunge 0,1 ml/s', await p.locator('#cFlow').inputValue() === '4.6', await p.locator('#cFlow').inputValue());
+  await p.locator('#cFlow').fill('50'); await p.locator('#cFlow').blur();
+  ok('oltre il limite dell\'IDR si ferma al massimo', await p.evaluate(() => cur.idr === LIM.idr[1]));
+  const vol = await p.locator('#cVol').textContent();
+  ok('il volume non cambia con il flusso', /^\d+$/.test(vol), vol);
+
   console.log('\n────────────────────────────────────────');
   console.log(errs.length ? 'ERRORI JS: ' + errs.join(' | ') : 'errori JS: nessuno');
   if (errs.length) fail++;

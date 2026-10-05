@@ -478,6 +478,20 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 .calc-out{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .calc-k{display:flex;flex-direction:column;gap:5px;padding:10px 12px;border-radius:10px;background:var(--accent-s)}
 .calc-l{font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.fl-r{display:flex;align-items:baseline;gap:4px}
+.fl-i{width:2.6em;min-width:0;border:0;border-bottom:1.5px dashed var(--accent);background:none;padding:0;
+  font-family:inherit;outline:none;-moz-appearance:textfield}
+.fl-i::-webkit-outer-spin-button,.fl-i::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.fl-i:focus{border-bottom-style:solid}
+/* più specifico dello stile generico dei campi: deve sembrare il valore del volume */
+.calc .flusso input.fl-i{height:auto;width:2.3em;padding:0;margin:0;border:0;border-bottom:1.5px dashed var(--accent);
+  border-radius:0;background:none;box-shadow:none;font-size:30px;font-weight:800;letter-spacing:-1px;
+  color:var(--accent-d);font-variant-numeric:tabular-nums;line-height:1;text-align:left}
+.calc .flusso input.fl-i:focus{border-bottom-style:solid;box-shadow:none}
+.fl-b{align-self:center;width:28px;height:28px;flex-shrink:0;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface);color:var(--accent-d);font-size:16px;font-weight:700;line-height:1;cursor:pointer;padding:0}
+.fl-b:first-child{margin-right:2px}
+.fl-b:last-child{margin-left:auto}
 .calc-v{font-size:30px;font-weight:800;letter-spacing:-1px;color:var(--accent-d);
   font-variant-numeric:tabular-nums;line-height:1}
 .calc-u{font-size:12px;font-weight:650;color:var(--muted)}
@@ -1029,8 +1043,12 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         <div class="calc-out">
           <div class="calc-k"><span class="calc-l">Volume</span>
             <span><span class="calc-v" id="cVol">—</span> <span class="calc-u" id="cVolU"></span></span></div>
-          <div class="calc-k"><span class="calc-l">Flusso</span>
-            <span><span class="calc-v" id="cFlow">—</span> <span class="calc-u" id="cFlowU"></span></span></div>
+          <!-- il flusso si può cambiare: l'IDR segue (flusso × concentrazione) -->
+          <div class="calc-k flusso"><span class="calc-l">Flusso</span>
+            <div class="fl-r"><button class="fl-b" data-k="flusso" data-d="-0.1" aria-label="Meno 0,1 ml/s">−</button>
+              <input class="calc-v fl-i" id="cFlow" type="number" inputmode="decimal" step="0.1" aria-label="Flusso in ml/s">
+              <span class="calc-u" id="cFlowU">ml/s</span>
+              <button class="fl-b" data-k="flusso" data-d="0.1" aria-label="Più 0,1 ml/s">+</button></div></div>
         </div>
         <div class="calc-tot" id="cTot">nessuna fase con contrasto</div>
         <div class="calc-warn" id="cWarn"></div>
@@ -1938,20 +1956,20 @@ function calc(){
   /* la dose viene dal protocollo: si segnala solo se è stata cambiata */
   const pr = PROTOCOLS[cur.proto];
   const mod = pr && (Math.abs(pr.giKg-cur.giKg) > 1e-9 || Math.abs(pr.idr-cur.idr) > 1e-9);
-  $('cDoseT').innerHTML = `Dose <b>${it(cur.giKg,2)}</b> gI/kg · IDR <b>${it(cur.idr)}</b> gI/s`
+  $('cDoseT').innerHTML = `Dose <b>${it(cur.giKg,2)}</b> gI/kg · IDR <b>${it(cur.idr, Math.abs(cur.idr*10 - Math.round(cur.idr*10)) > 1e-6 ? 2 : 1)}</b> gI/s`
     + (mod ? ' <span class="mod">· modificata</span>' : '');
   /* senza contrasto non c'è niente da calcolare: si mostra solo questo */
   document.querySelector('.calc').classList.toggle('vuoto', !conMdc);
   if(!conMdc || !cur.giKg){
     $('cVol').textContent='—'; $('cVolU').textContent='';
-    $('cFlow').textContent='—'; $('cFlowU').textContent='';
+    if(document.activeElement!==$('cFlow')) $('cFlow').value='';
     $('cTot').textContent = conMdc ? 'protocollo senza somministrazione di iodio'
                                    : 'nessuna fase con contrasto';
     $('cWarn').classList.remove('show'); return;
   }
   const gi=cur.giKg*cur.peso, vol=gi/ag.c, flow=cur.idr/ag.c;
   $('cVol').textContent=Math.round(vol);  $('cVolU').textContent='ml';
-  $('cFlow').textContent=it(flow);        $('cFlowU').textContent='ml/s';
+  if(document.activeElement!==$('cFlow')) $('cFlow').value = flow.toFixed(1);   // mentre si scrive non si tocca
   $('cTot').textContent = `${it(gi)} gI di iodio · ${ag.l}, ${it(ag.c,2)} gI/ml`;
   const w=[];
   if(vol>150) w.push(`Volume elevato (${Math.round(vol)} ml): verifica peso e indicazione.`);
@@ -1969,10 +1987,27 @@ function setPar(k,v){
   $({peso:'pPeso',giKg:'pGiKg',idr:'pIdr'}[k]).value = dec?v.toFixed(dec):v;
   calc();
 }
+/* Il flusso si imposta anche direttamente: l'IDR diventa flusso ×
+   concentrazione del mezzo, nei limiti dell'IDR. La dose del protocollo
+   risulta allora «modificata».                                         */
+const agenteScheda = () => AGENTS.find(a=>a.id===(cur.agent||agent)) || AGENTS[0];
+const flussoAttuale = () => cur.idr / agenteScheda().c;
+function impostaFlusso(v){
+  if(!cur || !isFinite(v)) return calc();
+  const [min, max] = LIM.idr;
+  cur.idr = Math.round(Math.max(min, Math.min(max, v * agenteScheda().c)) * 1000) / 1000;
+  $('pIdr').value = cur.idr.toFixed(2);
+  calc();
+}
+$('cFlow').oninput  = e => { const v = parseFloat(e.target.value); if(cur && v > 0){ cur.idr = v * agenteScheda().c; calc(); } };
+$('cFlow').onchange = e => { impostaFlusso(parseFloat(e.target.value)); $('cFlow').value = flussoAttuale().toFixed(1); };
+
 /* − e +: un tocco cambia di un passo, tenendo premuto continua */
-document.querySelectorAll('.step button').forEach(b => {
+document.querySelectorAll('.step button, .fl-b').forEach(b => {
   let t = null;
-  const passo = () => { if(cur) setPar(b.dataset.k, cur[b.dataset.k]+parseFloat(b.dataset.d)); };
+  const passo = () => { if(!cur) return;
+    if(b.dataset.k==='flusso') impostaFlusso(Math.round((flussoAttuale() + parseFloat(b.dataset.d)) * 10) / 10);
+    else setPar(b.dataset.k, cur[b.dataset.k]+parseFloat(b.dataset.d)); };
   const ferma = () => { clearTimeout(t); clearInterval(t); t = null; };
   b.addEventListener('pointerdown', e => {
     e.preventDefault(); passo(); ferma();

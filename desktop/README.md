@@ -165,6 +165,9 @@ si toccano le fasi possibili. Le acquisizioni si compongono da sole:
 - «separa» / «unisci» su un'acquisizione tiene distinti o riunisce torace e addome;
 - il protocollo applicato si stende sulle sezioni, che si mostrano già colorate;
 - per l'encefalo c'è la fase **Ritardo 5'** (300 s), a sé;
+- nel calcolatore il **flusso** (ml/s) si cambia direttamente, con − e + o
+  scrivendolo: l'IDR segue (flusso × concentrazione del mezzo), nei suoi limiti, e la
+  dose risulta «modificata»;
 - le zone che non sono un distretto (l'angio-TC, le fasi fisse dei protocolli)
   restano come sono; per i casi particolari resta «Aggiunta manuale».
 
