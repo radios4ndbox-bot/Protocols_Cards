@@ -120,7 +120,9 @@ const ok = (etichetta, cond, extra = '') => {
      (await p.locator('#cVol').textContent()) + ' ml');
 
   console.log('\n── COMBO FASE → ZONE ───────────────────');
+  await p.evaluate(() => { document.querySelector('.manuale').open = true; });
   ok('zone bloccate senza fase', await p.locator('#ddZone').isDisabled());
+  await p.evaluate(() => { document.querySelector('.manuale').open = true; });
   await p.selectOption('#ddPhase', 'basale');
   await p.locator('#ddZone').click(); await p.waitForTimeout(200);
   ok('zone della basale', (await p.locator('#pop .pop-i span').allTextContents()).join(' ')
