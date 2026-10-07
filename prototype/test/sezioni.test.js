@@ -17,7 +17,7 @@ const FILE = 'file://' + path.resolve(__dirname, '../index.html');
   const apri = async (esame, quesito = 'controllo') => {
     if (await p.evaluate(() => !!cur)) { await p.locator('#back').click(); await p.waitForTimeout(900); }
     await p.evaluate(([e, q]) => {
-      Object.assign(state[0], { esame: e, quesito: q, fasi: [], stato: 'todo', proto: matchProtocol(e, q) }); delete state[0].sezioni; delete state[0].separa;
+      Object.assign(state[0], { esame: e, quesito: q, fasi: [], stato: 'todo', proto: matchProtocol(e, q) }); delete state[0].sezioni; delete state[0].separa; delete state[0].adFase;
       persist(); show('board'); }, [esame, quesito]);
     await p.locator('.card-mini').first().click(); await p.waitForTimeout(1100);
   };
@@ -81,10 +81,28 @@ const FILE = 'file://' + path.resolve(__dirname, '../index.html');
   await p.locator('#sezAgg button[data-k="AD"]').click();
   ok('si aggiunge una sezione', await sezioni() === 'TO,AD');
   await tocca('TO', 'venosa'); await tocca('AD', 'venosa');
-  await p.locator('.sez[data-k="AD"] [data-ad]').click();
-  ok('addome superiore ↔ completo', await acq() === 'venosa:TAs', await acq());
+  await p.locator('.sez[data-k="AD"] [data-est="ADs"][data-f="venosa"]').click();
+  ok('addome superiore ↔ completo, per la fase', await acq() === 'venosa:TAs', await acq());
   await p.locator('.sez[data-k="AD"] [data-via]').click();
   ok('togliendo la sezione si tolgono le sue fasi', await acq() === 'venosa:TO' && await sezioni() === 'TO', await acq());
+
+  console.log('\n── ADDOME: ESTENSIONE PER FASE ─────────');
+  /* arteriosa sul solo addome superiore, venosa sull'addome completo */
+  await apri('TC ADDOME COMPLETO CON MDC');
+  await tocca('AD', 'arteriosa'); await tocca('AD', 'venosa');
+  ok('di base, l\'estensione della richiesta', await acq() === 'arteriosa:ADc venosa:ADc', await acq());
+  await p.locator('.sez[data-k="AD"] [data-est="ADs"][data-f="arteriosa"]').click();
+  ok('arteriosa sul superiore, venosa sul completo', await acq() === 'arteriosa:ADs venosa:ADc', await acq());
+  ok('il riquadro lo dice', /superiore \+ completo/.test(await p.locator('.sez[data-k="AD"] .sez-n').textContent()));
+  ok('e le sigle lo distinguono', (await p.locator('.sez[data-k="AD"] .sez-p').textContent()) === 'ARTsVENc',
+     await p.locator('.sez[data-k="AD"] .sez-p').textContent());
+  await p.locator('#sezAgg button[data-k="TO"]').click();
+  await tocca('TO', 'arteriosa'); await tocca('TO', 'venosa');
+  ok('con il torace: torace-addome superiore in arteriosa, completo in venosa', await acq() === 'arteriosa:TAs venosa:TAc', await acq());
+  await p.locator('.sez[data-k="AD"] .sez-h').click();
+  ok('un\'estensione per fase: due scelte, una per fase attiva', await p.locator('.sez[data-k="AD"] .ad-est').count() === 2);
+  await p.locator('.sez[data-k="AD"] [data-est="ADc"][data-f="arteriosa"]').click();
+  ok('e si torna indietro', await acq() === 'arteriosa:TAc venosa:TAc', await acq());
 
   console.log('\n── PROTOCOLLO SUGGERITO ────────────────');
   await apri('TC TORACE ADDOME CON MDC', 'Ristadiazione neoplasia');

@@ -162,6 +162,8 @@ si toccano le fasi possibili. Le acquisizioni si compongono da sole:
 - sezioni vicine nella stessa fase diventano una sola scansione: torace + addome
   in venosa → torace-addome completo (o superiore), collo + torace + addome →
   «collo + torace-addome»; fasi diverse restano separate;
+- nell'addome l'estensione si sceglie **per fase**: superiore o completo accanto a
+  ogni fase (es. arteriosa sul superiore, venosa sul completo);
 - «separa» / «unisci» su un'acquisizione tiene distinti o riunisce torace e addome;
 - il protocollo applicato si stende sulle sezioni, che si mostrano già colorate;
 - per l'encefalo c'è la fase **Ritardo 5'** (300 s), a sé;
