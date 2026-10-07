@@ -433,6 +433,14 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 .sez-fasi button{height:34px;padding:0 12px;border-radius:9px;border:1.5px solid var(--ph);background:var(--surface);
   color:var(--ph);font:inherit;font-size:12px;font-weight:750;cursor:pointer}
 .sez-fasi button.on{background:var(--ph);color:#fff}
+.sez-fasi.ad{flex-direction:column;align-items:stretch;gap:7px}
+.ad-riga{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ad-riga > button{min-width:110px}
+.ad-est{display:inline-flex;padding:2px;border-radius:9px;background:var(--surface2);border:1px solid var(--border)}
+.ad-est button{height:28px;padding:0 10px;border:0;border-radius:7px;background:none;font:inherit;font-size:11.5px;
+  font-weight:700;color:var(--muted);cursor:pointer}
+.ad-est button.on{background:var(--surface);color:var(--text);box-shadow:var(--sh)}
+.sez-p i b{font-weight:700;font-size:8px;margin-left:2px;opacity:.85;text-transform:lowercase}
 .sez-alt{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:11.5px;color:var(--muted)}
 .sez-alt button{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--accent-d);cursor:pointer}
 .sez-alt .via{margin-left:auto;color:var(--danger)}
@@ -928,7 +936,8 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         superiore o completo). Tocca una sezione per scegliere le sue fasi: compaiono solo quelle possibili per
         quel distretto, e per l'encefalo c'è anche il ritardo a 5 minuti. Le acquisizioni si compongono da
         sole: sezioni vicine nella stessa fase diventano una sola scansione (torace e addome in venosa
-        diventano torace-addome completo), fasi diverse restano separate. «Separa» tiene distinti torace e
+        diventano torace-addome completo), fasi diverse restano separate. Nell'addome, accanto a ogni fase, scegli superiore o
+        completo: per esempio arteriosa sul superiore e venosa sul completo. «Separa» tiene distinti torace e
         addome; una sezione mancante si aggiunge con «+»; per le zone particolari c'è «Aggiunta manuale».</p></details>
     <details><summary>Planning</summary>
       <p>Il PC può mandare in anticipo la lista di un giorno futuro, per preparare i protocolli prima. Se
@@ -1793,6 +1802,7 @@ $('applyBtn').onclick = () => {
      rimapparle vanificherebbe la scelta dell'operatore.                */
   const fasi = JSON.parse(JSON.stringify(src.fasi));
   cur.fasi = appreso ? fasi : fitZones(fasi, cur.esame);
+  cur.adFase = {};                                    // l'estensione dell'addome la porta il protocollo
   cur.idr = src.idr; cur.giKg = src.giKg;
   $('pGiKg').value=cur.giKg; $('pIdr').value=cur.idr;
   renderRows(); syncHint();
@@ -1829,8 +1839,23 @@ function sezioniDa(esame){
   return SEZ_ORD.filter(k => s.has(k));
 }
 const adDa = esame => /addom\w*\s+(superior|sup\b)/.test(PR.normText(esame)) ? 'ADs' : 'ADc';
-const codiceSez = k => k === 'AD' ? (cur.sezAd || 'ADc') : k;
-const fasePermessa = (fase, k) => (ZONES[fase] || []).some(([c]) => c === codiceSez(k));
+/* L'addome ha la sua estensione fase per fase: un'arteriosa sul solo
+   addome superiore e una venosa sull'addome completo, per esempio.
+   Vale, nell'ordine: la scelta fatta qui, quella che le fasi portano già
+   (un protocollo applicato), quella letta dalla richiesta.            */
+const ammesse = fase => new Set((ZONES[fase] || []).map(([c]) => c));
+const estensioniAD = fase => ['ADs', 'ADc'].filter(v => ammesse(fase).has(v));
+function varAD(fase){
+  const ok = estensioniAD(fase);
+  const scelta = cur.adFase && cur.adFase[fase];
+  if(scelta && ok.includes(scelta)) return scelta;
+  const f = cur.fasi.find(x => x.fase === fase && mappabile(x));
+  if(f && f.zone.some(z => /(ADs|TAs)$/.test(z)) && ok.includes('ADs')) return 'ADs';
+  if(f && f.zone.some(z => /(ADc|TAc)$/.test(z)) && ok.includes('ADc')) return 'ADc';
+  const base = cur.sezAd || 'ADc';
+  return ok.includes(base) ? base : (ok[0] || base);
+}
+const fasePermessa = (fase, k) => k === 'AD' ? estensioniAD(fase).length > 0 : ammesse(fase).has(k);
 
 /* per ogni sezione, le fasi in cui è acquisita */
 function fasiDelleSezioni(){
@@ -1848,7 +1873,7 @@ function sezioniScheda(){
 }
 /* le zone di una fase, dalle sezioni che la usano: unione delle vicine */
 function componi(fase, chiavi){
-  const ha = k => chiavi.includes(k), v = cur.sezAd || 'ADc', ta = v === 'ADs' ? 'TAs' : 'TAc';
+  const ha = k => chiavi.includes(k), v = varAD(fase), ta = v === 'ADs' ? 'TAs' : 'TAc';
   const sep = !!(cur.separa && cur.separa[fase]);
   const out = [];
   if(ha('ENC')) out.push('ENC');
@@ -1881,26 +1906,35 @@ function renderSezioni(){
   const sez = sezioniScheda(), m = fasiDelleSezioni();
   box.innerHTML = sez.map(k => {
     const fasi = Object.keys(PH).filter(f => m[k].has(f));
-    const nome = SEZ[k] + (k === 'AD' ? `<small>${(cur.sezAd || 'ADc') === 'ADs' ? 'superiore' : 'completo'}</small>` : '');
+    /* per l'addome: superiore, completo, o entrambi in fasi diverse */
+    const est = k === 'AD' ? [...new Set((fasi.length ? fasi : [null]).map(f => f ? varAD(f) : (cur.sezAd || 'ADc')))] : [];
+    const nome = SEZ[k] + (k === 'AD' ? `<small>${est.length > 1 ? 'superiore + completo' : est[0] === 'ADs' ? 'superiore' : 'completo'}</small>` : '');
+    const sigla = f => (SIGLA[f] || f) + (k === 'AD' && est.length > 1 ? `<b>${varAD(f) === 'ADs' ? 's' : 'c'}</b>` : '');
     return `<div class="sez${sezAperta === k ? ' aperta' : ''}" data-k="${k}">
       <button class="sez-h" aria-expanded="${sezAperta === k}"><span class="sez-n">${nome}</span>
-        <span class="sez-p">${fasi.length ? fasi.map(f => `<i style="--ph:${PH[f].c}">${SIGLA[f] || f}</i>`).join('') : '<i class="vuota">nessuna fase</i>'}</span></button>
-      <div class="sez-f"><div class="sez-fasi">${Object.keys(PH).filter(f => fasePermessa(f, k)).map(f =>
-          `<button class="${m[k].has(f) ? 'on' : ''}" style="--ph:${PH[f].c}" data-f="${f}" aria-pressed="${m[k].has(f)}">${PH[f].l}</button>`).join('')}</div>
-        <div class="sez-alt">${k === 'AD' ? `<button data-ad>${(cur.sezAd || 'ADc') === 'ADs' ? 'Passa ad addome completo' : 'Passa ad addome superiore'}</button>` : ''}
-          <button class="via" data-via>Togli sezione</button></div></div>
+        <span class="sez-p">${fasi.length ? fasi.map(f => `<i style="--ph:${PH[f].c}">${sigla(f)}</i>`).join('') : '<i class="vuota">nessuna fase</i>'}</span></button>
+      <div class="sez-f"><div class="sez-fasi${k === 'AD' ? ' ad' : ''}">${Object.keys(PH).filter(f => fasePermessa(f, k)).map(f => {
+          const b = `<button class="${m[k].has(f) ? 'on' : ''}" style="--ph:${PH[f].c}" data-f="${f}" aria-pressed="${m[k].has(f)}">${PH[f].l}</button>`;
+          if(k !== 'AD') return b;
+          /* addome: accanto alla fase, superiore o completo per quella fase */
+          const vv = estensioniAD(f), cur_ = varAD(f);
+          return `<div class="ad-riga">${b}${m[k].has(f) && vv.length > 1 ? `<span class="ad-est" role="radiogroup" aria-label="Estensione ${PH[f].l}">${vv.map(v =>
+            `<button class="${v === cur_ ? 'on' : ''}" data-est="${v}" data-f="${f}" aria-pressed="${v === cur_}">${v === 'ADs' ? 'superiore' : 'completo'}</button>`).join('')}</span>` : ''}</div>`;
+        }).join('')}</div>
+        <div class="sez-alt"><button class="via" data-via>Togli sezione</button></div></div>
     </div>`;
   }).join('');
   box.querySelectorAll('.sez').forEach(el => {
     const k = el.dataset.k;
     el.querySelector('.sez-h').onclick = () => { sezAperta = sezAperta === k ? null : k; renderSezioni(); };
-    el.querySelectorAll('[data-f]').forEach(b => b.onclick = () => tocca(k, b.dataset.f));
-    const ad = el.querySelector('[data-ad]');
-    if(ad) ad.onclick = () => {
-      cur.sezAd = (cur.sezAd || 'ADc') === 'ADs' ? 'ADc' : 'ADs';
-      Object.keys(PH).forEach(f => { const mm = fasiDelleSezioni(); if(mm.AD.has(f)) ricomponi(f, SEZ_ORD.filter(x => mm[x].has(f))); });
+    el.querySelectorAll('[data-f]:not([data-est])').forEach(b => b.onclick = () => tocca(k, b.dataset.f));
+    /* l'estensione dell'addome per quella fase */
+    el.querySelectorAll('[data-est]').forEach(b => b.onclick = () => {
+      const f = b.dataset.f;
+      cur.adFase = { ...(cur.adFase || {}), [f]: b.dataset.est };
+      const mm = fasiDelleSezioni(); ricomponi(f, SEZ_ORD.filter(x => mm[x].has(f)));
       renderRows(); syncHint();
-    };
+    });
     el.querySelector('[data-via]').onclick = () => {
       const mm = fasiDelleSezioni();
       Object.keys(PH).forEach(f => { if(mm[k].has(f)) ricomponi(f, SEZ_ORD.filter(x => x !== k && mm[x].has(f))); });
