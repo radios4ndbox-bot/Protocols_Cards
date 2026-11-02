@@ -29,16 +29,19 @@
   const ZONE = {
     basale:   [['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
                ['ADs','Addome sup.'],['ADc','Addome compl.'],
-               ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']],
+               ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
+               ['ASup','Arto sup.'],['AInf','Arto inf.'],['MF','Massiccio facciale'],['RACH','Rachide'],['BAC','Bacino']],
     arteriosa:[['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
                ['ADs','Addome sup.'],['ADc','Addome compl.'],
                ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
                ['Collo TAs','Collo + tor-add sup.'],['Collo TAc','Collo + tor-add compl.'],
-               ['Angio TC','Angio-TC']],
+               ['Angio TC','Angio-TC'],
+               ['ASup','Arto sup.'],['AInf','Arto inf.'],['MF','Massiccio facciale'],['BAC','Bacino']],
     venosa:   [['Collo','Collo'],['TO','Torace'],
                ['ADs','Addome sup.'],['ADc','Addome compl.'],
                ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
-               ['Collo TAs','Collo + tor-add sup.'],['Collo TAc','Collo + tor-add compl.']],
+               ['Collo TAs','Collo + tor-add sup.'],['Collo TAc','Collo + tor-add compl.'],
+               ['ASup','Arto sup.'],['AInf','Arto inf.'],['MF','Massiccio facciale'],['RACH','Rachide'],['BAC','Bacino']],
     tardiva:  [['ENC','Encefalo'],['TO','Torace'],
                ['ADs','Addome sup.'],['ADc','Addome compl.'],
                ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']],
@@ -55,7 +58,11 @@
      protocollo dichiara di essere compatibile                          */
   const REGIONI = [['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
                    ['ADs','Addome sup.'],['ADc','Addome compl.'],
-                   ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']];
+                   ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
+                   ['ASup','Arto sup.'],['AInf','Arto inf.'],['MF','Massiccio facciale'],['RACH','Rachide'],['BAC','Bacino']];
+  /* distretti fuori dal tronco: con più esami non si uniscono fra loro né
+     al tronco; da soli sono la regione dell'esame                      */
+  const DISTRETTI_ESTERNI = ['ENC', 'MF', 'Collo', 'RACH', 'BAC', 'ASup', 'AInf'];
 
   const BASALE = {
     req:  'Richiesta',
@@ -71,9 +78,11 @@
        1 · estratto SIRM 2022
        2 · termini dai quesiti reali: oncologia generica, follow-up solo
            oncologico, vie escretriche, pielonefrite/ascesso, enfisema e
-           pneumotorace                                                   */
-  const REVISIONE = 2;
-  const FIRME_PRECEDENTI = { '1JOYMYK': 1 };      // firma(libreria) → revisione
+           pneumotorace
+       3 · distretti fuori dal tronco: massiccio facciale, rachide, bacino,
+           arti superiori e inferiori (protocolli di partenza da validare) */
+  const REVISIONE = 3;
+  const FIRME_PRECEDENTI = { '1JOYMYK': 1, '046LQUP': 2 };      // firma(libreria) → revisione
 
   /* ═══ LIBRERIA DI PARTENZA (estratto SIRM 2022) ════════════════════
      basale: req = richiesta · opt = opzionale · skip = omettibile
@@ -155,6 +164,42 @@
       fasi:[{fase:'venosa',zone:['TAs'],delay:'70'}] },
   ];
 
+  /* Distretti fuori dall'estratto SIRM: protocolli di partenza, da
+     validare in reparto prima dell'uso. Stanno nella libreria ufficiale
+     perché coprono richieste quotidiane che altrimenti non avrebbero
+     alcun suggerimento; la nota lo dice anche sul telefono.             */
+  const DA_VALIDARE = 'Protocollo di partenza, da validare in reparto. ';
+  const DISTRETTI = [
+    { id:'massiccio-trauma', l:'TC Massiccio facciale – Trauma', idr:0, giKg:0, basale:'req',
+      reg:['MF'], kw:['trauma','frattura','caduta','aggressione'], ex:['massiccio','facciale','orbite'],
+      nota:DA_VALIDARE + 'Studio senza mdc con ricostruzioni multiplanari.',
+      fasi:[{fase:'basale',zone:['MF'],delay:''}] },
+    { id:'massiccio-flogosi', l:'TC Massiccio facciale – Flogosi o massa', idr:1.2, giKg:0.45, basale:'opt',
+      reg:['MF'], kw:['ascesso','flogosi','cellulite','neoformazione','massa'], ex:['massiccio','facciale'],
+      nota:DA_VALIDARE + 'La basale è utile solo per calcificazioni o sanguinamento.',
+      fasi:[{fase:'venosa',zone:['MF'],delay:'70'}] },
+    { id:'rachide-trauma', l:'TC Rachide – Trauma', idr:0, giKg:0, basale:'req',
+      reg:['RACH'], kw:['trauma','frattura','caduta','crollo vertebrale','incidente'], ex:['rachide'],
+      nota:DA_VALIDARE + 'Studio senza mdc con ricostruzioni sagittali e coronali.',
+      fasi:[{fase:'basale',zone:['RACH'],delay:''}] },
+    { id:'bacino-trauma', l:'TC Bacino – Trauma', idr:0, giKg:0, basale:'req',
+      reg:['BAC'], kw:['trauma','frattura','caduta'], ex:['bacino','anca'],
+      nota:DA_VALIDARE + 'Studio senza mdc; con mdc se si sospetta sanguinamento attivo.',
+      fasi:[{fase:'basale',zone:['BAC'],delay:''}] },
+    { id:'arto-sup-trauma', l:'TC Arto superiore – Trauma', idr:0, giKg:0, basale:'req',
+      reg:['ASup'], kw:['trauma','frattura','caduta','lussazione','distorsione'], ex:['spalla','gomito','polso','mano','omero'],
+      nota:DA_VALIDARE + 'Studio senza mdc del segmento indicato.',
+      fasi:[{fase:'basale',zone:['ASup'],delay:''}] },
+    { id:'arto-inf-trauma', l:'TC Arto inferiore – Trauma', idr:0, giKg:0, basale:'req',
+      reg:['AInf'], kw:['trauma','frattura','caduta','lussazione','distorsione'], ex:['ginocchio','caviglia','piede','femore','tibia'],
+      nota:DA_VALIDARE + 'Studio senza mdc del segmento indicato.',
+      fasi:[{fase:'basale',zone:['AInf'],delay:''}] },
+    { id:'angio-arti-inf', l:'AngioTC Arti inferiori', idr:1.6, giKg:0.45, basale:'opt',
+      reg:['AInf'], kw:['arteriopatia','claudicatio','ischemia','ischemia acuta','occlusione','trombosi'], ex:['angio'],
+      nota:DA_VALIDARE + 'Acquisizione arteriosa dall’aorta addominale ai piedi.',
+      fasi:[{fase:'arteriosa',zone:['AInf'],delay:'B-T',fix:1}] },
+  ];
+
   /* ═══ TESTO ════════════════════════════════════════════════════════ */
   /* normalizzazione condivisa da matcher e termini: la stessa del prototipo,
      così un termine scritto nel tool PC si comporta uguale sul telefono  */
@@ -207,7 +252,7 @@
     const pezzi = String(esame || '').split(/\s[|·]\s/).map(regioneEsame).filter(Boolean);
     if (pezzi.length < 2) return pezzi[0] || null;
     const tr = pezzi.filter(r => TRONCO.includes(r));
-    if (!tr.length) return ['ENC', 'Collo', 'ALTRO'].find(r => pezzi.includes(r)) || null;
+    if (!tr.length) return [...DISTRETTI_ESTERNI, 'ALTRO'].find(r => pezzi.includes(r)) || null;
     const tor = tr.some(r => r[0] === 'T'), add = tr.some(r => r !== 'TO');
     const sup = tr.filter(r => r !== 'TO').every(r => r === 'ADs' || r === 'TAs');
     if (tor && add) return sup ? 'TAs' : 'TAc';
@@ -221,7 +266,12 @@
     if (/\buro\b|urotc|uro tc|renal|vescic/.test(t))  return 'ADc';
     if (/encefal|cranio|cerebral|capo/.test(t))       return 'ENC';
     /* prima del collo: «rachide cervicale» è colonna, non collo */
-    if (/rachide|colonna|vertebr|bacino|femore|ginocchio|spalla|omero|arto|polso|caviglia|piede|mano|massiccio|facciale|temporale|orbit|seni paranasal|mandibol/.test(t))
+    if (/rachide|colonna|vertebr|\bsacro\b|coccig/.test(t)) return 'RACH';
+    if (/massiccio|facciale|orbit|seni paranasal|mandibol|mascell|zigom|rocche|temporal|ossa nasali|dentalscan/.test(t)) return 'MF';
+    if (/art[io] superior|spalla|omero|gomito|avambracci|\bradio\b|\bulna\b|polso|\bmano\b|\bmani\b|scapola|clavicol/.test(t)) return 'ASup';
+    if (/art[io] inferior|femore|ginocchi|gamba|gambe|tibia|perone|caviglia|\bpiede\b|\bpiedi\b|calcagn/.test(t)) return 'AInf';
+    if (/bacino|\banca\b|\banche\b|acetabol|sacroiliac/.test(t)) return 'BAC';
+    if (/sterno|coste|costal|cuore|cardi|coronar/.test(t))
       return 'ALTRO';                       // distretto riconosciuto ma fuori tassonomia
     const tor = /torac/.test(t), add = /addom/.test(t), sup = /superior|\bsup\b/.test(t);
     /* «collo torace addome» è un'unica scansione dal collo all'addome */
@@ -461,7 +511,7 @@
   const clona = x => JSON.parse(JSON.stringify(x));
 
   function nuovaLibreria() {
-    return { v: 1, base: 'SIRM 2022', rev: REVISIONE, modificata: 0, protocolli: clona(SIRM_2022) };
+    return { v: 1, base: 'SIRM 2022', rev: REVISIONE, modificata: 0, protocolli: clona(SIRM_2022.concat(DISTRETTI)) };
   }
 
   /* Libreria ufficiale salvata sul PC → nuova revisione, se si può senza
@@ -543,7 +593,7 @@
     return l;
   }
 
-  const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022, LEXICON, REVISIONE,
+  const api = { FASI, ZONE, ZONE_L, REGIONI, DISTRETTI_ESTERNI, BASALE, LIMITI, SIRM_2022, DISTRETTI, LEXICON, REVISIONE,
     normText, normQuesito, normTermine, normEx, termini, regionOf, riconosci, fitZones, valida,
     firmaCaso, suggerisci, impara, opzioni, analizzaEsempio, simili, sostituisci,
     nuovaLibreria, nuovaLibreriaPersonale, aggiornaUfficiale, idLibero, idPersonale, canonico, firma, leggiLibreria, clona };

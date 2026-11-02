@@ -544,6 +544,14 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 .set-btn:active{transform:scale(.978)}
 .set-btn:disabled{background:var(--surface2);color:var(--muted);box-shadow:none;cursor:not-allowed}
 .set-btn.re{background:var(--surface);color:var(--text);border:1px solid var(--border2);box-shadow:var(--sh)}
+.d-act-r{display:flex;gap:9px}
+.d-act-r .set-btn{flex:1}
+.learn-btn{flex-shrink:0;height:52px;padding:0 16px;border-radius:13px;border:1px solid var(--border2);background:var(--surface);
+  color:var(--accent-d);font-size:14px;font-weight:750;cursor:pointer;box-shadow:var(--sh);transition:transform .12s}
+.learn-btn:active{transform:scale(.97)}
+.learn-btn:disabled{color:var(--muted);box-shadow:none;cursor:not-allowed}
+.learn-btn.fatto{background:var(--accent-s)}
+.tec-qr{display:block;margin:12px auto 6px;border-radius:10px;border:1px solid var(--border);max-width:100%;height:auto;image-rendering:pixelated}
 
 /* ═══ NUOVA SCHEDA ═════════════════════════════════════ */
 .form{display:flex;flex-direction:column;gap:14px;margin-top:16px}
@@ -907,6 +915,10 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     <div id="pcBox"></div>
   </div>
   <div class="blk">
+    <div class="sec-t">App tecnici <span class="sp"></span><span id="tecN"></span></div>
+    <div id="tecBox"></div>
+  </div>
+  <div class="blk">
     <div class="sec-t">Dati</div>
     <button class="btn-ghost" id="btnReset">Ripristina i dati di esempio</button>
   </div>
@@ -914,8 +926,14 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
   <div class="blk info" id="info">
     <div class="sec-t">Info</div>
     <details><summary>Protocolli appresi</summary>
-      <p>Quando imposti un protocollo a mano, viene registrato sotto una firma calcolata da esame e quesito.
-        Alla firma successiva identica te lo ripropone. Nessuna stima: stessa firma, stesso suggerimento.</p></details>
+      <p>«Apprendi», in fondo alla scheda, registra le fasi della scheda sotto una firma calcolata da esame e
+        termini clinici del quesito. Alla firma successiva identica te le ripropone. «Imposta» non insegna nulla:
+        si impara solo quando lo chiedi. Nessuna stima: stessa firma, stesso suggerimento.</p></details>
+    <details><summary>App tecnici</summary>
+      <p>I tecnici hanno un'app di sola lettura che mostra le schede che hai <b>impostato</b>, con fasi, mezzo, peso
+        e nota, e si aggiorna da sola quando cambi qualcosa. Una scheda non impostata non compare; riattivata, sparisce.
+        «Collega i tecnici» crea un canale cifrato e un codice: ogni tecnico lo inquadra una volta. Il nome del paziente
+        non viene inviato. «Nuovo abbinamento» scollega i telefoni dei tecnici collegati finora.</p></details>
     <details><summary>Il tuo profilo</summary>
       <p>Nome, titolo, protocolli personali e appresi viaggiano con questo telefono: accedendo a un PC, di
         qualsiasi ospedale, i tuoi protocolli si caricano lì, e ciò che crei sul PC torna qui. Il tool PC ti
@@ -1094,7 +1112,9 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
       </div>
     </div>
   </div>
-  <div class="d-act"><button class="set-btn" id="setBtn" disabled>Imposta</button></div>
+  <div class="d-act"><div class="d-act-r">
+    <button class="learn-btn" id="learnBtn" disabled title="Ricorda queste fasi per i casi con lo stesso esame e gli stessi termini clinici">Apprendi</button>
+    <button class="set-btn" id="setBtn" disabled>Imposta</button></div></div>
 </section>
 
 <div class="mask" id="mask">
@@ -1125,6 +1145,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
 <div class="toast" id="toast"></div>
 <script src="../desktop/protocolli.js"></script>
 <script src="../desktop/canale.js"></script>
+<script src="../desktop/vendor/qrcode.js"></script>
 
 <script>
 'use strict';
@@ -1202,6 +1223,13 @@ const PH = {
 };
 ZONES.urografica = PR.ZONE.urografica; ZONES.surrene = PR.ZONE.surrene;
 ZONES.ritardo = [['ENC','Encefalo']];
+/* le zone dei distretti fuori dal tronco (arti, massiccio, rachide,
+   bacino) vengono dal modulo condiviso, come le fasi nuove            */
+['basale','arteriosa','venosa','tardiva'].forEach(f => (PR.ZONE[f] || []).forEach(z => {
+  if(!ZONES[f].some(([c]) => c === z[0])) ZONES[f].push(z); }));
+/* i colori delle fasi sono quelli del modulo condiviso: gli stessi del
+   tool PC e dell'app dei tecnici                                       */
+Object.keys(PH).forEach(f => { if(PR.FASI[f]) PH[f].c = PR.FASI[f].c; });
 
 /* ═══ UTIL ═══════════════════════════════════════════════ */
 const $  = id => document.getElementById(id);
@@ -1318,7 +1346,7 @@ let learned = load('learned', {});
 let trash   = load('trash', []);
 let agent   = load('agent', 'iomeron400');
 const persist = () => { save('state',state); save('learned',learned);
-                        save('trash',trash); save('agent',agent); };
+                        save('trash',trash); save('agent',agent); pianificaTecnici(); };
 
 function learn(p){
   const sig = signature(p), cfg = canon(p.fasi), ex = learned[sig];
@@ -1819,23 +1847,33 @@ $('applyBtn').onclick = () => {
    separate; «separa» tiene distinte torace e addome in una fase.
    Le acquisizioni che non sono di un distretto (l'angio-TC del collo e
    dell'encefalo, fasi fisse dei protocolli) restano come sono.       */
-const SEZ = { ENC:'Encefalo', Collo:'Collo', TO:'Torace', AD:'Addome' };
-const SEZ_ORD = ['ENC','Collo','TO','AD'];
+const SEZ = { ENC:'Encefalo', MF:'Massiccio facciale', Collo:'Collo', TO:'Torace', AD:'Addome',
+              RACH:'Rachide', BAC:'Bacino', ASup:'Arto superiore', AInf:'Arto inferiore' };
+const SEZ_ORD = ['ENC','MF','Collo','TO','AD','RACH','BAC','ASup','AInf'];
+/* i distretti fuori dal tronco sono scansioni a sé: non si uniscono */
+const SEZ_SOLE = ['MF','RACH','BAC','ASup','AInf'];
 const SIGLA = { basale:'BAS', arteriosa:'ART', venosa:'VEN', tardiva:'TAR', urografica:'URO', surrene:'SUR', ritardo:"5'" };
 const COPRE = { ENC:['ENC'], Collo:['Collo'], TO:['TO'], ADs:['AD'], ADc:['AD'], TAs:['TO','AD'], TAc:['TO','AD'],
-                'Collo TAs':['Collo','TO','AD'], 'Collo TAc':['Collo','TO','AD'] };
+                'Collo TAs':['Collo','TO','AD'], 'Collo TAc':['Collo','TO','AD'],
+                MF:['MF'], RACH:['RACH'], BAC:['BAC'], ASup:['ASup'], AInf:['AInf'] };
 const mappabile = f => f.zone.length && f.zone.every(z => COPRE[z]);
 let sezAperta = null;
 
 /* i distretti scritti nella richiesta, anche più esami insieme */
 function sezioniDa(esame){
   const t = PR.normText(esame), s = new Set();
-  if(/total body|whole body|politrauma/.test(t)) SEZ_ORD.forEach(k => s.add(k));
+  if(/total body|whole body|politrauma/.test(t)) ['ENC','Collo','TO','AD'].forEach(k => s.add(k));
   if(/encefal|cranio|cerebral|\bcapo\b/.test(t)) s.add('ENC');
   if(/\bcollo\b|tronchi sovra|\btsa\b|tiroide|laring|faring/.test(t)) s.add('Collo');
   if(/torac|polmon/.test(t)) s.add('TO');
   if(/addom|\buro\b|urotc|renal|reni\b|vescic|pelvi|surren|fegat|pancrea/.test(t)) s.add('AD');
   if(/aorta/.test(t) && !/torac|addom/.test(t)) s.add('AD');
+  /* distretti fuori dal tronco: le stesse parole del modulo condiviso */
+  if(/massiccio|facciale|orbit|seni paranasal|mandibol|mascell|zigom|rocche|temporal|ossa nasali|dentalscan/.test(t)) s.add('MF');
+  if(/rachide|colonna|vertebr|\bsacro\b|coccig/.test(t)) s.add('RACH');
+  if(/bacino|\banca\b|\banche\b|acetabol|sacroiliac/.test(t)) s.add('BAC');
+  if(/art[io] superior|spalla|omero|gomito|avambracci|\bradio\b|\bulna\b|polso|\bmano\b|\bmani\b|scapola|clavicol/.test(t)) s.add('ASup');
+  if(/art[io] inferior|femore|ginocchi|gamba|gambe|tibia|perone|caviglia|\bpiede\b|\bpiedi\b|calcagn/.test(t)) s.add('AInf');
   return SEZ_ORD.filter(k => s.has(k));
 }
 const adDa = esame => /addom\w*\s+(superior|sup\b)/.test(PR.normText(esame)) ? 'ADs' : 'ADc';
@@ -1880,6 +1918,7 @@ function componi(fase, chiavi){
   if(!sep && ha('Collo') && ha('TO') && ha('AD')) out.push('Collo ' + ta);
   else if(!sep && ha('TO') && ha('AD')){ if(ha('Collo')) out.push('Collo'); out.push(ta); }
   else { if(ha('Collo')) out.push('Collo'); if(ha('TO')) out.push('TO'); if(ha('AD')) out.push(v); }
+  SEZ_SOLE.forEach(k => { if(ha(k)) out.push(k); });
   /* solo zone ammesse per la fase: quelle unite si spezzano se serve */
   const ok = new Set((ZONES[fase] || []).map(([c]) => c));
   const PARTI = { 'Collo TAs':['Collo','TAs'], 'Collo TAc':['Collo','TAc'], TAs:['TO','ADs'], TAc:['TO','ADc'] };
@@ -1981,6 +2020,15 @@ function renderRows(){
   b.disabled=!cur.fasi.length;
   b.textContent = cur.stato==='todo'?'Imposta':'Aggiorna';
   b.classList.toggle('re', cur.stato!=='todo');
+  etichettaApprendi();
+}
+/* «Apprendi» dice se queste fasi sono già quelle ricordate per il caso */
+function etichettaApprendi(){
+  const l = $('learnBtn'), L = cur && learned[signature(cur)];
+  const uguale = !!(L && cur.fasi.length && canon(L.fasi) === canon(cur.fasi));
+  l.disabled = !cur || !cur.fasi.length;
+  l.textContent = uguale ? `Appreso ×${L.count}` : 'Apprendi';
+  l.classList.toggle('fatto', uguale);
 }
 
 /* ═══ CALCOLATORE MDC ════════════════════════════════════ */
@@ -2167,11 +2215,22 @@ $('addBtn').onclick = () => {
   $('ddPhase').value=''; pick=[]; syncZone();
 };
 
+/* «Imposta» conferma il protocollo della scheda (ed è ciò che la fa
+   comparire ai tecnici); non insegna nulla. A ricordare la combinazione
+   per i casi uguali ci pensa «Apprendi», solo quando lo si chiede.    */
 $('setBtn').onclick = () => {
   if(!cur.fasi.length) return;
   cur.stato='set'; detail.dataset.state='set';
-  learn(cur); toast('Protocollo impostato');
+  persist(); toast('Protocollo impostato');
   setTimeout(close, 380);
+};
+$('learnBtn').onclick = () => {
+  if(!cur || !cur.fasi.length) return;
+  learn(cur);
+  const L = learned[signature(cur)], t = keywords(cur.quesito);
+  toast(L.count > 1 ? `Confermato · ${L.count} volte per questo caso`
+        : `Appreso: ${normEx(cur.esame) || 'esame'}${t.length ? ' + ' + t.join(', ') : ''}`, 2400);
+  etichettaApprendi();
 };
 $('back').onclick = close;
 
@@ -2264,6 +2323,7 @@ $('btnEmptyTrash').onclick = () => {
 
 /* ═══ IMPOSTAZIONI ═══════════════════════════════════════ */
 function renderSettings(){
+  renderTecnici();
   const box=$('learnList'); box.innerHTML='';
   const keys=Object.keys(learned).sort((a,b)=>learned[b].lastUsed-learned[a].lastUsed);
   $('learnN').textContent = keys.length ? `${keys.length}` : '';
@@ -3120,6 +3180,124 @@ togliPassati();
 sessioneAvvio();
 const cambioGiorno = () => { if(iso(new Date()) !== TODAY) location.reload(); };
 document.addEventListener('visibilitychange', () => { if(!document.hidden) cambioGiorno(); });
+
+/* ═══ APP TECNICI ════════════════════════════════════════
+   I tecnici hanno un'app di sola lettura (../tecnico/): vede le schede
+   che il medico ha impostato su questo telefono, con fasi, mezzo, peso e
+   nota, e si aggiorna da sola. «Imposta» è la conferma del medico: una
+   scheda compare ai tecnici solo da lì; riattivata o tolta, sparisce.
+   Il canale è quello del PC (canale.js) con un abbinamento proprio, che
+   nasce su questo telefono e passa ai tecnici in un QR. Il nome del
+   paziente non viaggia: ai tecnici bastano orario, accettazione, esame. */
+const URL_TECNICI = 'https://radios4ndbox-bot.github.io/Protocols_Cards/tecnico/';
+const urlTecnici = () => /^https?:$/.test(location.protocol) ? new URL('../tecnico/', location.href).href : URL_TECNICI;
+let tecLink = load('tecnici', null);                 // { t, k, quando }
+let tecUltima = load('tecniciUltima', null);          // { seq, quando, n, h }: senza dati dei pazienti
+let tecSess = null, tecChiudi = null, tecStato = '', tecErrore = '', tecTimer = null, tecQR = false;
+const tecTelefoni = new Map();                        // dispositivo → { nome, seq, quando }
+
+function istantaneaTecnici(){
+  const cards = state.filter(p => (p.stato === 'set' || p.stato === 'done') && p.fasi && p.fasi.length).map(p => {
+    const ag = AGENTS.find(a => a.id === (p.agent || agent)) || AGENTS[0], pr = PROTOCOLS[p.proto];
+    return { id:p.id, data:p.data, ora:p.ora, modo:p.modo, esame:p.esame, quesito:p.quesito, fatto:p.stato === 'done',
+      proto: pr ? pr.l : 'Impostato a mano', personale: !!(pr && pr.personale),
+      fasi: p.fasi.map(f => ({ fase:f.fase, l:PH[f.fase].l, c:PH[f.fase].c, zone:f.zone.slice(), delay:f.delay || '' })),
+      peso:p.peso, giKg:p.giKg, idr:p.idr, agente:{ l:ag.l, c:ag.c }, nota:p.note || '' };
+  }).sort((a, b) => (a.data + a.ora).localeCompare(b.data + b.ora));
+  return { v:1, cards };
+}
+
+/* si pubblica solo se qualcosa è cambiato; la somma di controllo
+   dell'ultima pubblicazione resta in memoria anche fra un'apertura e
+   l'altra, così riaprire l'app non manda nulla di nuovo               */
+/* persist() gira anche durante l'avvio, prima che questo blocco sia letto:
+   finché non è pronto non si pianifica nulla (var: visibile da subito)  */
+var tecPronto = false;
+function pianificaTecnici(){ if(!tecPronto || !tecLink) return; clearTimeout(tecTimer); tecTimer = setTimeout(() => pubblicaTecnici(), 1200); }
+async function pubblicaTecnici(forza){
+  if(!tecLink || !tecSess) return;
+  const s = istantaneaTecnici(), h = Canale.somma(JSON.stringify(s));
+  if(!forza && tecUltima && tecUltima.h === h) return;
+  try{
+    const seq = Date.now();
+    await Canale.inviaLista(tecSess, 'med', { ...(await Canale.impacchetta({ ...s, seq })), tipo:'tecnici' });
+    tecUltima = { seq, quando:Date.now(), n:s.cards.length, h }; save('tecniciUltima', tecUltima); tecErrore = '';
+  }catch(e){ tecErrore = e.message; }
+  renderTecnici();
+}
+
+async function avviaTecnici(){
+  if(tecChiudi){ tecChiudi(); tecChiudi = null; }
+  tecSess = null; tecTelefoni.clear(); tecStato = '';
+  if(!tecLink || typeof Canale === 'undefined') return renderTecnici();
+  try{ tecSess = await Canale.apri(tecLink); }catch(_){ tecStato = 'errore'; return renderTecnici(); }
+  tecStato = 'connessione';
+  tecChiudi = Canale.ascolta(tecSess, 'med', {
+    stato: s => { if(s !== 'scartato'){ tecStato = s; renderTecnici(); } },
+    messaggio: m => {
+      if(!m || !m.dev) return;
+      tecTelefoni.set(m.dev, { nome:m.nome || 'telefono', seq:m.seq || 0, quando:Date.now() });
+      /* un telefono che si collega dopo ore non trova più nulla sul relay
+         (lo tiene 12 ore): se l'ultima pubblicazione è vecchia, si rimanda */
+      if(m.tipo === 'ciao' && (!tecUltima || Date.now() - tecUltima.quando > 6 * 3600e3)) pubblicaTecnici(true);
+      renderTecnici();
+    },
+  });
+  pubblicaTecnici();
+}
+async function nuovoTecnici(){
+  tecLink = { ...(await Canale.nuovoAbbinamento()), quando:Date.now() };
+  save('tecnici', tecLink); tecUltima = null; save('tecniciUltima', null); tecQR = true;
+  await avviaTecnici();
+  pubblicaTecnici(true);
+}
+
+const TEC_STATO = { connessione:'collegamento al relay…', aperto:'in ascolto', riconnessione:'rete assente, riprovo…',
+  chiuso:'chiuso', errore:'abbinamento non valido: rifallo' };
+function renderTecnici(){
+  const box = $('tecBox'); if(!box) return;
+  $('tecN').textContent = tecLink ? `${tecTelefoni.size || ''}` : '';
+  if(!tecLink){
+    box.innerHTML = `<div class="item"><div class="item-h"><div style="min-width:0;flex:1">
+        <div class="item-n">Nessun telefono dei tecnici collegato</div>
+        <div class="item-s">I tecnici vedranno, in sola lettura, le schede che imposti.</div></div>
+      <button class="mini-b" id="tecCrea">Collega i tecnici</button></div></div>`;
+    $('tecCrea').onclick = () => nuovoTecnici();
+    return;
+  }
+  const ora = t => t ? new Date(t).toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' }) : '—';
+  const tel = [...tecTelefoni.values()].sort((a, b) => b.quando - a.quando);
+  box.innerHTML = `<div class="item">
+    <div class="item-n">Canale dei tecnici · ${esc(TEC_STATO[tecStato] || '—')}</div>
+    <div class="item-s">${tecUltima ? `ultima pubblicazione alle ${esc(ora(tecUltima.quando))} · <b>${tecUltima.n}</b> ${tecUltima.n === 1 ? 'scheda' : 'schede'}` : 'nessuna pubblicazione'}</div>
+    ${tecErrore ? `<div class="item-s" style="color:var(--danger)">Pubblicazione non riuscita: ${esc(tecErrore)}</div>` : ''}
+    ${tel.map(t => `<div class="item-s">● ${esc(t.nome)} · ${tecUltima && t.seq === tecUltima.seq ? 'aggiornato' : t.seq ? 'versione precedente' : 'collegato'} alle ${esc(ora(t.quando))}</div>`).join('')}
+    ${tecQR ? `<canvas id="tecQR" width="240" height="240" class="tec-qr"></canvas>
+      <div class="item-s" style="text-align:center">Il tecnico inquadra il codice con la fotocamera. Contiene la chiave: non fotografarlo.</div>` : ''}
+    <div class="prof-az">
+      <button class="mini-b" id="tecMostra">${tecQR ? 'Nascondi il codice' : 'Mostra il codice'}</button>
+      <button class="mini-b" id="tecPubblica">Pubblica ora</button>
+      <button class="mini-b" id="tecNuovo">Nuovo abbinamento</button>
+    </div></div>`;
+  if(tecQR) disegnaQR($('tecQR'), urlTecnici() + Canale.frammento(tecLink));
+  $('tecMostra').onclick = () => { tecQR = !tecQR; renderTecnici(); };
+  $('tecPubblica').onclick = () => pubblicaTecnici(true);
+  $('tecNuovo').onclick = () => ask('Nuovo abbinamento dei tecnici',
+    'I telefoni dei tecnici collegati finora smetteranno di ricevere le schede e andranno ricollegati con il nuovo codice.',
+    'Nuovo abbinamento', () => nuovoTecnici());
+}
+
+function disegnaQR(canvas, testo){
+  if(!canvas || typeof qrcode === 'undefined') return;
+  const q = qrcode(0, 'M'); q.addData(testo); q.make();
+  const n = q.getModuleCount(), lato = canvas.width, s = Math.floor(lato / (n + 8)), off = Math.floor((lato - s * (n + 8)) / 2);
+  const g = canvas.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, lato, lato); g.fillStyle = '#15233f';
+  for(let r = 0; r < n; r++) for(let c = 0; c < n; c++) if(q.isDark(r, c)) g.fillRect(off + (c + 4) * s, off + (r + 4) * s, s, s);
+}
+
+tecPronto = true;
+if(tecLink) avviaTecnici();
 
 /* ═══ MODALE / TOAST ═════════════════════════════════════ */
 let onYes=null;

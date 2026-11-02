@@ -10,7 +10,7 @@ const sez = t => console.log('\n── ' + t + ' ' + '─'.repeat(Math.max(3, 38
 const lib = P.nuovaLibreria().protocolli;
 
 sez('LIBRERIA DI PARTENZA');
-ok('14 protocolli SIRM', lib.length === 14, lib.length);
+ok('14 SIRM + 7 distretti', lib.length === 21, lib.length);
 ok('identificativi unici', new Set(lib.map(p => p.id)).size === lib.length);
 const gravi = lib.flatMap(p => P.valida(p, lib).filter(e => e.grave).map(e => p.id + ': ' + e.msg));
 ok('nessun errore grave', gravi.length === 0, gravi.join(' | '));
@@ -86,7 +86,7 @@ ok('collo + torace + addome + encefalo → tronco', P.regionOf('TAC COLLO | TAC 
    P.regionOf('TAC COLLO | TAC ADDOME COMPLETO | TAC TORACE | TAC ENCEFALO'));
 ok('torace + addome superiore', P.regionOf('TC TORACE | TC ADDOME SUPERIORE') === 'TAs');
 ok('encefalo + collo, senza tronco', P.regionOf('TC ENCEFALO | TC COLLO') === 'ENC');
-ok('rachide cervicale non è collo', P.regionOf('TAC RACHIDE CERVICALE') === 'ALTRO', P.regionOf('TAC RACHIDE CERVICALE'));
+ok('rachide cervicale non è collo', P.regionOf('TAC RACHIDE CERVICALE') === 'RACH', P.regionOf('TAC RACHIDE CERVICALE'));
 ok('aorta toraco-addominale', P.regionOf('ANGIO-TC DELLAORTA TORACO ADDOMINALE') === 'TAc');
 
 sez('REVISIONE DELLA LIBRERIA');
@@ -95,7 +95,7 @@ sez('REVISIONE DELLA LIBRERIA');
   ok('revisione corrente', nuova.rev === P.REVISIONE && P.REVISIONE >= 2);
   ok('libreria attuale lasciata', P.aggiornaUfficiale(nuova).stato === 'attuale');
   /* la revisione 1 salvata sul PC: stessi protocolli, termini di allora */
-  const r1 = P.clona(nuova); delete r1.rev;
+  const r1 = { ...P.clona(nuova), protocolli: P.clona(P.SIRM_2022) }; delete r1.rev;
   const vecchi = { 'onco-ristad':['restaging','ristadiazione','stadiazione'], 'onco-fup':['followup','recidiva'],
     'urotc-split':['ematuria','colica renale','idronefrosi','urolitiasi','calcolosi'],
     'addome-acuto':['appendicite','diverticolite','occlusione','perforazione','addome acuto','peritonite'],
@@ -108,6 +108,36 @@ sez('REVISIONE DELLA LIBRERIA');
   const m = P.aggiornaUfficiale(mod);
   ok('revisione 1 modificata → lasciata com\'è', m.stato === 'modificata' && m.libreria === mod, m.stato);
   ok('la revisione sopravvive al salvataggio', P.leggiLibreria(JSON.stringify(nuova)).rev === P.REVISIONE);
+  /* la revisione 2 salvata sul PC: estratto SIRM con i termini attuali, senza distretti */
+  const r2 = { ...P.clona(nuova), rev: 2, protocolli: P.clona(P.SIRM_2022) };
+  const b = P.aggiornaUfficiale(r2);
+  ok('revisione 2 intatta → aggiornata con i distretti', b.stato === 'aggiornata' && b.libreria.protocolli.some(p => p.id === 'arto-inf-trauma'), b.stato);
+  const r2m = P.clona(r2); r2m.protocolli[1].giKg = 0.1;
+  ok('revisione 2 modificata → lasciata com\'è', P.aggiornaUfficiale(r2m).stato === 'modificata');
+}
+
+sez('NUOVI DISTRETTI');
+[['TC RACHIDE LOMBARE', 'RACH'], ['TC RACHIDE CERVICALE', 'RACH'], ['TC MASSICCIO FACCIALE', 'MF'],
+ ['TC ORBITE', 'MF'], ['TC SPALLA DX', 'ASup'], ['TC POLSO', 'ASup'], ['TC ARTO SUPERIORE SX', 'ASup'],
+ ['TC GINOCCHIO SINISTRO', 'AInf'], ['TC CAVIGLIA', 'AInf'], ['ANGIO TC ARTI INFERIORI', 'AInf'],
+ ['TC BACINO', 'BAC'], ['TC ANCA DX', 'BAC'], ['TC COLLO CON MDC', 'Collo'],
+ ['TC TORACE, ADDOME E PELVI CON MDC', 'TAc'], ['TC ENCEFALO E MASSICCIO FACCIALE', 'ENC'],
+ ['TC MASSICCIO FACCIALE | TC TORACE', 'TO'], ['TC GINOCCHIO DX | TC CAVIGLIA DX', 'AInf'], ['TC ROMANO', null]]
+  .forEach(([e, r]) => ok(`regione di «${e}»`, P.regionOf(e) === r, String(P.regionOf(e))));
+{
+  const LD = P.nuovaLibreria().protocolli;
+  [['TC GINOCCHIO DX', 'trauma distorsivo, sospetta frattura', 'arto-inf-trauma'],
+   ['TC POLSO SX', 'caduta, frattura?', 'arto-sup-trauma'],
+   ['TC MASSICCIO FACCIALE', 'trauma facciale da aggressione', 'massiccio-trauma'],
+   ['TC RACHIDE DORSALE', 'crollo vertebrale', 'rachide-trauma'],
+   ['TC BACINO', 'caduta, sospetta frattura', 'bacino-trauma'],
+   ['ANGIO TC ARTI INFERIORI', 'claudicatio, arteriopatia', 'angio-arti-inf'],
+   ['TC ENCEFALO', 'trauma cranico, caduta', 'cranio-trauma'],
+   ['TC TORACE', 'trauma toracico', null]]
+    .forEach(([e, q, atteso]) => { const r = P.riconosci(LD, e, q); ok(`${String(atteso).padEnd(17)} ← ${e}`, r.id === atteso, String(r.id)); });
+  ok('le zone delle fasi seguono il distretto', P.fitZones([{ fase: 'basale', zone: ['TAc'], delay: '' }], 'TC CAVIGLIA')[0].zone[0] === 'AInf');
+  ok('nessun errore grave nei distretti', P.DISTRETTI.every(p => !P.valida(p, LD).some(e => e.grave)));
+  ok('i distretti dicono di essere da validare', P.DISTRETTI.every(p => /da validare/.test(p.nota)));
 }
 
 sez('REGIONE E CASI LIMITE');
@@ -118,7 +148,7 @@ ok('…ma il candidato è mostrato come fuori regione',
 ok('solo l’esame non basta', P.riconosci(L, 'TC TORACE CON MDC', 'controllo').id === null);
 ok('quesito vuoto', P.riconosci(L, '', '').id === null);
 ok('regione di «ADDOME SUPERIORE»', P.regionOf('TC ADDOME SUPERIORE') === 'ADs');
-ok('regione fuori tassonomia', P.regionOf('TC RACHIDE LOMBARE') === 'ALTRO');
+ok('regione fuori tassonomia', P.regionOf('TC CUORE') === 'ALTRO');
 ok('accenti e maiuscole nei termini', (() => {
   const x = P.clona(L); x[0].kw = ['Embolìa'];
   return P.riconosci(x, 'TC TORACE', 'sospetta EMBOLIA').id === 'angio-polm';
@@ -168,7 +198,7 @@ ok('cambia con l’ordine', (() => { const x = P.clona(L); x.reverse(); return P
 ok('ignora gli spazi ai bordi del nome', (() => { const x = P.clona(L); x[0].l += '  '; return P.firma(x) === f0; })());
 const giro = P.leggiLibreria(JSON.stringify({ protocolli: L }));
 ok('esporta → importa conserva la firma', P.firma(giro.protocolli) === f0);
-ok('accetta anche un elenco nudo', P.leggiLibreria(JSON.stringify(L)).protocolli.length === 14);
+ok('accetta anche un elenco nudo', P.leggiLibreria(JSON.stringify(L)).protocolli.length === 21);
 const rifiuta = (t, s) => { try { P.leggiLibreria(t); return false; } catch (e) { return s.test(e.message); } };
 ok('rifiuta testo non JSON', rifiuta('ciao', /JSON/));
 ok('rifiuta id doppi', rifiuta(JSON.stringify([L[0], L[0]]), /doppio/));

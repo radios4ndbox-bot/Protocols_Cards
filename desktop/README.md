@@ -314,6 +314,37 @@ personale riconosciuto dai termini). Si propone la personale quando c'è;
 in verifica si passa dall'una all'altra con un clic, e il telefono le riceverà
 entrambe per poter cambiare idea anche in reparto.
 
+## Apprendimento su richiesta
+
+Si impara solo quando lo si chiede, con **Apprendi**: sul PC accanto al
+protocollo di ogni paziente in verifica, sul telefono in fondo alla scheda,
+accanto a «Imposta». Registra la combinazione esame + termini clinici del
+quesito → protocollo (o fasi) in uso; da lì i casi uguali la ritrovano. Il
+tasto diventa «Appreso ×N» quando quella combinazione è già ricordata.
+
+Scegliere un altro protocollo (PC, «Altro protocollo…») o impostare una scheda
+(telefono, «Imposta») non insegna nulla: vale solo per quel paziente.
+
+## Distretti fuori dal tronco
+
+Massiccio facciale, rachide, bacino, arto superiore e arto inferiore hanno zone
+proprie, vengono riconosciuti dall'esame («TC ginocchio», «TC rachide
+cervicale», «TC orbite»…) e sul telefono sono **sezioni** come encefalo, collo,
+torace e addome: scansioni a sé, che non si uniscono al tronco. La revisione 3
+della libreria aggiunge sette protocolli di partenza (traumi dei distretti,
+flogosi del massiccio, angio-TC degli arti inferiori): **non vengono
+dall'estratto SIRM**, e la loro nota dice che vanno validati in reparto. Una
+libreria ufficiale rimasta alla revisione 2 si aggiorna da sola; una modificata
+dal reparto li riceve con «Ripristina».
+
+## App tecnici
+
+I tecnici hanno un'app di sola lettura (`../tecnico/`) che mostra le schede
+**impostate** dal medico sul suo telefono — «Imposta» è la conferma — con fasi,
+volume e flusso, nota; si aggiorna da sola. Si collega dal telefono del medico
+(Impostazioni → App tecnici) con un canale cifrato proprio. Il nome del paziente
+non viene inviato. Vedi `../tecnico/README.md`.
+
 ## Protocol builder
 
 Sta dentro **Protocolli**: si apre con «+ Insegna un protocollo», dalla scheda

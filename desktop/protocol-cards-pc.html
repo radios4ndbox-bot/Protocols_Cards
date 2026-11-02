@@ -545,6 +545,12 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .op-f{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:.74rem}
 .op-f .ptag{margin:0}
 .chip.proto{background:#EEE8FA;color:#5B3FA0}
+.apprendi{border:0;cursor:pointer;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;color:#2F5D92;background:#E3ECFD;
+  box-shadow:var(--well-s);transition:.18s}
+.apprendi:hover{background:#D3E1FB}
+.apprendi.fatto{color:#5B3FA0;background:#EEE8FA}
+.op.s{cursor:default;background:#E3ECFD;box-shadow:inset 0 0 0 2px #8FB2EE}
+.op.s .op-k{color:#2F5D92}
 .insegna{border:0;cursor:pointer;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;color:#5B3FA0;background:#EEE8FA;
   box-shadow:var(--well-s);transition:.18s}
 .insegna:hover{background:#E1D7F7}
@@ -1110,9 +1116,9 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
       <p>Qui si decide cosa suggerirà il telefono: fasi, zone, mezzo di contrasto e i termini del quesito che
         fanno riconoscere il protocollo. Con <b>Sincronizza</b> il telefono riceve questa libreria.</p>
       <p><b>Personali.</b> Sono le varianti di chi usa il tool e vengono suggerite prima degli ufficiali. Si
-        creano con il builder, con «Copia nei personali» da un ufficiale, oppure scegliendo in verifica un
-        protocollo diverso da quello suggerito: il tool lo impara per i casi con lo stesso esame e gli stessi
-        termini clinici. Un protocollo appreso vale per quei casi; per usarlo anche in casi simili si aggiungono
+        creano con il builder, con «Copia nei personali» da un ufficiale, oppure con <b>Apprendi</b> in verifica:
+        il tool ricorda il protocollo in uso per i casi con lo stesso esame e gli stessi termini clinici. Scegliere
+        un altro protocollo, da solo, vale solo per quel paziente. Un protocollo appreso vale per quei casi; per usarlo anche in casi simili si aggiungono
         termini del quesito in «Riconoscimento».</p>
       <p><b>Acquisizioni.</b> Le fasi nell'ordine in cui si eseguono. Una zona <b>fissa</b> fa parte del
         protocollo; altrimenti il telefono la sostituisce con la regione dell'esame richiesto.</p>
@@ -1292,7 +1298,6 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
   </label>
   <div class="pop-list" id="popList"></div>
   <div class="pop-f">
-    <button class="btn xs" id="popPers" title="Crea un protocollo personale per questo caso e aprilo nell'editor">Personalizza per questo caso</button>
     <button class="btn xs" id="popApri">Apri nell'editor</button>
   </div>
 </div>
@@ -3977,16 +3982,19 @@ var qrcode = function() {
   const ZONE = {
     basale:   [['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
                ['ADs','Addome sup.'],['ADc','Addome compl.'],
-               ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']],
+               ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
+               ['ASup','Arto sup.'],['AInf','Arto inf.'],['MF','Massiccio facciale'],['RACH','Rachide'],['BAC','Bacino']],
     arteriosa:[['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
                ['ADs','Addome sup.'],['ADc','Addome compl.'],
                ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
                ['Collo TAs','Collo + tor-add sup.'],['Collo TAc','Collo + tor-add compl.'],
-               ['Angio TC','Angio-TC']],
+               ['Angio TC','Angio-TC'],
+               ['ASup','Arto sup.'],['AInf','Arto inf.'],['MF','Massiccio facciale'],['BAC','Bacino']],
     venosa:   [['Collo','Collo'],['TO','Torace'],
                ['ADs','Addome sup.'],['ADc','Addome compl.'],
                ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
-               ['Collo TAs','Collo + tor-add sup.'],['Collo TAc','Collo + tor-add compl.']],
+               ['Collo TAs','Collo + tor-add sup.'],['Collo TAc','Collo + tor-add compl.'],
+               ['ASup','Arto sup.'],['AInf','Arto inf.'],['MF','Massiccio facciale'],['RACH','Rachide'],['BAC','Bacino']],
     tardiva:  [['ENC','Encefalo'],['TO','Torace'],
                ['ADs','Addome sup.'],['ADc','Addome compl.'],
                ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']],
@@ -4003,7 +4011,11 @@ var qrcode = function() {
      protocollo dichiara di essere compatibile                          */
   const REGIONI = [['ENC','Encefalo'],['Collo','Collo'],['TO','Torace'],
                    ['ADs','Addome sup.'],['ADc','Addome compl.'],
-                   ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.']];
+                   ['TAs','Torace-addome sup.'],['TAc','Torace-addome compl.'],
+                   ['ASup','Arto sup.'],['AInf','Arto inf.'],['MF','Massiccio facciale'],['RACH','Rachide'],['BAC','Bacino']];
+  /* distretti fuori dal tronco: con più esami non si uniscono fra loro né
+     al tronco; da soli sono la regione dell'esame                      */
+  const DISTRETTI_ESTERNI = ['ENC', 'MF', 'Collo', 'RACH', 'BAC', 'ASup', 'AInf'];
 
   const BASALE = {
     req:  'Richiesta',
@@ -4019,9 +4031,11 @@ var qrcode = function() {
        1 · estratto SIRM 2022
        2 · termini dai quesiti reali: oncologia generica, follow-up solo
            oncologico, vie escretriche, pielonefrite/ascesso, enfisema e
-           pneumotorace                                                   */
-  const REVISIONE = 2;
-  const FIRME_PRECEDENTI = { '1JOYMYK': 1 };      // firma(libreria) → revisione
+           pneumotorace
+       3 · distretti fuori dal tronco: massiccio facciale, rachide, bacino,
+           arti superiori e inferiori (protocolli di partenza da validare) */
+  const REVISIONE = 3;
+  const FIRME_PRECEDENTI = { '1JOYMYK': 1, '046LQUP': 2 };      // firma(libreria) → revisione
 
   /* ═══ LIBRERIA DI PARTENZA (estratto SIRM 2022) ════════════════════
      basale: req = richiesta · opt = opzionale · skip = omettibile
@@ -4103,6 +4117,42 @@ var qrcode = function() {
       fasi:[{fase:'venosa',zone:['TAs'],delay:'70'}] },
   ];
 
+  /* Distretti fuori dall'estratto SIRM: protocolli di partenza, da
+     validare in reparto prima dell'uso. Stanno nella libreria ufficiale
+     perché coprono richieste quotidiane che altrimenti non avrebbero
+     alcun suggerimento; la nota lo dice anche sul telefono.             */
+  const DA_VALIDARE = 'Protocollo di partenza, da validare in reparto. ';
+  const DISTRETTI = [
+    { id:'massiccio-trauma', l:'TC Massiccio facciale – Trauma', idr:0, giKg:0, basale:'req',
+      reg:['MF'], kw:['trauma','frattura','caduta','aggressione'], ex:['massiccio','facciale','orbite'],
+      nota:DA_VALIDARE + 'Studio senza mdc con ricostruzioni multiplanari.',
+      fasi:[{fase:'basale',zone:['MF'],delay:''}] },
+    { id:'massiccio-flogosi', l:'TC Massiccio facciale – Flogosi o massa', idr:1.2, giKg:0.45, basale:'opt',
+      reg:['MF'], kw:['ascesso','flogosi','cellulite','neoformazione','massa'], ex:['massiccio','facciale'],
+      nota:DA_VALIDARE + 'La basale è utile solo per calcificazioni o sanguinamento.',
+      fasi:[{fase:'venosa',zone:['MF'],delay:'70'}] },
+    { id:'rachide-trauma', l:'TC Rachide – Trauma', idr:0, giKg:0, basale:'req',
+      reg:['RACH'], kw:['trauma','frattura','caduta','crollo vertebrale','incidente'], ex:['rachide'],
+      nota:DA_VALIDARE + 'Studio senza mdc con ricostruzioni sagittali e coronali.',
+      fasi:[{fase:'basale',zone:['RACH'],delay:''}] },
+    { id:'bacino-trauma', l:'TC Bacino – Trauma', idr:0, giKg:0, basale:'req',
+      reg:['BAC'], kw:['trauma','frattura','caduta'], ex:['bacino','anca'],
+      nota:DA_VALIDARE + 'Studio senza mdc; con mdc se si sospetta sanguinamento attivo.',
+      fasi:[{fase:'basale',zone:['BAC'],delay:''}] },
+    { id:'arto-sup-trauma', l:'TC Arto superiore – Trauma', idr:0, giKg:0, basale:'req',
+      reg:['ASup'], kw:['trauma','frattura','caduta','lussazione','distorsione'], ex:['spalla','gomito','polso','mano','omero'],
+      nota:DA_VALIDARE + 'Studio senza mdc del segmento indicato.',
+      fasi:[{fase:'basale',zone:['ASup'],delay:''}] },
+    { id:'arto-inf-trauma', l:'TC Arto inferiore – Trauma', idr:0, giKg:0, basale:'req',
+      reg:['AInf'], kw:['trauma','frattura','caduta','lussazione','distorsione'], ex:['ginocchio','caviglia','piede','femore','tibia'],
+      nota:DA_VALIDARE + 'Studio senza mdc del segmento indicato.',
+      fasi:[{fase:'basale',zone:['AInf'],delay:''}] },
+    { id:'angio-arti-inf', l:'AngioTC Arti inferiori', idr:1.6, giKg:0.45, basale:'opt',
+      reg:['AInf'], kw:['arteriopatia','claudicatio','ischemia','ischemia acuta','occlusione','trombosi'], ex:['angio'],
+      nota:DA_VALIDARE + 'Acquisizione arteriosa dall’aorta addominale ai piedi.',
+      fasi:[{fase:'arteriosa',zone:['AInf'],delay:'B-T',fix:1}] },
+  ];
+
   /* ═══ TESTO ════════════════════════════════════════════════════════ */
   /* normalizzazione condivisa da matcher e termini: la stessa del prototipo,
      così un termine scritto nel tool PC si comporta uguale sul telefono  */
@@ -4155,7 +4205,7 @@ var qrcode = function() {
     const pezzi = String(esame || '').split(/\s[|·]\s/).map(regioneEsame).filter(Boolean);
     if (pezzi.length < 2) return pezzi[0] || null;
     const tr = pezzi.filter(r => TRONCO.includes(r));
-    if (!tr.length) return ['ENC', 'Collo', 'ALTRO'].find(r => pezzi.includes(r)) || null;
+    if (!tr.length) return [...DISTRETTI_ESTERNI, 'ALTRO'].find(r => pezzi.includes(r)) || null;
     const tor = tr.some(r => r[0] === 'T'), add = tr.some(r => r !== 'TO');
     const sup = tr.filter(r => r !== 'TO').every(r => r === 'ADs' || r === 'TAs');
     if (tor && add) return sup ? 'TAs' : 'TAc';
@@ -4169,7 +4219,12 @@ var qrcode = function() {
     if (/\buro\b|urotc|uro tc|renal|vescic/.test(t))  return 'ADc';
     if (/encefal|cranio|cerebral|capo/.test(t))       return 'ENC';
     /* prima del collo: «rachide cervicale» è colonna, non collo */
-    if (/rachide|colonna|vertebr|bacino|femore|ginocchio|spalla|omero|arto|polso|caviglia|piede|mano|massiccio|facciale|temporale|orbit|seni paranasal|mandibol/.test(t))
+    if (/rachide|colonna|vertebr|\bsacro\b|coccig/.test(t)) return 'RACH';
+    if (/massiccio|facciale|orbit|seni paranasal|mandibol|mascell|zigom|rocche|temporal|ossa nasali|dentalscan/.test(t)) return 'MF';
+    if (/art[io] superior|spalla|omero|gomito|avambracci|\bradio\b|\bulna\b|polso|\bmano\b|\bmani\b|scapola|clavicol/.test(t)) return 'ASup';
+    if (/art[io] inferior|femore|ginocchi|gamba|gambe|tibia|perone|caviglia|\bpiede\b|\bpiedi\b|calcagn/.test(t)) return 'AInf';
+    if (/bacino|\banca\b|\banche\b|acetabol|sacroiliac/.test(t)) return 'BAC';
+    if (/sterno|coste|costal|cuore|cardi|coronar/.test(t))
       return 'ALTRO';                       // distretto riconosciuto ma fuori tassonomia
     const tor = /torac/.test(t), add = /addom/.test(t), sup = /superior|\bsup\b/.test(t);
     /* «collo torace addome» è un'unica scansione dal collo all'addome */
@@ -4409,7 +4464,7 @@ var qrcode = function() {
   const clona = x => JSON.parse(JSON.stringify(x));
 
   function nuovaLibreria() {
-    return { v: 1, base: 'SIRM 2022', rev: REVISIONE, modificata: 0, protocolli: clona(SIRM_2022) };
+    return { v: 1, base: 'SIRM 2022', rev: REVISIONE, modificata: 0, protocolli: clona(SIRM_2022.concat(DISTRETTI)) };
   }
 
   /* Libreria ufficiale salvata sul PC → nuova revisione, se si può senza
@@ -4491,7 +4546,7 @@ var qrcode = function() {
     return l;
   }
 
-  const api = { FASI, ZONE, ZONE_L, REGIONI, BASALE, LIMITI, SIRM_2022, LEXICON, REVISIONE,
+  const api = { FASI, ZONE, ZONE_L, REGIONI, DISTRETTI_ESTERNI, BASALE, LIMITI, SIRM_2022, DISTRETTI, LEXICON, REVISIONE,
     normText, normQuesito, normTermine, normEx, termini, regionOf, riconosci, fitZones, valida,
     firmaCaso, suggerisci, impara, opzioni, analizzaEsempio, simili, sostituisci,
     nuovaLibreria, nuovaLibreriaPersonale, aggiornaUfficiale, idLibero, idPersonale, canonico, firma, leggiLibreria, clona };
@@ -4986,12 +5041,14 @@ const trova = id => (id && (libs.personale.protocolli.find(x => x.id === id)
 const libDi = id => /^p-/.test(id || '') ? 'personale' : 'ufficiale';
 
 /* p.usa: 'ufficiale' | 'personale' | assente = l'opzione proposta.
-   p.scelta === null: nessun protocollo, si imposterà sul telefono.
-   Se l'opzione scelta sparisce (protocollo eliminato) si torna alla
-   proposta invece di restare senza protocollo.                        */
+   p.scelta: id di un protocollo scelto a mano, che vale solo per questo
+   paziente finché non si preme «Apprendi»; null = nessun protocollo, si
+   imposterà sul telefono. Se il protocollo scelto sparisce (eliminato) si
+   torna alla proposta invece di restare senza protocollo.             */
 function protocolloDi(p) {
   const o = opzioniDi(p);
   if (p.scelta === null) return { pr: null, fonte: 'nessuno', usa: null, o };
+  if (p.scelta) { const x = trova(p.scelta); if (x) return { pr: x, fonte: 'scelto', usa: 'scelto', o }; }
   const usa = p.usa === 'ufficiale' && o.ufficiale ? 'ufficiale'
             : p.usa === 'personale' && o.personale ? 'personale' : o.predefinita;
   if (usa === 'personale') return { pr: trova(o.personale), fonte: o.appreso ? 'appreso' : 'personale', usa, o };
@@ -4999,14 +5056,21 @@ function protocolloDi(p) {
   return { pr: null, fonte: 'nessuno', usa: null, o };
 }
 function cellaProtocollo(td, p, i) {
-  const { usa, o } = protocolloDi(p);
+  const { pr: att, usa, o } = protocolloDi(p);
   const uff = trova(o.ufficiale), pers = trova(o.personale);
+  /* «Apprendi» diventa una conferma quando il protocollo in uso è già la
+     voce appresa per questo stesso caso                                 */
+  const giàAppreso = usa === 'personale' && o.appreso;
   const opz = (tipo, pr, vuoto) => `<button class="op ${tipo === 'ufficiale' ? 'u' : 'p'}${usa === tipo ? ' on' : ''}${pr ? '' : ' vuota'}"
       data-usa="${tipo}" data-i="${i}" aria-pressed="${usa === tipo}">
       <span class="op-k">${tipo === 'ufficiale' ? 'Ufficiale' : 'Personale'}${tipo === 'personale' && o.appreso ? ` · appreso ×${pers.appreso.volte}` : ''}</span>
       <span class="op-n">${pr ? esc(pr.l) : vuoto}</span>${pr ? tagFasi(pr, true) : ''}</button>`;
-  td.innerHTML = `<div class="opz">${opz('ufficiale', uff, 'nessuno riconosciuto')}${opz('personale', pers, 'nessuno — insegnalo ›')}</div>
-    <div class="op-f">${pers ? `<button class="insegna" data-insegna="${i}" title="Apri il builder con questo caso e il protocollo in uso">★ Insegna</button>` : ''}
+  const scelto = usa === 'scelto' ? `<div class="op s on"><span class="op-k">Scelto a mano · solo per questo paziente</span>
+      <span class="op-n">${esc(att.l)}</span>${tagFasi(att, true)}</div>` : '';
+  td.innerHTML = `<div class="opz">${opz('ufficiale', uff, 'nessuno riconosciuto')}${opz('personale', pers, 'nessuno — insegnalo ›')}${scelto}</div>
+    <div class="op-f">${att ? `<button class="apprendi${giàAppreso ? ' fatto' : ''}" data-apprendi="${i}"
+        title="Ricorda: questo esame con questi termini clinici → questo protocollo">${giàAppreso ? `Appreso ×${pers.appreso.volte}` : 'Apprendi'}</button>` : ''}
+      ${pers ? `<button class="insegna" data-insegna="${i}" title="Apri il builder con questo caso e il protocollo in uso">★ Insegna</button>` : ''}
       <button class="link" data-scegli="${i}">Altro protocollo…</button>${
       p.scelta === null ? '<span class="ptag">nessuno · si imposta sul telefono</span>' : ''}</div>`;
 }
@@ -5019,7 +5083,9 @@ $('righe').addEventListener('click', e => {
   if (s) { e.stopPropagation(); return apriScelta(+s.dataset.scegli, s); }
   const ins = e.target.closest('[data-insegna]');
   if (ins) return insegna(+ins.dataset.insegna);
-  const b = e.target.closest('.op'); if (!b) return;
+  const app = e.target.closest('[data-apprendi]');
+  if (app) return apprendi(+app.dataset.apprendi);
+  const b = e.target.closest('.op'); if (!b || b.classList.contains('s')) return;
   const p = pazienti[+b.dataset.i];
   if (b.classList.contains('vuota')) {
     /* manca un'opzione personale: si apre il builder con questo caso
@@ -5085,44 +5151,41 @@ document.addEventListener('click', e => { if (popI !== null && !$('pop').contain
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && popI !== null) chiudiScelta(); });
 addEventListener('resize', () => { if (popI !== null) chiudiScelta(); });
 
+/* Scegliere non insegna nulla: il protocollo vale solo per questo
+   paziente. Per farlo ricordare nei casi uguali c'è «Apprendi».       */
 function scegli(id) {
-  const i = popI, p = pazienti[i], o = opzioniDi(p);
+  const p = pazienti[popI], o = opzioniDi(p);
   chiudiScelta();
   if (!id) { p.scelta = null; aggiornaColonnaProtocolli(); return toast('Nessun protocollo: si imposterà sul telefono'); }
   delete p.scelta;
-  /* scegliere una delle due opzioni proposte non insegna nulla, cambia
-     solo quella in uso. Un protocollo diverso viene appreso come opzione
-     personale per i casi con la stessa firma; riconfermare una voce
-     appresa ne aumenta il conteggio.                                     */
-  if (id === o.ufficiale) { p.usa = 'ufficiale'; return aggiornaColonnaProtocolli(); }
-  if (id === o.personale && !o.appreso) { p.usa = 'personale'; return aggiornaColonnaProtocolli(); }
+  if (id === o.ufficiale) p.usa = 'ufficiale';
+  else if (id === o.personale) p.usa = 'personale';
+  else { p.scelta = id; toast('Scelto solo per questo paziente · «Apprendi» per ricordarlo nei casi uguali'); }
+  aggiornaColonnaProtocolli();
+}
+
+/* «Apprendi»: la combinazione esame + termini clinici del quesito viene
+   ricordata con il protocollo in uso, e da quel momento i casi uguali lo
+   ricevono come opzione personale. Se è già la voce appresa per questo
+   caso, ne conta un uso in più.                                         */
+function apprendi(i) {
+  const p = pazienti[i], { pr } = protocolloDi(p);
+  if (!pr) return toast('Scegli prima un protocollo da far apprendere');
   const prima = PR.clona(libs.personale);
-  const voce = PR.impara(libs.personale.protocolli, trova(id), esameDi(p), p.quesito);
-  p.usa = 'personale';
+  const voce = PR.impara(libs.personale.protocolli, pr, esameDi(p), p.quesito);
+  delete p.scelta; p.usa = 'personale';
   salvaLibreria('personale');
   aggiornaColonnaProtocolli(); aggiornaNav();
   const uguali = pazienti.filter(x => x !== p && x.scelta === undefined && !x.usa && opzioniDi(x).personale === voce.id).length;
+  const caso = [voce.appreso.esame, voce.appreso.termini.join(', ')].filter(Boolean).join(' + ');
   toast(voce.appreso.volte > 1 ? `Confermato · ${voce.appreso.volte} volte per questo caso`
-        : `Appreso nei protocolli personali${uguali ? ` · vale anche per ${uguali === 1 ? 'un altro paziente' : `altri ${uguali} pazienti`} in lista` : ''}`,
+        : `Appreso: ${caso} → ${pr.l.replace(/ · .*$/, '')}${uguali ? ` · vale anche per ${uguali === 1 ? 'un altro paziente' : `altri ${uguali} pazienti`}` : ''}`,
     'Annulla', () => { ripristinaPersonale(prima); aggiornaColonnaProtocolli(); });
 }
 $('popApri').onclick = () => {
   const pr = protocolloDi(pazienti[popI]).pr; chiudiScelta();
   if (!pr) return toast('Nessun protocollo da aprire');
   apriProtocollo(pr.id);
-};
-$('popPers').onclick = () => {
-  /* crea (o ritrova) la voce appresa per questo caso partendo dal protocollo
-     attuale, e la apre nell'editor per modificarne fasi e zone          */
-  const p = pazienti[popI], att = protocolloDi(p).pr;
-  chiudiScelta();
-  const base = att || { l: 'Protocollo', idr: 1.4, giKg: 0.5, basale: 'opt', nota: '', fasi: [{ fase: 'venosa', zone: ['TAc'], delay: '70' }] };
-  const prima = PR.clona(libs.personale);
-  const voce = PR.impara(libs.personale.protocolli, base, esameDi(p), p.quesito);
-  delete p.scelta; p.usa = 'personale';
-  salvaLibreria('personale');
-  apriProtocollo(voce.id);
-  toast('Protocollo personale per questo caso', 'Annulla', () => { ripristinaPersonale(prima); disegnaLibreria(); disegnaEditor(); });
 };
 
 function disegnaTabella() {
@@ -5200,7 +5263,7 @@ function aggiornaConteggi() {
   $('chipWarn').textContent = `${conSeg} da controllare`;
   $('reteInvia').disabled = a.length === 0;
   const n = { ufficiale: 0, personale: 0, nessuno: 0 };
-  a.forEach(p => { n[protocolloDi(p).usa || 'nessuno']++; });
+  a.forEach(p => { const { usa, pr } = protocolloDi(p); n[usa === 'scelto' ? libDi(pr.id) : usa || 'nessuno']++; });
   $('chipProto').innerHTML = a.length ? `<b>${n.personale}</b> personali · <b>${n.ufficiale}</b> ufficiali${n.nessuno ? ` · <b>${n.nessuno}</b> da impostare` : ''}` : '';
 }
 
@@ -5825,8 +5888,8 @@ function disegnaLibreria() {
   }).join('') || (lib.protocolli.length || tab === 'ufficiale'
     ? '<div class="vuoto">Nessun protocollo corrisponde alla ricerca</div>'
     : `<div class="vuoto guida"><b>Nessun protocollo personale, per ora.</b><br>
-        Nascono da soli: quando in <b>Verifica</b> scegli per un paziente un protocollo diverso da
-        quello suggerito, il tool lo impara per i casi uguali. Puoi anche crearne uno qui sotto,
+        Nascono in <b>Verifica</b>: «Apprendi» fa ricordare il protocollo in uso per i casi uguali, «★ Insegna»
+        lo compone nel builder. Puoi anche crearne uno qui sotto,
         o copiarne uno ufficiale con «Copia nei personali».</div>`);
   $('libNuovo').textContent = tab === 'ufficiale' ? '+ Nuovo protocollo' : '+ Insegna un protocollo';
   $('libReset').textContent = tab === 'ufficiale' ? 'Ripristina' : 'Svuota';

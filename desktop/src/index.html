@@ -545,6 +545,12 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .op-f{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:.74rem}
 .op-f .ptag{margin:0}
 .chip.proto{background:#EEE8FA;color:#5B3FA0}
+.apprendi{border:0;cursor:pointer;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;color:#2F5D92;background:#E3ECFD;
+  box-shadow:var(--well-s);transition:.18s}
+.apprendi:hover{background:#D3E1FB}
+.apprendi.fatto{color:#5B3FA0;background:#EEE8FA}
+.op.s{cursor:default;background:#E3ECFD;box-shadow:inset 0 0 0 2px #8FB2EE}
+.op.s .op-k{color:#2F5D92}
 .insegna{border:0;cursor:pointer;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;color:#5B3FA0;background:#EEE8FA;
   box-shadow:var(--well-s);transition:.18s}
 .insegna:hover{background:#E1D7F7}
@@ -1110,9 +1116,9 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
       <p>Qui si decide cosa suggerirà il telefono: fasi, zone, mezzo di contrasto e i termini del quesito che
         fanno riconoscere il protocollo. Con <b>Sincronizza</b> il telefono riceve questa libreria.</p>
       <p><b>Personali.</b> Sono le varianti di chi usa il tool e vengono suggerite prima degli ufficiali. Si
-        creano con il builder, con «Copia nei personali» da un ufficiale, oppure scegliendo in verifica un
-        protocollo diverso da quello suggerito: il tool lo impara per i casi con lo stesso esame e gli stessi
-        termini clinici. Un protocollo appreso vale per quei casi; per usarlo anche in casi simili si aggiungono
+        creano con il builder, con «Copia nei personali» da un ufficiale, oppure con <b>Apprendi</b> in verifica:
+        il tool ricorda il protocollo in uso per i casi con lo stesso esame e gli stessi termini clinici. Scegliere
+        un altro protocollo, da solo, vale solo per quel paziente. Un protocollo appreso vale per quei casi; per usarlo anche in casi simili si aggiungono
         termini del quesito in «Riconoscimento».</p>
       <p><b>Acquisizioni.</b> Le fasi nell'ordine in cui si eseguono. Una zona <b>fissa</b> fa parte del
         protocollo; altrimenti il telefono la sostituisce con la regione dell'esame richiesto.</p>
@@ -1292,7 +1298,6 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
   </label>
   <div class="pop-list" id="popList"></div>
   <div class="pop-f">
-    <button class="btn xs" id="popPers" title="Crea un protocollo personale per questo caso e aprilo nell'editor">Personalizza per questo caso</button>
     <button class="btn xs" id="popApri">Apri nell'editor</button>
   </div>
 </div>
@@ -1599,12 +1604,14 @@ const trova = id => (id && (libs.personale.protocolli.find(x => x.id === id)
 const libDi = id => /^p-/.test(id || '') ? 'personale' : 'ufficiale';
 
 /* p.usa: 'ufficiale' | 'personale' | assente = l'opzione proposta.
-   p.scelta === null: nessun protocollo, si imposterà sul telefono.
-   Se l'opzione scelta sparisce (protocollo eliminato) si torna alla
-   proposta invece di restare senza protocollo.                        */
+   p.scelta: id di un protocollo scelto a mano, che vale solo per questo
+   paziente finché non si preme «Apprendi»; null = nessun protocollo, si
+   imposterà sul telefono. Se il protocollo scelto sparisce (eliminato) si
+   torna alla proposta invece di restare senza protocollo.             */
 function protocolloDi(p) {
   const o = opzioniDi(p);
   if (p.scelta === null) return { pr: null, fonte: 'nessuno', usa: null, o };
+  if (p.scelta) { const x = trova(p.scelta); if (x) return { pr: x, fonte: 'scelto', usa: 'scelto', o }; }
   const usa = p.usa === 'ufficiale' && o.ufficiale ? 'ufficiale'
             : p.usa === 'personale' && o.personale ? 'personale' : o.predefinita;
   if (usa === 'personale') return { pr: trova(o.personale), fonte: o.appreso ? 'appreso' : 'personale', usa, o };
@@ -1612,14 +1619,21 @@ function protocolloDi(p) {
   return { pr: null, fonte: 'nessuno', usa: null, o };
 }
 function cellaProtocollo(td, p, i) {
-  const { usa, o } = protocolloDi(p);
+  const { pr: att, usa, o } = protocolloDi(p);
   const uff = trova(o.ufficiale), pers = trova(o.personale);
+  /* «Apprendi» diventa una conferma quando il protocollo in uso è già la
+     voce appresa per questo stesso caso                                 */
+  const giàAppreso = usa === 'personale' && o.appreso;
   const opz = (tipo, pr, vuoto) => `<button class="op ${tipo === 'ufficiale' ? 'u' : 'p'}${usa === tipo ? ' on' : ''}${pr ? '' : ' vuota'}"
       data-usa="${tipo}" data-i="${i}" aria-pressed="${usa === tipo}">
       <span class="op-k">${tipo === 'ufficiale' ? 'Ufficiale' : 'Personale'}${tipo === 'personale' && o.appreso ? ` · appreso ×${pers.appreso.volte}` : ''}</span>
       <span class="op-n">${pr ? esc(pr.l) : vuoto}</span>${pr ? tagFasi(pr, true) : ''}</button>`;
-  td.innerHTML = `<div class="opz">${opz('ufficiale', uff, 'nessuno riconosciuto')}${opz('personale', pers, 'nessuno — insegnalo ›')}</div>
-    <div class="op-f">${pers ? `<button class="insegna" data-insegna="${i}" title="Apri il builder con questo caso e il protocollo in uso">★ Insegna</button>` : ''}
+  const scelto = usa === 'scelto' ? `<div class="op s on"><span class="op-k">Scelto a mano · solo per questo paziente</span>
+      <span class="op-n">${esc(att.l)}</span>${tagFasi(att, true)}</div>` : '';
+  td.innerHTML = `<div class="opz">${opz('ufficiale', uff, 'nessuno riconosciuto')}${opz('personale', pers, 'nessuno — insegnalo ›')}${scelto}</div>
+    <div class="op-f">${att ? `<button class="apprendi${giàAppreso ? ' fatto' : ''}" data-apprendi="${i}"
+        title="Ricorda: questo esame con questi termini clinici → questo protocollo">${giàAppreso ? `Appreso ×${pers.appreso.volte}` : 'Apprendi'}</button>` : ''}
+      ${pers ? `<button class="insegna" data-insegna="${i}" title="Apri il builder con questo caso e il protocollo in uso">★ Insegna</button>` : ''}
       <button class="link" data-scegli="${i}">Altro protocollo…</button>${
       p.scelta === null ? '<span class="ptag">nessuno · si imposta sul telefono</span>' : ''}</div>`;
 }
@@ -1632,7 +1646,9 @@ $('righe').addEventListener('click', e => {
   if (s) { e.stopPropagation(); return apriScelta(+s.dataset.scegli, s); }
   const ins = e.target.closest('[data-insegna]');
   if (ins) return insegna(+ins.dataset.insegna);
-  const b = e.target.closest('.op'); if (!b) return;
+  const app = e.target.closest('[data-apprendi]');
+  if (app) return apprendi(+app.dataset.apprendi);
+  const b = e.target.closest('.op'); if (!b || b.classList.contains('s')) return;
   const p = pazienti[+b.dataset.i];
   if (b.classList.contains('vuota')) {
     /* manca un'opzione personale: si apre il builder con questo caso
@@ -1698,44 +1714,41 @@ document.addEventListener('click', e => { if (popI !== null && !$('pop').contain
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && popI !== null) chiudiScelta(); });
 addEventListener('resize', () => { if (popI !== null) chiudiScelta(); });
 
+/* Scegliere non insegna nulla: il protocollo vale solo per questo
+   paziente. Per farlo ricordare nei casi uguali c'è «Apprendi».       */
 function scegli(id) {
-  const i = popI, p = pazienti[i], o = opzioniDi(p);
+  const p = pazienti[popI], o = opzioniDi(p);
   chiudiScelta();
   if (!id) { p.scelta = null; aggiornaColonnaProtocolli(); return toast('Nessun protocollo: si imposterà sul telefono'); }
   delete p.scelta;
-  /* scegliere una delle due opzioni proposte non insegna nulla, cambia
-     solo quella in uso. Un protocollo diverso viene appreso come opzione
-     personale per i casi con la stessa firma; riconfermare una voce
-     appresa ne aumenta il conteggio.                                     */
-  if (id === o.ufficiale) { p.usa = 'ufficiale'; return aggiornaColonnaProtocolli(); }
-  if (id === o.personale && !o.appreso) { p.usa = 'personale'; return aggiornaColonnaProtocolli(); }
+  if (id === o.ufficiale) p.usa = 'ufficiale';
+  else if (id === o.personale) p.usa = 'personale';
+  else { p.scelta = id; toast('Scelto solo per questo paziente · «Apprendi» per ricordarlo nei casi uguali'); }
+  aggiornaColonnaProtocolli();
+}
+
+/* «Apprendi»: la combinazione esame + termini clinici del quesito viene
+   ricordata con il protocollo in uso, e da quel momento i casi uguali lo
+   ricevono come opzione personale. Se è già la voce appresa per questo
+   caso, ne conta un uso in più.                                         */
+function apprendi(i) {
+  const p = pazienti[i], { pr } = protocolloDi(p);
+  if (!pr) return toast('Scegli prima un protocollo da far apprendere');
   const prima = PR.clona(libs.personale);
-  const voce = PR.impara(libs.personale.protocolli, trova(id), esameDi(p), p.quesito);
-  p.usa = 'personale';
+  const voce = PR.impara(libs.personale.protocolli, pr, esameDi(p), p.quesito);
+  delete p.scelta; p.usa = 'personale';
   salvaLibreria('personale');
   aggiornaColonnaProtocolli(); aggiornaNav();
   const uguali = pazienti.filter(x => x !== p && x.scelta === undefined && !x.usa && opzioniDi(x).personale === voce.id).length;
+  const caso = [voce.appreso.esame, voce.appreso.termini.join(', ')].filter(Boolean).join(' + ');
   toast(voce.appreso.volte > 1 ? `Confermato · ${voce.appreso.volte} volte per questo caso`
-        : `Appreso nei protocolli personali${uguali ? ` · vale anche per ${uguali === 1 ? 'un altro paziente' : `altri ${uguali} pazienti`} in lista` : ''}`,
+        : `Appreso: ${caso} → ${pr.l.replace(/ · .*$/, '')}${uguali ? ` · vale anche per ${uguali === 1 ? 'un altro paziente' : `altri ${uguali} pazienti`}` : ''}`,
     'Annulla', () => { ripristinaPersonale(prima); aggiornaColonnaProtocolli(); });
 }
 $('popApri').onclick = () => {
   const pr = protocolloDi(pazienti[popI]).pr; chiudiScelta();
   if (!pr) return toast('Nessun protocollo da aprire');
   apriProtocollo(pr.id);
-};
-$('popPers').onclick = () => {
-  /* crea (o ritrova) la voce appresa per questo caso partendo dal protocollo
-     attuale, e la apre nell'editor per modificarne fasi e zone          */
-  const p = pazienti[popI], att = protocolloDi(p).pr;
-  chiudiScelta();
-  const base = att || { l: 'Protocollo', idr: 1.4, giKg: 0.5, basale: 'opt', nota: '', fasi: [{ fase: 'venosa', zone: ['TAc'], delay: '70' }] };
-  const prima = PR.clona(libs.personale);
-  const voce = PR.impara(libs.personale.protocolli, base, esameDi(p), p.quesito);
-  delete p.scelta; p.usa = 'personale';
-  salvaLibreria('personale');
-  apriProtocollo(voce.id);
-  toast('Protocollo personale per questo caso', 'Annulla', () => { ripristinaPersonale(prima); disegnaLibreria(); disegnaEditor(); });
 };
 
 function disegnaTabella() {
@@ -1813,7 +1826,7 @@ function aggiornaConteggi() {
   $('chipWarn').textContent = `${conSeg} da controllare`;
   $('reteInvia').disabled = a.length === 0;
   const n = { ufficiale: 0, personale: 0, nessuno: 0 };
-  a.forEach(p => { n[protocolloDi(p).usa || 'nessuno']++; });
+  a.forEach(p => { const { usa, pr } = protocolloDi(p); n[usa === 'scelto' ? libDi(pr.id) : usa || 'nessuno']++; });
   $('chipProto').innerHTML = a.length ? `<b>${n.personale}</b> personali · <b>${n.ufficiale}</b> ufficiali${n.nessuno ? ` · <b>${n.nessuno}</b> da impostare` : ''}` : '';
 }
 
@@ -2438,8 +2451,8 @@ function disegnaLibreria() {
   }).join('') || (lib.protocolli.length || tab === 'ufficiale'
     ? '<div class="vuoto">Nessun protocollo corrisponde alla ricerca</div>'
     : `<div class="vuoto guida"><b>Nessun protocollo personale, per ora.</b><br>
-        Nascono da soli: quando in <b>Verifica</b> scegli per un paziente un protocollo diverso da
-        quello suggerito, il tool lo impara per i casi uguali. Puoi anche crearne uno qui sotto,
+        Nascono in <b>Verifica</b>: «Apprendi» fa ricordare il protocollo in uso per i casi uguali, «★ Insegna»
+        lo compone nel builder. Puoi anche crearne uno qui sotto,
         o copiarne uno ufficiale con «Copia nei personali».</div>`);
   $('libNuovo').textContent = tab === 'ufficiale' ? '+ Nuovo protocollo' : '+ Insegna un protocollo';
   $('libReset').textContent = tab === 'ufficiale' ? 'Ripristina' : 'Svuota';
