@@ -932,7 +932,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     <details><summary>App tecnici</summary>
       <p>I tecnici hanno un'app di sola lettura che mostra le schede che hai <b>impostato</b>, con fasi, mezzo, peso
         e nota, e si aggiorna da sola quando cambi qualcosa. Una scheda non impostata non compare; riattivata, sparisce.
-        «Collega i tecnici» crea un canale cifrato e un codice: ogni tecnico lo inquadra una volta. Il nome del paziente
+        «Collega i tecnici» crea un canale cifrato e un codice: ogni tecnico lo scansiona una volta dall'app dei tecnici («Scansiona il codice»). Il nome del paziente
         non viene inviato. «Nuovo abbinamento» scollega i telefoni dei tecnici collegati finora.</p></details>
     <details><summary>Il tuo profilo</summary>
       <p>Nome, titolo, protocolli personali e appresi viaggiano con questo telefono: accedendo a un PC, di
@@ -3273,7 +3273,7 @@ function renderTecnici(){
     ${tecErrore ? `<div class="item-s" style="color:var(--danger)">Pubblicazione non riuscita: ${esc(tecErrore)}</div>` : ''}
     ${tel.map(t => `<div class="item-s">● ${esc(t.nome)} · ${tecUltima && t.seq === tecUltima.seq ? 'aggiornato' : t.seq ? 'versione precedente' : 'collegato'} alle ${esc(ora(t.quando))}</div>`).join('')}
     ${tecQR ? `<canvas id="tecQR" width="240" height="240" class="tec-qr"></canvas>
-      <div class="item-s" style="text-align:center">Il tecnico inquadra il codice con la fotocamera. Contiene la chiave: non fotografarlo.</div>` : ''}
+      <div class="item-s" style="text-align:center">Il tecnico lo scansiona dall'app dei tecnici con «Scansiona il codice», oppure con la fotocamera. Contiene la chiave: non fotografarlo.</div>` : ''}
     <div class="prof-az">
       <button class="mini-b" id="tecMostra">${tecQR ? 'Nascondi il codice' : 'Mostra il codice'}</button>
       <button class="mini-b" id="tecPubblica">Pubblica ora</button>

@@ -13,8 +13,17 @@ Pubblicata su GitHub Pages:
 ## Collegamento
 
 1. Sul telefono del medico: **Impostazioni → App tecnici → Collega i tecnici**.
-2. Il tecnico inquadra il codice con la fotocamera: si apre l'app, già collegata.
-   Lo stesso codice vale per tutti i telefoni del reparto («Mostra il codice»).
+2. Il tecnico tocca **Scansiona il codice** nell'app dei tecnici e lo inquadra:
+   l'abbinamento resta dentro l'app, anche se è stata aggiunta alla schermata
+   Home (la fotocamera di sistema aprirebbe invece una scheda del browser). In
+   alternativa si può inquadrare con la fotocamera. Lo stesso codice vale per
+   tutti i telefoni del reparto («Mostra il codice»); «Nuovo codice», nel menu
+   dell'app, scansiona quello di un nuovo abbinamento.
+
+   Lo scanner usa il lettore del browser (BarcodeDetector, Chrome per Android) e,
+   dove manca (Safari su iPhone), jsQR da `../desktop/vendor/`, caricato solo
+   quando serve. Riconosce il codice che collega il PC al telefono del medico e
+   spiega che non è quello giusto.
 3. «Nuovo abbinamento» sul telefono del medico scollega i tecnici collegati finora.
 
 Nelle impostazioni del medico compare quali telefoni dei tecnici hanno ricevuto

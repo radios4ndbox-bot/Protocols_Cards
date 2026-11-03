@@ -109,6 +109,22 @@ p{margin:0}
   background-image:var(--gloss);box-shadow:var(--lift),var(--lip)}
 .btn:active{background-image:var(--gloss-down)}
 .btn.danger{color:var(--coral-ink)}
+.btn.solid{background-image:linear-gradient(180deg,#B2E7D2 0%,#90D9BD 46%,#6BC5A5 46.01%,#52B492 100%);color:#0E3A2E;
+  box-shadow:0 12px 20px -11px rgba(42,122,98,.9),inset 0 1px 0 0 rgba(255,255,255,.8),inset 0 -1px 0 0 rgba(16,72,56,.4)}
+.btn.grande{height:52px;padding:0 26px;font-size:1rem;margin-top:18px}
+.abbina .alt{margin-top:14px;font-size:.78rem;color:var(--ink-3)}
+.scan{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;background:#0D1520}
+.scan.on{display:flex}
+.scan video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scan .mirino{position:absolute;left:50%;top:44%;width:min(68vw,300px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:26px;
+  box-shadow:0 0 0 100vmax rgba(13,21,32,.55);outline:3px solid rgba(124,207,176,.95);outline-offset:-3px}
+.scan .mirino::after{content:"";position:absolute;left:10%;right:10%;top:50%;height:2px;background:rgba(124,207,176,.8);
+  box-shadow:0 0 12px rgba(124,207,176,.9);animation:linea 2.2s ease-in-out infinite}
+@keyframes linea{0%,100%{transform:translateY(-110px)}50%{transform:translateY(110px)}}
+.scan .giu{position:relative;margin-top:auto;padding:20px 20px calc(24px + env(safe-area-inset-bottom));text-align:center;color:#fff;
+  background:linear-gradient(transparent,rgba(13,21,32,.85) 40%)}
+.scan .giu p{font-size:.92rem;line-height:1.45;margin:0 auto 14px;max-width:34ch}
+.scan .btn{color:var(--ink)}
 .foglio{position:fixed;inset:0;z-index:50;display:none;align-items:flex-end;background:rgba(35,45,60,.3)}
 .foglio.on{display:flex}
 .foglio > div{width:100%;max-width:560px;margin:0 auto;padding:22px 20px calc(22px + env(safe-area-inset-bottom));border-radius:26px 26px 0 0;background:var(--plate);box-shadow:var(--clay)}
@@ -131,11 +147,17 @@ p{margin:0}
   <main id="vista"></main>
 </div>
 
+<div class="scan" id="scan" role="dialog" aria-modal="true" aria-label="Scansione del codice">
+  <video id="scanVideo" playsinline muted></video>
+  <div class="mirino" aria-hidden="true"></div>
+  <div class="giu"><p id="scanMsg"></p><button class="btn" id="scanChiudi">Annulla</button></div>
+</div>
+
 <div class="foglio" id="foglio" role="dialog" aria-modal="true" aria-labelledby="fTit">
   <div>
     <h3 id="fTit">Questo telefono</h3>
     <p id="fTesto"></p>
-    <div class="riga"><button class="btn" id="fChiudi">Chiudi</button><button class="btn danger" id="fScollega">Scollega</button></div>
+    <div class="riga"><button class="btn" id="fChiudi">Chiudi</button><button class="btn" id="fScansiona">Nuovo codice</button><button class="btn danger" id="fScollega">Scollega</button></div>
   </div>
 </div>
 
@@ -223,10 +245,12 @@ function nonAbbinato() {
     <p>L'app mostra, in sola lettura, le schede che il medico imposta sul suo telefono.</p>
     <ol>
       <li>Sul telefono del medico: <b>Impostazioni → App tecnici → Mostra il codice</b>.</li>
-      <li>Inquadra il codice con la fotocamera di questo telefono.</li>
-      <li>Si apre questa pagina, già collegata: tienila tra i preferiti o aggiungila alla schermata Home.</li>
+      <li>Qui, tocca <b>Scansiona il codice</b> e inquadralo.</li>
     </ol>
+    <button class="btn solid grande" id="scanApri">Scansiona il codice</button>
+    <p class="alt">In alternativa puoi inquadrarlo con la fotocamera del telefono: si apre questa pagina, già collegata.</p>
   </div>`);
+  $('scanApri').onclick = apriScanner;
 }
 
 /* ── schede ── */
@@ -293,12 +317,112 @@ setInterval(() => { if (attuale) mostraCarte(true); }, 60000);
 
 /* ── impostazioni ── */
 $('menu').onclick = () => {
-  $('fTesto').textContent = `Collegato al telefono del medico come «${nomeDispositivo()}». Scollegando, questo telefono smette di ricevere le schede finché non inquadri di nuovo il codice.`;
+  $('fTesto').textContent = `Collegato al telefono del medico come «${nomeDispositivo()}». «Nuovo codice» scansiona il codice di un nuovo abbinamento; scollegando, questo telefono smette di ricevere le schede.`;
   $('foglio').classList.add('on');
 };
 $('fChiudi').onclick = () => $('foglio').classList.remove('on');
 $('foglio').addEventListener('click', e => { if (e.target === $('foglio')) $('foglio').classList.remove('on'); });
 $('fScollega').onclick = () => { scrivi(K_CANALE, null); location.reload(); };
+$('fScansiona').onclick = () => { $('foglio').classList.remove('on'); apriScanner(); };
+
+/* ── scansione del codice, dentro l'app ──
+   Il tecnico inquadra il codice dal telefono del medico senza uscire
+   dall'app: aggiunta alla schermata Home, la fotocamera di sistema
+   aprirebbe il link in una scheda del browser, e l'abbinamento finirebbe
+   lì. Si usa il lettore del browser (BarcodeDetector, Chrome per Android);
+   dove manca (Safari su iPhone) si carica jsQR, incorporato nel progetto. */
+let scan = null;                                  // { stream, timer, fermo }
+
+/* il codice dei tecnici ha la forma …/tecnico/#t=…&k=…; quello che abbina
+   il PC al telefono del medico ha la stessa chiave ma un altro indirizzo */
+function leggiCodice(testo) {
+  let u; try { u = new URL(String(testo).trim()); } catch (_) { return { errore: 'Questo codice non è di Protocol Cards.' }; }
+  const a = Canale.daFrammento(u.hash);
+  if (!a) return { errore: 'Questo codice non è di Protocol Cards.' };
+  if (!/\/tecnico\/?$/.test(u.pathname)) return { errore: 'Questo è il codice che collega il telefono del medico al PC. Serve quello dell’app tecnici: sul telefono del medico, Impostazioni → App tecnici → Mostra il codice.' };
+  return { a };
+}
+
+function caricaJsQR() {
+  if (window.jsQR) return Promise.resolve(window.jsQR);
+  return new Promise((ok, ko) => {
+    const s = document.createElement('script');
+    s.src = '../desktop/vendor/jsQR.js';
+    s.onload = () => window.jsQR ? ok(window.jsQR) : ko(new Error('lettore non disponibile'));
+    s.onerror = () => ko(new Error('lettore non disponibile: serve la rete al primo uso'));
+    document.head.appendChild(s);
+  });
+}
+async function lettoreQR() {
+  if ('BarcodeDetector' in window) {
+    try {
+      const formati = await BarcodeDetector.getSupportedFormats();
+      if (formati.includes('qr_code')) {
+        const d = new BarcodeDetector({ formats: ['qr_code'] });
+        return async video => { const r = await d.detect(video); return r[0] ? r[0].rawValue : null; };
+      }
+    } catch (_) {}
+  }
+  const jsQR = await caricaJsQR();
+  const c = document.createElement('canvas'), g = c.getContext('2d', { willReadFrequently: true });
+  return async video => {
+    const w = video.videoWidth, h = video.videoHeight; if (!w || !h) return null;
+    const k = Math.min(1, 640 / Math.max(w, h));             // basta una risoluzione modesta
+    c.width = Math.round(w * k); c.height = Math.round(h * k);
+    g.drawImage(video, 0, 0, c.width, c.height);
+    const r = jsQR(g.getImageData(0, 0, c.width, c.height).data, c.width, c.height, { inversionAttempts: 'dontInvert' });
+    return r ? r.data : null;
+  };
+}
+
+async function apriScanner() {
+  $('scan').classList.add('on');
+  const msg = t => { $('scanMsg').textContent = t; };
+  msg('Avvio della fotocamera…');
+  if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+    return msg('La fotocamera non è disponibile da questa pagina. Inquadra il codice con la fotocamera del telefono.');
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+  } catch (e) {
+    return msg(e && e.name === 'NotAllowedError'
+      ? 'Permesso della fotocamera negato. Consentilo nelle impostazioni del browser, oppure inquadra il codice con la fotocamera del telefono.'
+      : 'Nessuna fotocamera disponibile.');
+  }
+  const video = $('scanVideo');
+  video.srcObject = stream;
+  try { await video.play(); } catch (_) {}
+  scan = { stream, timer: null, fermo: false };
+  let leggi;
+  try { leggi = await lettoreQR(); } catch (e) { msg(e.message); return; }
+  msg('Inquadra il codice sul telefono del medico');
+  const giro = async () => {
+    if (!scan || scan.fermo) return;
+    let testo = null;
+    try { testo = await leggi(video); } catch (_) {}
+    if (testo) {
+      const r = leggiCodice(testo);
+      if (r.a) {
+        scan.fermo = true;
+        if (navigator.vibrate) navigator.vibrate(60);
+        msg('Codice letto: collegamento…');
+        scrivi(K_CANALE, JSON.stringify(r.a));
+        setTimeout(() => { chiudiScanner(); location.reload(); }, 350);
+        return;
+      }
+      msg(r.errore);
+    }
+    scan.timer = setTimeout(giro, 160);
+  };
+  giro();
+}
+function chiudiScanner() {
+  if (scan) { scan.fermo = true; clearTimeout(scan.timer); scan.stream.getTracks().forEach(t => t.stop()); scan = null; }
+  $('scanVideo').srcObject = null;
+  $('scan').classList.remove('on');
+}
+$('scanChiudi').onclick = chiudiScanner;
+document.addEventListener('visibilitychange', () => { if (document.hidden && scan) chiudiScanner(); });
 
 avvia();
 </script>

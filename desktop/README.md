@@ -270,6 +270,7 @@ sistema non parte.
 |---|---|---|
 | pdf.js (`pdfjs-dist`) | 3.11.174, build legacy | Apache-2.0 |
 | qrcode-generator | 2.0.4 | MIT |
+| jsQR (solo app tecnici, per scansionare il codice) | 1.4.0 | Apache-2.0 |
 
 I testi delle licenze sono in `vendor/`. Per rigenerare le copie:
 
@@ -278,6 +279,7 @@ npm pack pdfjs-dist@3.11.174
 tar xzf pdfjs-dist-3.11.174.tgz package/legacy/build/pdf.min.js \
         package/legacy/build/pdf.worker.min.js package/LICENSE
 npm pack qrcode-generator
+npm pack jsqr@1.4.0           # package/dist/jsQR.js e LICENSE
 ```
 
 ## Libreria protocolli
