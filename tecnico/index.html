@@ -8,10 +8,10 @@
 <title>Protocol Cards — Tecnici</title>
 <style>
 /* ═══════════════════════════════════════════════════════════════════
-   PROTOCOL CARDS · app tecnici
-   Sola lettura. Mostra le schede che il medico ha impostato sul suo
-   telefono — fasi, mezzo, peso e nota — e si aggiorna da sola tramite il
-   canale cifrato (../desktop/canale.js). Non conserva dati dei pazienti:
+   PROTOCOL CARDS · app tecnici (TSRM)
+   Sola lettura. Mostra le schede che il medico ha mandato ai TSRM, dal
+   suo telefono o dal PC — fasi, mezzo, peso e nota — e si aggiorna da
+   sola tramite il canale cifrato (../desktop/canale.js). Non conserva dati dei pazienti:
    alla riapertura li riceve di nuovo. Sul telefono resta solo
    l'abbinamento.
    ═══════════════════════════════════════════════════════════════════ */
@@ -139,7 +139,7 @@ p{margin:0}
   <header class="top">
     <div class="bar">
       <span class="mark" aria-hidden="true"></span>
-      <div class="brand"><b>Protocol Cards</b><small>Tecnici · sola lettura</small></div>
+      <div class="brand"><b>Protocol Cards</b><small>TSRM · sola lettura</small></div>
       <span class="stato" id="stato"><i></i><span>avvio…</span></span>
       <button class="menu" id="menu" aria-label="Impostazioni" hidden>⋯</button>
     </div>
@@ -184,7 +184,38 @@ function nomeDispositivo() {
   return [so, br].filter(Boolean).join(' · ') + ' · ' + dev.slice(0, 4);
 }
 
+/* Due fonti sullo stesso canale:
+   · telefono del medico ('med'): ogni volta l'elenco completo delle
+     schede inviate, che sostituisce il precedente;
+   · PC ('pc'): solo le schede inviate o ritirate in quel momento, che si
+     sommano, così un PC riaperto non cancella ciò che aveva già inviato.
+   Una scheda presente in tutte e due vale nella versione inviata per
+   ultima (t = momento dell'invio).                                    */
 let sess = null, attuale = null, prima = new Map();
+let dalTel = null;                                 // ultima istantanea del telefono { seq, cards }
+const dalPC = new Map();                           // id → scheda inviata dal PC
+const ritiratiPC = new Map();                      // id → momento del ritiro
+let ultimoArrivo = 0;
+function unisci() {
+  const per = new Map();
+  const metti = c => { const x = per.get(c.id); if (!x || (c.t || 0) >= (x.t || 0)) per.set(c.id, c); };
+  (dalTel ? dalTel.cards : []).forEach(metti);
+  dalPC.forEach(metti);
+  const cards = [...per.values()].sort((a, b) => ((a.data || '') + a.ora).localeCompare((b.data || '') + b.ora));
+  return { seq: ultimoArrivo, cards };
+}
+function ricevi(x) {
+  if (x.fonte === 'pc') {
+    (x.ritirati || []).forEach(r => { const c = dalPC.get(r.id);
+      if (!c || (c.t || 0) <= r.t) { dalPC.delete(r.id); ritiratiPC.set(r.id, r.t); } });
+    (x.cards || []).forEach(c => { const g = dalPC.get(c.id), rit = ritiratiPC.get(c.id) || 0;
+      if ((c.t || 0) > rit && (!g || (c.t || 0) >= (g.t || 0))) dalPC.set(c.id, c); });
+    return true;
+  }
+  if (dalTel && x.seq <= dalTel.seq) return false;
+  dalTel = { seq: x.seq, cards: x.cards || [] };
+  return true;
+}
 /* al collegamento il relay ripete le pubblicazioni delle ultime ore, in
    ordine: in quei primi secondi le differenze non sono novità          */
 let quietoFino = 0;
@@ -218,7 +249,7 @@ async function avvia() {
         quietoFino = Date.now() + 4000;
         stato(attuale ? 'ok' : 'attesa', attuale ? 'aggiornato ' + oraDi(attuale.seq) : 'in attesa');
         if (!salutato) { salutato = true;
-          try { await Canale.invia(sess, 'tec', { tipo: 'ciao', dev, nome: nomeDispositivo(), seq: attuale ? attuale.seq : 0 }); } catch (_) {} }
+          try { await Canale.invia(sess, 'tec', { tipo: 'ciao', dev, nome: nomeDispositivo(), seq: dalTel ? dalTel.seq : 0 }); } catch (_) {} }
       }
       if (s === 'riconnessione') stato('ko', 'senza rete · riprovo');
     },
@@ -226,13 +257,15 @@ async function avvia() {
       let r; try { r = raccogli(m); } catch (_) { return; }
       if (!r) return;
       let x; try { x = await Canale.leggiLista(r); } catch (_) { return; }
-      if (!x || !Array.isArray(x.cards) || (attuale && x.seq <= attuale.seq)) return;
+      if (!x || !Array.isArray(x.cards) || !ricevi(x)) return;
       prima = new Map(attuale ? attuale.cards.map(c => [c.id, JSON.stringify(c)]) : []);
       const primoArrivo = !attuale;
-      attuale = x;
-      stato('ok', 'aggiornato ' + oraDi(x.seq));
+      ultimoArrivo = Math.max(ultimoArrivo, x.seq || 0);
+      attuale = unisci();
+      stato('ok', 'aggiornato ' + oraDi(ultimoArrivo));
       mostraCarte(primoArrivo);
-      try { await Canale.invia(sess, 'tec', { tipo: 'visto', dev, nome: nomeDispositivo(), seq: x.seq }); } catch (_) {}
+      /* la ricevuta serve al telefono del medico: dice quale sua versione si ha */
+      if (x.fonte !== 'pc') try { await Canale.invia(sess, 'tec', { tipo: 'visto', dev, nome: nomeDispositivo(), seq: x.seq }); } catch (_) {}
     },
   });
 }
@@ -242,7 +275,7 @@ function nonAbbinato() {
   $('menu').hidden = true;
   mostra(`<div class="abbina">
     <h2>Collega questo telefono</h2>
-    <p>L'app mostra, in sola lettura, le schede che il medico imposta sul suo telefono.</p>
+    <p>L'app mostra, in sola lettura, le schede che il medico manda ai TSRM.</p>
     <ol>
       <li>Sul telefono del medico: <b>Impostazioni → App tecnici → Mostra il codice</b>.</li>
       <li>Qui, tocca <b>Scansiona il codice</b> e inquadralo.</li>
@@ -271,12 +304,12 @@ function mostra(html) { $('vista').innerHTML = html; }
 
 function mostraCarte(primoArrivo) {
   if (!attuale) return mostra(`<div class="vuoto"><h2>In attesa del medico</h2>
-    <p>Qui compariranno le schede man mano che il medico le imposta.</p></div>`);
-  if (!attuale.cards.length) return mostra(`<div class="vuoto"><h2>Nessuna scheda impostata</h2>
-    <p>Il medico non ha ancora impostato schede. Compariranno qui da sole.</p></div>`);
+    <p>Qui compariranno le schede man mano che il medico le manda ai TSRM.</p></div>`);
+  if (!attuale.cards.length) return mostra(`<div class="vuoto"><h2>Nessuna scheda</h2>
+    <p>Il medico non ha ancora mandato schede ai TSRM. Compariranno qui da sole.</p></div>`);
   /* un giorno per blocco: oggi, poi il planning dei giorni a venire */
   const giorni = [...new Set(attuale.cards.map(c => c.data))].filter(d => d >= oggiIso()).sort();
-  mostra(`<p class="nota-sola">Schede impostate dal medico · sola lettura</p>` + giorni.map(d => {
+  mostra(`<p class="nota-sola">Schede mandate dal medico · sola lettura</p>` + giorni.map(d => {
     const cards = attuale.cards.filter(c => c.data === d);
     const oggi = d === oggiIso();
     const titolo = oggi ? 'Oggi' : new Date(d + 'T12:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -293,6 +326,7 @@ function carta(c, prossima, primoArrivo) {
   const mdc = c.fasi.some(f => f.fase !== 'basale');
   const vol = mdc && c.peso > 0 && c.agente ? c.giKg * c.peso / c.agente.c : 0;
   const flusso = mdc && c.agente ? c.idr / c.agente.c : 0;
+  const dose = `${it(c.giKg, 2)} gI/kg · IDR ${it(c.idr)} gI/s`;
   const cls = ['carta', prossima ? 'prossima' : '', c.fatto ? 'fatta' : '', nuova ? 'nuova' : ''].filter(Boolean).join(' ');
   return `<article class="${cls}">
     <div class="c-testa"><span class="c-ora">${esc(c.ora || '—')}</span><span class="c-acc">${esc(c.id)}</span>
@@ -302,12 +336,13 @@ function carta(c, prossima, primoArrivo) {
     ${c.quesito ? `<div class="c-quesito">${esc(c.quesito)}</div>` : ''}
     <div class="c-proto"><h3>${esc(c.proto)}</h3><span class="fonte ${c.personale ? 'personale' : ''}">${c.personale ? 'personale' : 'ufficiale'}</span></div>
     <div class="fasi">${c.fasi.map(f => `<div class="fase">${tag(f)}<span class="rit">${esc(ritardo(f))}</span><span class="zona">${esc(zone(f))}</span></div>`).join('')}</div>
-    ${mdc ? `<div class="mdc">
+    ${mdc ? c.agente ? `<div class="mdc">
         ${vol ? `<span class="v"><b>${Math.round(vol)}</b><span>ml</span></span>` : ''}<span class="v"><b>${it(flusso)}</b><span>ml/s</span></span>
-        <small>${esc(c.agente.l)} · ${c.peso ? `${esc(c.peso)} kg · ` : ''}${it(c.giKg, 2)} gI/kg · IDR ${it(c.idr)} gI/s</small>
+        <small>${esc(c.agente.l)} · ${c.peso ? `${esc(c.peso)} kg · ` : ''}${dose}</small>
         ${vol > 150 ? '<small class="avv">Volume elevato: verifica con il medico.</small>' : ''}
         ${flusso > 5 ? '<small class="avv">Flusso alto: serve un accesso venoso adeguato (≥18G).</small>' : ''}
-      </div>` : ''}
+      </div>` : `<div class="mdc"><span class="v"><b>${it(c.giKg, 2)}</b><span>gI/kg</span></span><span class="v"><b>${it(c.idr)}</b><span>gI/s</span></span>
+        <small>Dal PC: peso e mezzo si definiscono in sala, volume e flusso di conseguenza.</small></div>` : ''}
     ${c.nota ? `<div class="nota-med"><b>Nota del medico</b>${esc(c.nota)}</div>` : ''}
   </article>`;
 }

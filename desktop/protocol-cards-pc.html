@@ -551,6 +551,12 @@ td.segn .cel{box-shadow:inset 0 0 0 2px var(--amber)}
 .apprendi.fatto{color:#5B3FA0;background:#EEE8FA}
 .op.s{cursor:default;background:#E3ECFD;box-shadow:inset 0 0 0 2px #8FB2EE}
 .op.s .op-k{color:#2F5D92}
+.tsrm{border:0;cursor:pointer;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;color:#2A7A62;background:#E1F4EC;
+  box-shadow:var(--well-s);transition:.18s}
+.tsrm:hover{background:#D2EFE3}
+.tsrm.inviato{color:#0E3A2E;background:linear-gradient(180deg,#B2E7D2 0%,#90D9BD 46%,#6BC5A5 46.01%,#52B492 100%)}
+.tsrm.modificato{color:#8A5A0B;background:#FCF1DC}
+.tsrm:disabled{opacity:.45;cursor:not-allowed}
 .insegna{border:0;cursor:pointer;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;color:#5B3FA0;background:#EEE8FA;
   box-shadow:var(--well-s);transition:.18s}
 .insegna:hover{background:#E1D7F7}
@@ -1115,6 +1121,11 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
     <details><summary>Protocolli</summary>
       <p>Qui si decide cosa suggerirà il telefono: fasi, zone, mezzo di contrasto e i termini del quesito che
         fanno riconoscere il protocollo. Con <b>Sincronizza</b> il telefono riceve questa libreria.</p>
+      <p><b>Manda a TSRM.</b> I tecnici hanno un'app di sola lettura. Dal PC si manda un paziente con
+        «Manda a TSRM» nella sua riga, o tutti con il tasto in cima alla tabella (chiede conferma). Il canale si
+        collega dal telefono del medico (Impostazioni → App tecnici) e passa al PC quando il telefono è abbinato.
+        Viaggia il protocollo com'è in quel momento; se cambia dopo l'invio il tasto diventa «Aggiorna TSRM».
+        Peso e mezzo si definiscono in sala; il nome del paziente non viene inviato.</p>
       <p><b>Personali.</b> Sono le varianti di chi usa il tool e vengono suggerite prima degli ufficiali. Si
         creano con il builder, con «Copia nei personali» da un ufficiale, oppure con <b>Apprendi</b> in verifica:
         il tool ricorda il protocollo in uso per i casi con lo stesso esame e gli stessi termini clinici. Scegliere
@@ -1199,6 +1210,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
       <div class="rete-az">
         <button class="btn xs" id="scaricaJson" title="La lista in un file, per trasferirla senza rete">Scarica file</button>
         <button class="btn sm" id="reteAccedi" hidden>Accedi per inviare</button>
+        <button class="btn sm" id="tsrmTutti" hidden title="Manda all'app dei TSRM tutti i pazienti con un protocollo">Manda a TSRM</button>
         <button class="btn solid sm" id="reteInvia" hidden>Invia la lista al telefono</button>
       </div>
     </div>
@@ -5070,6 +5082,7 @@ function cellaProtocollo(td, p, i) {
   td.innerHTML = `<div class="opz">${opz('ufficiale', uff, 'nessuno riconosciuto')}${opz('personale', pers, 'nessuno — insegnalo ›')}${scelto}</div>
     <div class="op-f">${att ? `<button class="apprendi${giàAppreso ? ' fatto' : ''}" data-apprendi="${i}"
         title="Ricorda: questo esame con questi termini clinici → questo protocollo">${giàAppreso ? `Appreso ×${pers.appreso.volte}` : 'Apprendi'}</button>` : ''}
+      ${Tsrm ? Tsrm.tasto(p, i) : ''}
       ${pers ? `<button class="insegna" data-insegna="${i}" title="Apri il builder con questo caso e il protocollo in uso">★ Insegna</button>` : ''}
       <button class="link" data-scegli="${i}">Altro protocollo…</button>${
       p.scelta === null ? '<span class="ptag">nessuno · si imposta sul telefono</span>' : ''}</div>`;
@@ -5078,6 +5091,7 @@ function aggiornaColonnaProtocolli() {
   document.querySelectorAll('#righe tr').forEach((tr, i) => cellaProtocollo(tr.querySelector('.c-proto'), pazienti[i], i));
   aggiornaConteggi();
 }
+$('tsrmTutti').onclick = () => Tsrm.tutti();
 $('righe').addEventListener('click', e => {
   const s = e.target.closest('[data-scegli]');
   if (s) { e.stopPropagation(); return apriScelta(+s.dataset.scegli, s); }
@@ -5085,6 +5099,8 @@ $('righe').addEventListener('click', e => {
   if (ins) return insegna(+ins.dataset.insegna);
   const app = e.target.closest('[data-apprendi]');
   if (app) return apprendi(+app.dataset.apprendi);
+  const ts = e.target.closest('[data-tsrm]');
+  if (ts) return Tsrm.clic(+ts.dataset.tsrm);
   const b = e.target.closest('.op'); if (!b || b.classList.contains('s')) return;
   const p = pazienti[+b.dataset.i];
   if (b.classList.contains('vuota')) {
@@ -5262,6 +5278,7 @@ function aggiornaConteggi() {
   $('chipWarn').style.display = conSeg ? 'inline-block' : 'none';
   $('chipWarn').textContent = `${conSeg} da controllare`;
   $('reteInvia').disabled = a.length === 0;
+  if (Tsrm) Tsrm.disegna();
   const n = { ufficiale: 0, personale: 0, nessuno: 0 };
   a.forEach(p => { const { usa, pr } = protocolloDi(p); n[usa === 'scelto' ? libDi(pr.id) : usa || 'nessuno']++; });
   $('chipProto').innerHTML = a.length ? `<b>${n.personale}</b> personali · <b>${n.ufficiale}</b> ufficiali${n.nessuno ? ` · <b>${n.nessuno}</b> da impostare` : ''}` : '';
@@ -5486,6 +5503,7 @@ async function ascoltaRete(a, suAperto) {
 
 function messaggioRete(a, m) {
   if (m.tipo === 'profilo') return Profilo.messaggio(m);
+  if (m.tipo === 'tecnici') return Tsrm.chiave(a, m);
   if (m.tipo === 'libreria-ok') return Sync.conferma(m);
   if (m.tipo === 'sync') return Sync.invia();            // chiesta dal telefono
   if (m.tipo === 'ciao' && inAbbinamento && inAbbinamento.t === a.t) {
@@ -6878,6 +6896,100 @@ $('simNuovo').onclick = () => { chiudiSimili(); salvaComeNuovo(); };
 $('simModifica').onclick = () => { chiudiSimili(); const n = bRad.querySelector('.nome-b'); if (n) { n.focus(); n.select(); } };
 $('maskSim').addEventListener('click', e => { if (e.target === $('maskSim')) chiudiSimili(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('maskSim').classList.contains('on')) chiudiSimili(); });
+
+/* ═══════════════════════════════════════════════════════════════════
+   MANDA A TSRM
+   I tecnici (TSRM) hanno un'app di sola lettura. Il canale nasce sul
+   telefono del medico, che ne passa la chiave al PC sul canale PC ↔
+   telefono: vale finché resta abbinato quel telefono. Dal PC si manda
+   solo con «Manda a TSRM», paziente per paziente o tutti insieme, mai da
+   solo. Viaggia una copia fissa della scheda; se il protocollo cambia
+   dopo l'invio il tasto diventa «Aggiorna TSRM». Il PC manda solo le
+   schede inviate o ritirate in quel momento: non conserva la lista, e
+   l'app dei tecnici somma gli invii. Il nome del paziente non viaggia.
+   ═══════════════════════════════════════════════════════════════════ */
+/* var: la tabella può chiederlo prima che lo script arrivi fin qui */
+var Tsrm = (() => {
+  const K = 'protocol-cards.pc.tecnici';
+  let link = (() => { try { const x = JSON.parse(localStorage.getItem(K) || 'null'); return x && Canale.valido(x) ? x : null; } catch (_) { return null; } })();
+  let sess = null, sessT = '';
+  /* la chiave vale solo con il telefono che l'ha mandata */
+  const valido = () => link && abbinamento && link.per === abbinamento.t ? link : null;
+
+  function chiave(a, m) {
+    if (!Canale.valido(m)) return;
+    if (link && link.t === m.t && link.per === a.t) return;
+    link = { t: m.t, k: m.k, per: a.t };
+    try { localStorage.setItem(K, JSON.stringify(link)); } catch (_) {}
+    if (pazienti.length) aggiornaColonnaProtocolli();
+  }
+  async function canale() {
+    const l = valido(); if (!l) throw new Error('canale dei TSRM non collegato');
+    if (!sess || sessT !== l.t) { sess = await Canale.apri(l); sessT = l.t; }
+    return sess;
+  }
+  /* la scheda come la vedono i TSRM: stessa forma di quella del telefono;
+     peso e mezzo non ci sono, si definiscono in sala                   */
+  function scheda(p) {
+    const { pr } = protocolloDi(p); if (!pr) return null;
+    const esame = esameDi(p);
+    return { id: p.accession, data: isoGG(p.data) || oggiIso(), ora: p.ora, modo: seduta,
+      esame: p.esami.map(e => e.descrizione).join(' | '), quesito: p.quesito,
+      proto: pr.l, personale: libDi(pr.id) === 'personale',
+      fasi: PR.fitZones(pr.fasi, esame).map(f => ({ fase: f.fase, l: PR.FASI[f.fase].l, c: PR.FASI[f.fase].c, zone: f.zone.slice(), delay: f.delay || '' })),
+      peso: null, giKg: pr.giKg, idr: pr.idr, agente: null, nota: '' };
+  }
+  const firmaScheda = p => { const s = scheda(p); return s ? Canale.somma(JSON.stringify(s)) : ''; };
+  /* 'no' · 'inviato' · 'modificato' (cambiato dopo l'invio) */
+  const stato = p => !p.tsrm ? 'no' : p.tsrm.h === firmaScheda(p) ? 'inviato' : 'modificato';
+
+  async function pubblica(cards, ritirati) {
+    const s = await canale(), seq = Date.now();
+    await Canale.inviaLista(s, 'pc', { ...(await Canale.impacchetta({ v: 1, fonte: 'pc', seq, cards, ritirati })), tipo: 'tecnici' });
+  }
+  async function manda(lista) {
+    const t = Date.now(), out = lista.map(p => ({ p, c: scheda(p) })).filter(x => x.c);
+    if (!out.length) return;
+    try { await pubblica(out.map(x => ({ ...x.c, fatto: false, t })), []); }
+    catch (e) { return toast('Invio ai TSRM non riuscito: ' + erroreRete(e)); }
+    out.forEach(({ p, c }) => { p.tsrm = { t, h: Canale.somma(JSON.stringify(c)) }; });
+    aggiornaColonnaProtocolli();
+    toast(out.length === 1 ? `Mandato ai TSRM · ${casoDi(out[0].p)}` : `${out.length} pazienti mandati ai TSRM`);
+  }
+  async function ritira(p) {
+    try { await pubblica([], [{ id: p.accession, t: Date.now() }]); }
+    catch (e) { return toast('Ritiro non riuscito: ' + erroreRete(e)); }
+    delete p.tsrm; aggiornaColonnaProtocolli(); toast('Ritirato dai TSRM');
+  }
+  /* il tasto della riga */
+  function tasto(p, i) {
+    if (!protocolloDi(p).pr) return '';
+    if (!valido()) return `<button class="tsrm" disabled title="Collega i TSRM dal telefono del medico: Impostazioni → App tecnici">Manda a TSRM</button>`;
+    const s = stato(p);
+    return `<button class="tsrm ${s}" data-tsrm="${i}" title="${s === 'inviato' ? 'I TSRM hanno questa versione: clic per ritirarla'
+      : s === 'modificato' ? 'Il protocollo è cambiato dopo l\'invio: clic per mandare la nuova versione' : 'Manda questo paziente all\'app dei TSRM'}">${
+      s === 'inviato' ? 'Inviato ✓' : s === 'modificato' ? 'Aggiorna TSRM' : 'Manda a TSRM'}</button>`;
+  }
+  function clic(i) {
+    const p = pazienti[i];
+    if (stato(p) === 'inviato') return chiedi('Ritirare dai TSRM?', `${casoDi(p)} sparirà dall'app dei tecnici. Potrai mandarlo di nuovo quando vuoi.`, 'Ritira', () => ritira(p));
+    manda([p]);
+  }
+  /* tutti insieme, con conferma: mai un invio per sbaglio */
+  function tutti() {
+    const da = attivi().filter(p => protocolloDi(p).pr && stato(p) !== 'inviato');
+    if (!da.length) return toast('Nessun paziente da mandare ai TSRM');
+    chiedi('Mandare ai TSRM?', `${da.length} ${da.length === 1 ? 'paziente' : 'pazienti'} con il protocollo scelto compariranno nell'app dei tecnici.`,
+      'Manda a TSRM', () => manda(da));
+  }
+  function disegna() {
+    const b = $('tsrmTutti'); if (!b) return;
+    b.hidden = !valido() || !pazienti.length;
+    const n = attivi().filter(p => protocolloDi(p).pr && stato(p) !== 'inviato').length;
+    b.disabled = !n; b.textContent = n ? `Manda a TSRM (${n})` : 'Tutti ai TSRM ✓';
+  }
+  return { chiave, tasto, clic, tutti, disegna, valido };
+})();
 
 /* ── modale e avvisi ── */
 function chiedi(titolo, testo, si, fatto) {

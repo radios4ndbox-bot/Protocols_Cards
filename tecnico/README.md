@@ -1,10 +1,12 @@
 # Protocol Cards — app tecnici
 
-App di **sola lettura** per i tecnici di radiologia. Mostra le schede che il
-medico ha **impostato** sul suo telefono (l'app del medico, `../prototype/`):
+App di **sola lettura** per i tecnici di radiologia (TSRM). Mostra le schede che
+il medico ha **mandato ai TSRM** con «Manda a TSRM», dal suo telefono (l'app del
+medico, `../prototype/`) o dal PC in verifica; «Imposta» da solo non manda nulla:
 protocollo, fasi con ritardi e zone, volume e flusso dal peso e dal mezzo scelti
-dal medico, nota del medico. Si aggiorna da sola; una scheda non impostata non
-compare, e una riattivata sparisce. Le schede di oggi vengono prima, poi il
+dal medico (dal PC si definiscono in sala), nota del medico. Si aggiorna da
+sola; una scheda ritirata sparisce. Se lo stesso paziente arriva dal telefono e
+dal PC vale l'invio più recente. Le schede di oggi vengono prima, poi il
 planning dei giorni a venire; le eseguite restano attenuate.
 
 Pubblicata su GitHub Pages:

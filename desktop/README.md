@@ -339,13 +339,29 @@ dall'estratto SIRM**, e la loro nota dice che vanno validati in reparto. Una
 libreria ufficiale rimasta alla revisione 2 si aggiorna da sola; una modificata
 dal reparto li riceve con «Ripristina».
 
-## App tecnici
+## App tecnici (TSRM)
 
-I tecnici hanno un'app di sola lettura (`../tecnico/`) che mostra le schede
-**impostate** dal medico sul suo telefono — «Imposta» è la conferma — con fasi,
-volume e flusso, nota; si aggiorna da sola. Si collega dal telefono del medico
-(Impostazioni → App tecnici) con un canale cifrato proprio. Il nome del paziente
-non viene inviato. Vedi `../tecnico/README.md`.
+I tecnici hanno un'app di sola lettura (`../tecnico/`). Una scheda arriva a loro
+**solo con «Manda a TSRM»**, mai da sola: «Imposta» sul telefono non manda
+nulla, così non si invia per sbaglio.
+
+- **Dal telefono del medico**, in fondo alla scheda. Viaggia una copia fissa
+  della scheda (fasi, peso, mezzo, nota); se poi la si modifica il tasto diventa
+  «Aggiorna TSRM» e i tecnici vedono ancora la versione inviata finché non lo si
+  preme. «Inviato ✓» permette di ritirarla. Le schede inviate hanno l'etichetta
+  TSRM in bacheca.
+- **Dal PC**, in verifica: «Manda a TSRM» nella riga del paziente, oppure il tasto
+  in cima alla tabella per tutti quelli con un protocollo, con conferma. Stessi
+  stati («Inviato ✓», «Aggiorna TSRM», ritiro). Peso e mezzo dal PC non ci sono:
+  si definiscono in sala.
+- **Canale.** Nasce sul telefono del medico (Impostazioni → App tecnici). Il
+  telefono ne passa la chiave al PC sul canale PC ↔ telefono; il PC la usa solo
+  finché resta abbinato quel telefono. Il PC manda solo le schede inviate o
+  ritirate in quel momento (non conserva la lista); il telefono manda ogni volta
+  l'elenco completo delle sue. L'app dei tecnici unisce le due fonti: per lo
+  stesso paziente vale l'invio più recente.
+
+Il nome del paziente non viene inviato. Vedi `../tecnico/README.md`.
 
 ## Protocol builder
 

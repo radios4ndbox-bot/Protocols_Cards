@@ -551,6 +551,12 @@ button.dd:disabled{opacity:.5;cursor:not-allowed;background:var(--surface2)}
 .learn-btn:active{transform:scale(.97)}
 .learn-btn:disabled{color:var(--muted);box-shadow:none;cursor:not-allowed}
 .learn-btn.fatto{background:var(--accent-s)}
+.learn-btn{padding:0 13px}
+.tsrm-btn{color:#2A7A62}
+.tsrm-btn.inviato{background:#E1F4EC;border-color:#7CCFB0}
+.tsrm-btn.mod{background:#FCF1DC;border-color:#F0C980;color:#8A5A0B}
+.mini-sum span.tsrm{background:#E1F4EC;color:#2A7A62}
+.mini-sum span.tsrm.mod{background:#FCF1DC;color:#8A5A0B}
 .tec-qr{display:block;margin:12px auto 6px;border-radius:10px;border:1px solid var(--border);max-width:100%;height:auto;image-rendering:pixelated}
 
 /* ═══ NUOVA SCHEDA ═════════════════════════════════════ */
@@ -930,8 +936,10 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
         termini clinici del quesito. Alla firma successiva identica te le ripropone. «Imposta» non insegna nulla:
         si impara solo quando lo chiedi. Nessuna stima: stessa firma, stesso suggerimento.</p></details>
     <details><summary>App tecnici</summary>
-      <p>I tecnici hanno un'app di sola lettura che mostra le schede che hai <b>impostato</b>, con fasi, mezzo, peso
-        e nota, e si aggiorna da sola quando cambi qualcosa. Una scheda non impostata non compare; riattivata, sparisce.
+      <p>I TSRM hanno un'app di sola lettura. Una scheda arriva a loro solo con <b>«Manda a TSRM»</b>, in fondo alla
+        scheda: «Imposta» non manda nulla. Viaggia la scheda com'è in quel momento (fasi, mezzo, peso, nota); se poi la
+        modifichi, il tasto diventa «Aggiorna TSRM» e i TSRM vedono la nuova versione solo quando lo premi. «Inviato ✓»
+        permette di ritirarla. Dal PC si può mandare ai TSRM allo stesso modo, quando è collegato a questo telefono.
         «Collega i tecnici» crea un canale cifrato e un codice: ogni tecnico lo scansiona una volta dall'app dei tecnici («Scansiona il codice»). Il nome del paziente
         non viene inviato. «Nuovo abbinamento» scollega i telefoni dei tecnici collegati finora.</p></details>
     <details><summary>Il tuo profilo</summary>
@@ -1114,6 +1122,7 @@ c35 -20 149 -81 253 -138 l189 -102 101 53 c56 29 165 88 244 131 78 43 147
   </div>
   <div class="d-act"><div class="d-act-r">
     <button class="learn-btn" id="learnBtn" disabled title="Ricorda queste fasi per i casi con lo stesso esame e gli stessi termini clinici">Apprendi</button>
+    <button class="learn-btn tsrm-btn" id="tsrmBtn" disabled title="Manda questa scheda all'app dei TSRM">Manda a TSRM</button>
     <button class="set-btn" id="setBtn" disabled>Imposta</button></div></div>
 </section>
 
@@ -1575,7 +1584,8 @@ const detailNodes = () => [
 ].filter(Boolean);
 
 /* ═══ BOARD ══════════════════════════════════════════════ */
-const summary = p => p.fasi.map(f=>`<span>${PH[f.fase].l.slice(0,3)}</span>`).join('');
+const summary = p => p.fasi.map(f=>`<span>${PH[f.fase].l.slice(0,3)}</span>`).join('')
+  + (p.tsrm ? `<span class="tsrm${statoTsrm(p) === 'modificato' ? ' mod' : ''}">TSRM</span>` : '');
 const isAM = p => parseInt(p.ora.slice(0,2),10) < 14;
 /* fuori dalla zona ospedale il planning resta nel telefono ma non si vede */
 const planningNascosto = () => { try{ return Zona.blocca(); }catch(_){ return false; } };
@@ -2029,7 +2039,17 @@ function etichettaApprendi(){
   l.disabled = !cur || !cur.fasi.length;
   l.textContent = uguale ? `Appreso ×${L.count}` : 'Apprendi';
   l.classList.toggle('fatto', uguale);
+  etichettaTsrm();
 }
+function etichettaTsrm(){
+  const b = $('tsrmBtn'); if(!cur){ b.disabled = true; return; }
+  const s = statoTsrm(cur);
+  b.disabled = !cur.fasi.length;
+  b.textContent = s === 'inviato' ? 'Inviato ✓' : s === 'modificato' ? 'Aggiorna TSRM' : 'Manda a TSRM';
+  b.classList.toggle('inviato', s === 'inviato'); b.classList.toggle('mod', s === 'modificato');
+}
+/* note, peso e mezzo cambiano la scheda: il tasto lo dice subito */
+setInterval(() => { if(cur) etichettaTsrm(); }, 700);
 
 /* ═══ CALCOLATORE MDC ════════════════════════════════════ */
 function calc(){
@@ -2215,14 +2235,22 @@ $('addBtn').onclick = () => {
   $('ddPhase').value=''; pick=[]; syncZone();
 };
 
-/* «Imposta» conferma il protocollo della scheda (ed è ciò che la fa
-   comparire ai tecnici); non insegna nulla. A ricordare la combinazione
+/* «Imposta» conferma il protocollo della scheda; non manda nulla ai TSRM
+   (per quello c'è «Manda a TSRM») e non insegna nulla. A ricordare la combinazione
    per i casi uguali ci pensa «Apprendi», solo quando lo si chiede.    */
 $('setBtn').onclick = () => {
   if(!cur.fasi.length) return;
   cur.stato='set'; detail.dataset.state='set';
   persist(); toast('Protocollo impostato');
   setTimeout(close, 380);
+};
+$('tsrmBtn').onclick = () => {
+  if(!cur || !cur.fasi.length) return;
+  const s = statoTsrm(cur), p = cur;
+  if(s === 'inviato') return ask('Ritirare dai TSRM?',
+    'La scheda sparirà dall\'app dei tecnici. Potrai mandarla di nuovo quando vuoi.', 'Ritira',
+    () => { ritiraTsrm(p); etichettaTsrm(); toast('Ritirata dai TSRM'); });
+  if(mandaTsrm(p)){ detail.dataset.state = p.stato; etichettaTsrm(); toast(s === 'modificato' ? 'Aggiornata per i TSRM' : 'Mandata ai TSRM'); }
 };
 $('learnBtn').onclick = () => {
   if(!cur || !cur.fasi.length) return;
@@ -2894,7 +2922,7 @@ async function avviaPc(){
                delete link.saluta; salvaPc(); }catch(_){}
         }
         /* a ogni collegamento il profilo parte verso il PC */
-        if(pcSess!==sess){ pcSess = sess; inviaProfilo(); }
+        if(pcSess!==sess){ pcSess = sess; inviaProfilo(); inviaLinkTecnici(); }
       }
       else if(s==='riconnessione' || s==='chiuso') pcStato = 'riconnessione';
       renderPc();
@@ -3182,10 +3210,13 @@ const cambioGiorno = () => { if(iso(new Date()) !== TODAY) location.reload(); };
 document.addEventListener('visibilitychange', () => { if(!document.hidden) cambioGiorno(); });
 
 /* ═══ APP TECNICI ════════════════════════════════════════
-   I tecnici hanno un'app di sola lettura (../tecnico/): vede le schede
-   che il medico ha impostato su questo telefono, con fasi, mezzo, peso e
-   nota, e si aggiorna da sola. «Imposta» è la conferma del medico: una
-   scheda compare ai tecnici solo da lì; riattivata o tolta, sparisce.
+   I tecnici (TSRM) hanno un'app di sola lettura (../tecnico/). Una scheda
+   arriva a loro solo con «Manda a TSRM»: «Imposta» non manda nulla, così
+   non si invia per sbaglio. Viaggia una copia fissa della scheda; se poi
+   la si modifica, i TSRM vedono ancora quella inviata finché non si preme
+   «Aggiorna TSRM». Eliminata, o ritirata, sparisce. Anche il PC può
+   mandare ai TSRM: riceve la chiave di questo canale dal telefono, sul
+   canale PC ↔ telefono, e l'app dei tecnici unisce le due fonti.
    Il canale è quello del PC (canale.js) con un abbinamento proprio, che
    nasce su questo telefono e passa ai tecnici in un QR. Il nome del
    paziente non viaggia: ai tecnici bastano orario, accettazione, esame. */
@@ -3196,15 +3227,36 @@ let tecUltima = load('tecniciUltima', null);          // { seq, quando, n, h }: 
 let tecSess = null, tecChiudi = null, tecStato = '', tecErrore = '', tecTimer = null, tecQR = false;
 const tecTelefoni = new Map();                        // dispositivo → { nome, seq, quando }
 
+/* la scheda come la vedono i TSRM: il nome del paziente non c'è */
+function cardTecnici(p){
+  const ag = AGENTS.find(a => a.id === (p.agent || agent)) || AGENTS[0], pr = PROTOCOLS[p.proto];
+  return { id:p.id, data:p.data, ora:p.ora, modo:p.modo, esame:p.esame, quesito:p.quesito,
+    proto: pr ? pr.l : 'Impostato a mano', personale: !!(pr && pr.personale),
+    fasi: p.fasi.map(f => ({ fase:f.fase, l:PH[f.fase].l, c:PH[f.fase].c, zone:f.zone.slice(), delay:f.delay || '' })),
+    peso:p.peso, giKg:p.giKg, idr:p.idr, agente:{ l:ag.l, c:ag.c }, nota:p.note || '' };
+}
+/* dichiarazioni di funzione: la bacheca le usa già all'avvio, prima di questo blocco */
+function firmaCard(p){ return Canale.somma(JSON.stringify(cardTecnici(p))); }
+/* 'no' · 'inviato' (i TSRM hanno questa versione) · 'modificato' (la scheda è cambiata dopo l'invio) */
+function statoTsrm(p){ return !p.tsrm ? 'no' : p.tsrm.h === firmaCard(p) ? 'inviato' : 'modificato'; }
 function istantaneaTecnici(){
-  const cards = state.filter(p => (p.stato === 'set' || p.stato === 'done') && p.fasi && p.fasi.length).map(p => {
-    const ag = AGENTS.find(a => a.id === (p.agent || agent)) || AGENTS[0], pr = PROTOCOLS[p.proto];
-    return { id:p.id, data:p.data, ora:p.ora, modo:p.modo, esame:p.esame, quesito:p.quesito, fatto:p.stato === 'done',
-      proto: pr ? pr.l : 'Impostato a mano', personale: !!(pr && pr.personale),
-      fasi: p.fasi.map(f => ({ fase:f.fase, l:PH[f.fase].l, c:PH[f.fase].c, zone:f.zone.slice(), delay:f.delay || '' })),
-      peso:p.peso, giKg:p.giKg, idr:p.idr, agente:{ l:ag.l, c:ag.c }, nota:p.note || '' };
-  }).sort((a, b) => (a.data + a.ora).localeCompare(b.data + b.ora));
-  return { v:1, cards };
+  /* ai TSRM va la copia inviata; cambia da sola solo lo stato di esecuzione */
+  const cards = state.filter(p => p.tsrm).map(p => ({ ...p.tsrm.card, fatto:p.stato === 'done', t:p.tsrm.t }))
+    .sort((a, b) => (a.data + a.ora).localeCompare(b.data + b.ora));
+  return { v:1, fonte:'med', cards };
+}
+function mandaTsrm(p){
+  if(!tecLink){ toast('Collega prima i TSRM: Impostazioni → App tecnici', 2600); return false; }
+  p.tsrm = { t:Date.now(), card:cardTecnici(p), h:firmaCard(p) };
+  if(p.stato === 'todo') p.stato = 'set';
+  persist(); pubblicaTecnici();
+  return true;
+}
+function ritiraTsrm(p){ delete p.tsrm; persist(); pubblicaTecnici(); }
+/* il PC può mandare ai TSRM sullo stesso canale: gli si passa la chiave */
+function inviaLinkTecnici(){
+  if(!tecLink || !pcSess) return;
+  Canale.invia(pcSess, 'tel', { tipo:'tecnici', t:tecLink.t, k:tecLink.k }).catch(() => {});
 }
 
 /* si pubblica solo se qualcosa è cambiato; la somma di controllo
@@ -3250,6 +3302,7 @@ async function nuovoTecnici(){
   save('tecnici', tecLink); tecUltima = null; save('tecniciUltima', null); tecQR = true;
   await avviaTecnici();
   pubblicaTecnici(true);
+  inviaLinkTecnici();
 }
 
 const TEC_STATO = { connessione:'collegamento al relay…', aperto:'in ascolto', riconnessione:'rete assente, riprovo…',
@@ -3260,7 +3313,7 @@ function renderTecnici(){
   if(!tecLink){
     box.innerHTML = `<div class="item"><div class="item-h"><div style="min-width:0;flex:1">
         <div class="item-n">Nessun telefono dei tecnici collegato</div>
-        <div class="item-s">I tecnici vedranno, in sola lettura, le schede che imposti.</div></div>
+        <div class="item-s">I TSRM vedranno, in sola lettura, le schede che mandi loro con «Manda a TSRM».</div></div>
       <button class="mini-b" id="tecCrea">Collega i tecnici</button></div></div>`;
     $('tecCrea').onclick = () => nuovoTecnici();
     return;
